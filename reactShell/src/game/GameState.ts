@@ -1,8 +1,14 @@
 // GameState.ts - Central state management
+
+// Game phase types for wave progression
+export type GamePhase = 'playing' | 'wave-complete' | 'upgrade'
+
 export class GameState {
   private score: number = 0
   private lives: number = 3
   private level: number = 1
+  private wave: number = 1
+  private gamePhase: GamePhase = 'playing'
   private gameOver: boolean = false
   private paused: boolean = false
 
@@ -50,6 +56,36 @@ export class GameState {
     this.level++
   }
 
+  // Wave management
+  getWave(): number {
+    return this.wave
+  }
+
+  nextWave(): void {
+    this.wave++
+    this.gamePhase = 'playing'
+  }
+
+  resetWave(): void {
+    // Reset to wave 1 (used for game restart)
+    this.wave = 1
+    this.gamePhase = 'playing'
+  }
+
+  // Game phase management
+  getGamePhase(): GamePhase {
+    return this.gamePhase
+  }
+
+  setGamePhase(phase: GamePhase): void {
+    this.gamePhase = phase
+  }
+
+  // Wave completion detection
+  completeWave(): void {
+    this.gamePhase = 'wave-complete'
+  }
+
   // Game state management
   isGameOver(): boolean {
     return this.gameOver
@@ -71,6 +107,8 @@ export class GameState {
     this.score = 0
     this.lives = 3
     this.level = 1
+    this.wave = 1
+    this.gamePhase = 'playing'
     this.gameOver = false
     this.paused = false
   }
@@ -81,6 +119,8 @@ export class GameState {
       score: this.score,
       lives: this.lives,
       level: this.level,
+      wave: this.wave,
+      gamePhase: this.gamePhase,
       gameOver: this.gameOver,
       paused: this.paused
     }

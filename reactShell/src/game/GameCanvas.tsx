@@ -70,8 +70,8 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
     particleManagerRef.current = particleManager
     gameStateRef.current = gameState
     
-    // Initialize level with asteroids (5-8 for testing)
-    spawning.initializeLevel()
+    // Initialize wave 1
+    spawning.initializeWave(gameState.getWave())
     
     // Dev panel greeting
     DebugBus.push('info', 'DevPanel ready')
@@ -160,6 +160,19 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
         }
       }
       
+      // Check for wave completion after collision updates
+      if (gameState.getGamePhase() === 'playing' && spawning.isWaveComplete()) {
+        gameState.completeWave()
+      }
+      
+      // Handle wave transitions
+      if (gameState.getGamePhase() === 'wave-complete') {
+        // Start next wave automatically
+        gameState.nextWave()
+        ship.resetForWave()
+        spawning.initializeWave(gameState.getWave())
+      }
+      
       // Follow ship with camera (simple following)
       const shipPos = ship.getPosition()
       camera.position.x = shipPos.x
@@ -182,6 +195,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
             other: particleManager.getActiveCount() 
           },
           score: gameState.getScore(),
+          wave: gameState.getWave(),
           ship: {
             x: shipPos.x,
             y: shipPos.y,

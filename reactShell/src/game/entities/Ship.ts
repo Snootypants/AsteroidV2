@@ -12,6 +12,9 @@ const PLAYER = {
   fireRate: 0.16,
 }
 
+// Wave invulnerability period (from vanilla INVULN_WAVE)
+const INVULN_WAVE = 3.0
+
 const WORLD = {
   width: 750,
   height: 498,
@@ -27,6 +30,7 @@ export class Ship {
   private fireCooldown = 0
   private minAimDistance = 20 // Minimum distance for mouse aiming
   private bulletManager?: BulletManager
+  private invulnerabilityTime = 0 // Invulnerability timer
 
   constructor(scene: THREE.Scene, bulletManager?: BulletManager) {
     this.bulletManager = bulletManager
@@ -38,7 +42,8 @@ export class Ship {
       rot: 0,
       alive: true,
       fireCooldown: 0,
-      radius: 1.5
+      radius: 1.5,
+      invulnerable: false
     }
     
     // Start at origin facing left (like vanilla)
@@ -132,6 +137,10 @@ export class Ship {
     this.fireCooldown = Math.max(0, this.fireCooldown - dt)
     s.fireCooldown = this.fireCooldown
 
+    // Invulnerability timer
+    this.invulnerabilityTime = Math.max(0, this.invulnerabilityTime - dt)
+    s.invulnerable = this.invulnerabilityTime > 0
+
     // Handle firing
     if (input.fire && this.canFire() && this.bulletManager) {
       this.bulletManager.fire(this, false) // false = not enemy bullet
@@ -189,5 +198,28 @@ export class Ship {
       // Scale the mesh to achieve desired on-screen size
       this.object.scale.set(imgW * scale, px, 1)
     }
+  }
+
+  // Reset ship for new wave
+  resetForWave(): void {
+    // Reset position to center
+    this.object.position.set(0, 0, 0)
+    
+    // Reset velocity
+    this.velocity.set(0, 0)
+    this.object.userData.vx = 0
+    this.object.userData.vy = 0
+    
+    // Reset rotation to face left (like vanilla)
+    this.object.rotation.z = Math.PI
+    
+    // Apply 3-second invulnerability
+    this.invulnerabilityTime = INVULN_WAVE
+    this.object.userData.invulnerable = true
+  }
+
+  // Check if ship is invulnerable
+  isInvulnerable(): boolean {
+    return this.invulnerabilityTime > 0
   }
 }

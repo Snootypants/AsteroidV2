@@ -5,6 +5,7 @@ export type DevStats = {
   fps: number
   entities: { ships: number; asteroids: number; bullets: number; other: number }
   score?: number
+  wave?: number
   ship?: { x: number; y: number; vx: number; vy: number; angleDeg: number; pxHeight: number }
   input?: { thrust: boolean; left: boolean; right: boolean; fire: boolean; mouseX: number; mouseY: number }
 }
@@ -67,6 +68,12 @@ export function DevPanel({ visible, stats }: DevPanelProps): JSX.Element | null 
           <div className="row">
             <span>Score:</span>
             <span>{stats.score}</span>
+          </div>
+        )}
+        {stats.wave !== undefined && (
+          <div className="row">
+            <span>Wave:</span>
+            <span>{stats.wave}</span>
           </div>
         )}
       </div>

@@ -7,6 +7,9 @@ const WORLD = {
   height: 498,
 }
 
+// Wave spawning constants (from vanilla)
+const SPAWN_BUFFER = 20 // Units outside world bounds to spawn asteroids
+
 export class Spawning {
   private scene: THREE.Scene
   private asteroids: Asteroid[] = []
@@ -26,7 +29,7 @@ export class Spawning {
     
     const halfWidth = WORLD.width / 2   // ±375
     const halfHeight = WORLD.height / 2 // ±249
-    const margin = 50 // Spawn outside visible area
+    const margin = SPAWN_BUFFER // Spawn 20 units outside world bounds
     
     switch (edge) {
       case 0: // Top
@@ -70,6 +73,14 @@ export class Spawning {
   initializeLevel(): void {
     const count = 5 + Math.floor(Math.random() * 4) // 5-8 asteroids
     this.spawnAsteroids(count, 'large')
+  }
+
+  // Initialize wave with specified wave number
+  initializeWave(waveNum: number): void {
+    // Wave asteroid count formula: (3 + wave) × 2
+    const asteroidCount = (3 + waveNum) * 2
+    this.clearAll() // Clear any existing asteroids
+    this.spawnAsteroids(asteroidCount, 'large')
   }
 
   // Add asteroid to tracking (for split asteroids)
@@ -135,6 +146,16 @@ export class Spawning {
   // Check if level is clear (no asteroids left)
   isLevelClear(): boolean {
     return this.getAsteroidCount() === 0
+  }
+
+  // Check if wave is complete (all asteroids destroyed)
+  isWaveComplete(): boolean {
+    return this.getAsteroidCount() === 0
+  }
+
+  // Clear wave (cleanup between waves)
+  clearWave(): void {
+    this.clearAll()
   }
 
   // Clear all asteroids
