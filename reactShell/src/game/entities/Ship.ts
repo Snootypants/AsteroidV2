@@ -1,6 +1,7 @@
 // Ship.ts - Player ship
 import * as THREE from 'three'
 import type { InputState } from '../Input'
+import type { BulletManager } from '../systems/BulletManager'
 
 // Constants from vanilla
 const PLAYER = {
@@ -12,7 +13,7 @@ const PLAYER = {
 }
 
 const WORLD = {
-  width: 564,
+  width: 750,
   height: 498,
 }
 
@@ -25,8 +26,10 @@ export class Ship {
   private velocity = new THREE.Vector2(0, 0)
   private fireCooldown = 0
   private minAimDistance = 20 // Minimum distance for mouse aiming
+  private bulletManager?: BulletManager
 
-  constructor(scene: THREE.Scene) {
+  constructor(scene: THREE.Scene, bulletManager?: BulletManager) {
+    this.bulletManager = bulletManager
     this.object = this.createShipMesh()
     this.object.userData = {
       kind: 'ship',
@@ -128,6 +131,12 @@ export class Ship {
     // Fire cooldown
     this.fireCooldown = Math.max(0, this.fireCooldown - dt)
     s.fireCooldown = this.fireCooldown
+
+    // Handle firing
+    if (input.fire && this.canFire() && this.bulletManager) {
+      this.bulletManager.fire(this, false) // false = not enemy bullet
+      this.setFireCooldown()
+    }
   }
 
   private isMouseAimActive(input: InputState): boolean {

@@ -4,12 +4,13 @@ import * as THREE from 'three'
 import { createComposer, resize, render } from './render/PostFX'
 import { Input } from './Input'
 import { Ship } from './entities/Ship'
+import { BulletManager } from './systems/BulletManager'
 import { DevStats } from '../ui/DevPanel'
 import { DebugBus } from '../dev/DebugBus'
 
 // World constants (from vanilla)
 const WORLD = {
-  width: 564,
+  width: 750,
   height: 498,
 }
 
@@ -31,6 +32,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
   const fpsHistoryRef = useRef<number[]>([])
   const shipRef = useRef<Ship | null>(null)
   const inputRef = useRef<Input | null>(null)
+  const bulletManagerRef = useRef<BulletManager | null>(null)
 
   useEffect(() => {
     if (!canvasRef.current) return
@@ -45,9 +47,12 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
     
     // Initialize game systems
     const input = new Input()
-    const ship = new Ship(scene)
+    const bulletManager = new BulletManager(scene)
+    const ship = new Ship(scene, bulletManager)
+    
     shipRef.current = ship
     inputRef.current = input
+    bulletManagerRef.current = bulletManager
     
     // Dev panel greeting
     DebugBus.push('info', 'DevPanel ready')
@@ -115,6 +120,9 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
       ship.setAimWorld(mouseWorld)
       ship.update(dt, inputState)
       
+      // Update bullets
+      bulletManager.update(dt)
+      
       // Follow ship with camera (simple following)
       const shipPos = ship.getPosition()
       camera.position.x = shipPos.x
@@ -133,7 +141,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
           entities: { 
             ships: 1, 
             asteroids: 0, 
-            bullets: 0, 
+            bullets: bulletManager.getActiveBulletCount(), 
             other: 0 
           },
           ship: {
