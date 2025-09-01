@@ -8,6 +8,7 @@ import { BulletManager } from './systems/BulletManager'
 import { Spawning } from './systems/Spawning'
 import { CollisionManager } from './systems/Collision'
 import { ParticleManager } from './entities/Particles'
+import { DebrisManager } from './entities/Debris'
 import { GameState } from './GameState'
 import { createEnemyBullets } from './systems/EnemyBullets'
 import { DevStats } from '../ui/DevPanel'
@@ -41,6 +42,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
   const spawningRef = useRef<Spawning | null>(null)
   const collisionManagerRef = useRef<CollisionManager | null>(null)
   const particleManagerRef = useRef<ParticleManager | null>(null)
+  const debrisManagerRef = useRef<DebrisManager | null>(null)
   const gameStateRef = useRef<GameState | null>(null)
   const enemyBulletsRef = useRef<any>(null)
 
@@ -62,8 +64,9 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
     const ship = new Ship(scene, bulletManager)
     const spawning = new Spawning(scene)
     const particleManager = new ParticleManager(scene)
+    const debrisManager = new DebrisManager(scene)
     const enemyBullets = createEnemyBullets(scene)
-    const collisionManager = new CollisionManager(bulletManager, spawning, ship, gameState, scene)
+    const collisionManager = new CollisionManager(bulletManager, spawning, ship, gameState, scene, particleManager, debrisManager)
     
     // Connect enemy bullets to collision manager
     collisionManager.setEnemyBullets(enemyBullets)
@@ -74,6 +77,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
     spawningRef.current = spawning
     collisionManagerRef.current = collisionManager
     particleManagerRef.current = particleManager
+    debrisManagerRef.current = debrisManager
     gameStateRef.current = gameState
     enemyBulletsRef.current = enemyBullets
     
@@ -168,24 +172,14 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
       // Update enemy bullets
       enemyBullets.update(dt)
       
-      // Update particles
+      // Update particles and debris
       particleManager.update(dt)
+      debrisManagerRef.current!.update(dt)
       
-      // Update collision detection and handle events
-      const collisionEvents = collisionManager.update(dt)
+      // Update collision detection (effects now handled internally)
+      collisionManager.update(dt)
       
-      // Handle collision events (create particle effects)
-      for (const event of collisionEvents) {
-        if (event.type === 'bullet-asteroid' && event.asteroidSize) {
-          particleManager.asteroidBurst(event.position, event.asteroidSize)
-        } else if (event.type === 'ship-asteroid') {
-          particleManager.shipBurst(event.position)
-        } else if (event.type === 'enemy-bullet-ship') {
-          particleManager.shipBurst(event.position)
-        }
-      }
-      
-      // Check for wave completion after collision updates
+      // Check for wave completion
       if (gameState.getGamePhase() === 'playing' && spawning.isWaveComplete()) {
         gameState.completeWave()
       }
@@ -217,7 +211,9 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
             ships: 1, 
             asteroids: spawning.getAsteroidCount(), 
             bullets: bulletManager.getActiveCount(), 
-            other: particleManager.getActiveCount() + spawning.getHunterCount() + enemyBullets.getActiveCount() 
+            particles: particleManager.getActiveCount(),
+            debris: debrisManagerRef.current!.getActiveCount(),
+            other: spawning.getHunterCount() + enemyBullets.getActiveCount() 
           },
           score: gameState.getScore(),
           wave: gameState.getWave(),

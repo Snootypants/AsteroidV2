@@ -6,6 +6,8 @@ import type { Asteroid } from '../entities/Asteroid'
 import type { BulletManager } from './BulletManager'
 import type { Spawning } from './Spawning'
 import type { GameState } from '../GameState'
+import type { ParticleManager } from '../entities/Particles'
+import type { DebrisManager } from '../entities/Debris'
 
 export interface CollisionEvent {
   type: 'bullet-asteroid' | 'ship-asteroid' | 'enemy-bullet-ship'
@@ -20,6 +22,8 @@ export class CollisionManager {
   private ship: Ship
   private gameState: GameState
   private scene: THREE.Scene
+  private particleManager: ParticleManager
+  private debrisManager: DebrisManager
   private enemyBullets: any // EnemyBullets system will be injected
   
   constructor(
@@ -27,13 +31,17 @@ export class CollisionManager {
     spawning: Spawning,
     ship: Ship,
     gameState: GameState,
-    scene: THREE.Scene
+    scene: THREE.Scene,
+    particleManager: ParticleManager,
+    debrisManager: DebrisManager
   ) {
     this.bulletManager = bulletManager
     this.spawning = spawning
     this.ship = ship
     this.gameState = gameState
     this.scene = scene
+    this.particleManager = particleManager
+    this.debrisManager = debrisManager
     this.enemyBullets = null
   }
 
@@ -43,7 +51,7 @@ export class CollisionManager {
   }
 
   // Main collision detection method
-  update(dt: number): CollisionEvent[] {
+  update(dt: number): void {
     const events: CollisionEvent[] = []
     
     // Check bullet-asteroid collisions
@@ -59,8 +67,21 @@ export class CollisionManager {
       const enemyBulletShipEvents = this.checkEnemyBulletShipCollisions()
       events.push(...enemyBulletShipEvents)
     }
-    
-    return events
+
+    // Handle collision events (create particle and debris effects)
+    for (const event of events) {
+      if (event.type === 'bullet-asteroid' && event.asteroidSize) {
+        this.particleManager.asteroidBurst(event.position, event.asteroidSize)
+        
+        // Spawn debris based on asteroid size
+        this.spawnDebrisForAsteroid(event.position, event.asteroidSize)
+      } else if (event.type === 'ship-asteroid') {
+        this.particleManager.shipBurst(event.position)
+        this.debrisManager.spawn(event.position, 4, 50) // Small debris burst
+      } else if (event.type === 'enemy-bullet-ship') {
+        this.particleManager.shipBurst(event.position)
+      }
+    }
   }
 
   // Circle-circle collision detection
@@ -225,5 +246,28 @@ export class CollisionManager {
       position: shipPos.clone(),
       damage: 1
     }
+  }
+  
+  // Spawn debris based on asteroid size
+  private spawnDebrisForAsteroid(position: THREE.Vector2, size: 'large' | 'medium' | 'small'): void {
+    let count = 6
+    let speed = 40
+    
+    switch (size) {
+      case 'large':
+        count = 20
+        speed = 60
+        break
+      case 'medium':
+        count = 12
+        speed = 50
+        break
+      case 'small':
+        count = 6
+        speed = 40
+        break
+    }
+    
+    this.debrisManager.spawn(position, count, speed)
   }
 }

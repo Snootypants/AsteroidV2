@@ -3,7 +3,7 @@ import { DebugBus, LogEntry } from '../dev/DebugBus'
 
 export type DevStats = {
   fps: number
-  entities: { ships: number; asteroids: number; bullets: number; other: number }
+  entities: { ships: number; asteroids: number; bullets: number; particles?: number; debris?: number; other: number }
   score?: number
   wave?: number
   ship?: { x: number; y: number; vx: number; vy: number; angleDeg: number; pxHeight: number }
@@ -58,10 +58,12 @@ export function DevPanel({ visible, stats }: DevPanelProps): JSX.Element | null 
         <div className="row">
           <span>Entities:</span>
           <span>
-            Ships:{stats.entities.ships} 
-            Asteroids:{stats.entities.asteroids} 
-            Bullets:{stats.entities.bullets} 
-            Particles:{stats.entities.other}
+            Ships:{stats.entities.ships}
+            Asteroids:{stats.entities.asteroids}
+            Bullets:{stats.entities.bullets}
+            {stats.entities.particles !== undefined && ` Particles:${stats.entities.particles}`}
+            {stats.entities.debris !== undefined && ` Debris:${stats.entities.debris}`}
+            {stats.entities.other > 0 && ` Other:${stats.entities.other}`}
           </span>
         </div>
         {stats.score !== undefined && (

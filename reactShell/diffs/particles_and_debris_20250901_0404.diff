@@ -1,0 +1,740 @@
+diff --git a/reactShell/src/game/entities/Particles.ts b/reactShell/src/game/entities/Particles.ts
+index 000000..000000 100644
+--- a/reactShell/src/game/entities/Particles.ts
++++ b/reactShell/src/game/entities/Particles.ts
+@@ -1,152 +1,192 @@
+-// Particles.ts - Particle system
++// Particles.ts - Pooled particle system for hit/explosion bursts
+ import * as THREE from 'three'
+ 
+-interface Particle {
+-  mesh: THREE.Mesh
+-  velocity: THREE.Vector2
+-  life: number
+-  maxLife: number
+-  isActive: boolean
++export type BurstOpts = { 
++  count: number; 
++  color?: number; 
++  speed?: number; 
++  lifeMs?: number; 
++  size?: number 
++}
++
++interface ParticleData {
++  pos: THREE.Vector2
++  vel: THREE.Vector2
++  ttl: number
++  maxTtl: number
++  active: boolean
+ }
+ 
+-export class ParticleManager {
+-  private particles: Particle[] = []
++export function createParticles(scene: THREE.Scene) {
++  const POOL_SIZE = 500 // Configurable, default 400-600 range
++  const particlePool: ParticleData[] = []
+   private scene: THREE.Scene
+-  private poolSize = 200 // Maximum particles that can exist
++  private geometry: THREE.BufferGeometry
++  private material: THREE.PointsMaterial
++  private points: THREE.Points
++  private positionAttribute: THREE.BufferAttribute
++  private colorAttribute: THREE.BufferAttribute
++  private positions: Float32Array
++  private colors: Float32Array
++  
++  // Initialize the pool
++  for (let i = 0; i < POOL_SIZE; i++) {
++    particlePool.push({
++      pos: new THREE.Vector2(),
++      vel: new THREE.Vector2(),
++      ttl: 0,
++      maxTtl: 1000,
++      active: false
++    })
++  }
++  
++  // Create geometry and material for batched rendering
++  positions = new Float32Array(POOL_SIZE * 3)
++  colors = new Float32Array(POOL_SIZE * 3)
++  
++  geometry = new THREE.BufferGeometry()
++  positionAttribute = new THREE.BufferAttribute(positions, 3)
++  colorAttribute = new THREE.BufferAttribute(colors, 3)
++  geometry.setAttribute('position', positionAttribute)
++  geometry.setAttribute('color', colorAttribute)
++  
++  material = new THREE.PointsMaterial({
++    size: 3,
++    sizeAttenuation: false,
++    vertexColors: true,
++    transparent: true,
++    opacity: 1.0
++  })
++  
++  points = new THREE.Points(geometry, material)
++  scene.add(points)
+ 
+-  constructor(scene: THREE.Scene) {
+-    this.scene = scene
++  function burst(pos: THREE.Vector2, opts: BurstOpts): void {
++    const {
++      count,
++      color = 0xffffff,
++      speed = 90, // Default 60-120 range
++      lifeMs = 675, // Default 450-900ms range
++      size = 2.5 // Default 2-3px range
++    } = opts
+     
+-    // Pre-create particle pool
+-    for (let i = 0; i < this.poolSize; i++) {
+-      const particle = this.createParticle()
+-      this.particles.push(particle)
+-      this.scene.add(particle.mesh)
++    // Find inactive particles to use
++    const inactiveParticles = particlePool.filter(p => !p.active)
++    const particlesToUse = Math.min(count, inactiveParticles.length)
++    
++    for (let i = 0; i < particlesToUse; i++) {
++      const particle = inactiveParticles[i]
++      
++      // Set position
++      particle.pos.copy(pos)
++      
++      // Set random velocity in a burst pattern
++      const angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.4
++      const randomSpeed = speed + (Math.random() - 0.5) * speed * 0.4
++      particle.vel.set(
++        Math.cos(angle) * randomSpeed,
++        Math.sin(angle) * randomSpeed
++      )
++      
++      // Set life and activate
++      const lifeVariation = lifeMs + (Math.random() - 0.5) * lifeMs * 0.5
++      particle.maxTtl = lifeVariation
++      particle.ttl = lifeVariation
++      particle.active = true
+     }
++    
++    // Update material size if specified
++    if (size !== material.size) {
++      material.size = size
++    }
+   }
+ 
+-  private createParticle(): Particle {
+-    // Create small colored sphere for particle visual
+-    const geometry = new THREE.SphereGeometry(0.5, 4, 3) // Very small, low-poly
+-    const material = new THREE.MeshBasicMaterial({ 
+-      color: 0xffffff,
+-      transparent: true,
+-      opacity: 1.0
+-    })
+-    const mesh = new THREE.Mesh(geometry, material)
+-    mesh.visible = false
++  function update(dt: number): void {
++    let activeIndex = 0
+     
+-    return {
+-      mesh,
+-      velocity: new THREE.Vector2(0, 0),
+-      life: 0,
+-      maxLife: 1.0,
+-      isActive: false
++    for (let i = 0; i < POOL_SIZE; i++) {
++      const particle = particlePool[i]
++      
++      if (!particle.active) {
++        continue
++      }
++      
++      // Update position
++      particle.pos.x += particle.vel.x * dt
++      particle.pos.y += particle.vel.y * dt
++      
++      // Update life
++      particle.ttl -= dt * 1000 // Convert dt to milliseconds
++      
++      if (particle.ttl <= 0) {
++        particle.active = false
++        continue
++      }
++      
++      // Update render buffers for active particle
++      const posIndex = activeIndex * 3
++      const colorIndex = activeIndex * 3
++      
++      positions[posIndex] = particle.pos.x
++      positions[posIndex + 1] = particle.pos.y
++      positions[posIndex + 2] = 0
++      
++      // Fade out over lifetime
++      const alpha = particle.ttl / particle.maxTtl
++      colors[colorIndex] = alpha
++      colors[colorIndex + 1] = alpha
++      colors[colorIndex + 2] = alpha
++      
++      activeIndex++
+     }
++    
++    // Update geometry attributes
++    positionAttribute.needsUpdate = true
++    colorAttribute.needsUpdate = true
++    
++    // Set draw range to only render active particles
++    geometry.setDrawRange(0, activeIndex)
+   }
+ 
+-  // Create particle burst at position
+-  burst(position: THREE.Vector2, color: number = 0xffffff, count: number = 8, speed: number = 30): void {
+-    const inactiveParticles = this.particles.filter(p => !p.isActive)
+-    const particlesToUse = Math.min(count, inactiveParticles.length)
++  function activeCount(): number {
++    return particlePool.filter(p => p.active).length
++  }
++  
++  return {
++    burst,
++    update,
++    activeCount
++  }
++}
++
++// Legacy adapter class for backwards compatibility
++export class ParticleManager {
++  private particles: ReturnType<typeof createParticles>
++
++  constructor(scene: THREE.Scene) {
++    this.particles = createParticles(scene)
++  }
++
++  // Create particle burst at position (legacy method)
++  burst(position: THREE.Vector2, color: number = 0xffffff, count: number = 8, speed: number = 30): void {
++    this.particles.burst(position, { count, color, speed, lifeMs: 600 })
++  }
++
++  // Create asteroid destruction burst
++  asteroidBurst(position: THREE.Vector2, asteroidSize: 'large' | 'medium' | 'small'): void {
++    let color = 0x808080
++    let count = 6
++    let speed = 60
+     
+-    for (let i = 0; i < particlesToUse; i++) {
+-      const particle = inactiveParticles[i]
+-      
+-      // Set position
+-      particle.mesh.position.set(position.x, position.y, 0)
+-      
+-      // Set random velocity
+-      const angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.5
+-      const randomSpeed = speed + (Math.random() - 0.5) * speed * 0.5
+-      particle.velocity.set(
+-        Math.cos(angle) * randomSpeed,
+-        Math.sin(angle) * randomSpeed
+-      )
+-      
+-      // Set properties
+-      particle.life = particle.maxLife
+-      particle.isActive = true
+-      particle.mesh.visible = true
+-      
+-      // Set color
+-      const material = particle.mesh.material as THREE.MeshBasicMaterial
+-      material.color.setHex(color)
+-      material.opacity = 1.0
++    switch (asteroidSize) {
++      case 'large':
++        color = 0xffffff
++        count = 28 // Destroy burst
++        speed = 90
++        break
++      case 'medium':
++        color = 0xdddddd
++        count = 18
++        speed = 75
++        break
++      case 'small':
++        color = 0xaaaaaa
++        count = 12 // Hit burst
++        speed = 60
++        break
+     }
++    
++    this.particles.burst(position, { count, color, speed, lifeMs: 750 })
+   }
+ 
+-  // Create asteroid destruction burst
+-  asteroidBurst(position: THREE.Vector2, asteroidSize: 'large' | 'medium' | 'small'): void {
+-    let color = 0x808080 // Default gray
+-    let count = 6
+-    let speed = 25
+-    
+-    switch (asteroidSize) {
+-      case 'large':
+-        color = 0xffffff
+-        count = 12
+-        speed = 35
+-        break
+-      case 'medium':
+-        color = 0xdddddd
+-        count = 8
+-        speed = 30
+-        break
+-      case 'small':
+-        color = 0xaaaaaa
+-        count = 6
+-        speed = 25
+-        break
+-    }
+-    
+-    this.burst(position, color, count, speed)
+-  }
+-
+-  // Create ship collision burst
++  // Create ship collision burst
+   shipBurst(position: THREE.Vector2): void {
+-    this.burst(position, 0xff4444, 10, 40) // Red particles for ship damage
++    this.particles.burst(position, { count: 12, color: 0xff4444, speed: 100, lifeMs: 600 })
+   }
+ 
+   // Update all particles
+   update(dt: number): void {
+-    for (const particle of this.particles) {
+-      if (!particle.isActive) continue
+-      
+-      // Update position
+-      particle.mesh.position.x += particle.velocity.x * dt
+-      particle.mesh.position.y += particle.velocity.y * dt
+-      
+-      // Update life
+-      particle.life -= dt
+-      
+-      // Fade out
+-      const alpha = particle.life / particle.maxLife
+-      const material = particle.mesh.material as THREE.MeshBasicMaterial
+-      material.opacity = alpha
+-      
+-      // Deactivate if expired
+-      if (particle.life <= 0) {
+-        particle.isActive = false
+-        particle.mesh.visible = false
+-      }
+-    }
++    this.particles.update(dt)
+   }
+ 
+   // Get active particle count
+   getActiveCount(): number {
+-    return this.particles.filter(p => p.isActive).length
+-  }
+-
+-  // Cleanup method
+-  dispose(): void {
+-    for (const particle of this.particles) {
+-      this.scene.remove(particle.mesh)
+-      particle.mesh.geometry.dispose()
+-      if (particle.mesh.material instanceof THREE.Material) {
+-        particle.mesh.material.dispose()
+-      }
+-    }
+-    this.particles = []
++    return this.particles.activeCount()
+   }
+ }
+diff --git a/reactShell/src/game/entities/Debris.ts b/reactShell/src/game/entities/Debris.ts
+index 000000..000000 100644
+--- a/reactShell/src/game/entities/Debris.ts
++++ b/reactShell/src/game/entities/Debris.ts
+@@ -1,2 +1,149 @@
+-// Debris.ts - Debris chunks
+-export class Debris {}
++// Debris.ts - Pooled tetrahedron debris system
++import * as THREE from 'three'
++
++interface DebrisData {
++  pos: THREE.Vector2
++  vel: THREE.Vector2
++  angularVel: number
++  ttl: number
++  maxTtl: number
++  active: boolean
++  mesh: THREE.Mesh
++}
++
++export function createDebris(scene: THREE.Scene) {
++  const POOL_SIZE = 220
++  const debrisPool: DebrisData[] = []
++  
++  // Create shared geometry (single tetrahedron)
++  const geometry = new THREE.TetrahedronGeometry(2.5, 0) // Small tetrahedron
++  
++  // Create shared material
++  const material = new THREE.MeshBasicMaterial({
++    color: 0xaaaaaa,
++    transparent: true,
++    opacity: 1.0,
++    wireframe: false
++  })
++  
++  // Initialize pool with mesh instances
++  for (let i = 0; i < POOL_SIZE; i++) {
++    const mesh = new THREE.Mesh(geometry, material.clone()) // Clone material for individual opacity
++    mesh.visible = false
++    scene.add(mesh)
++    
++    debrisPool.push({
++      pos: new THREE.Vector2(),
++      vel: new THREE.Vector2(),
++      angularVel: 0,
++      ttl: 0,
++      maxTtl: 1200,
++      active: false,
++      mesh
++    })
++  }
++  
++  function spawn(pos: THREE.Vector2, count: number, baseSpeed: number): void {
++    // Find inactive debris to use
++    const inactiveDebris = debrisPool.filter(d => !d.active)
++    const debrisToUse = Math.min(count, inactiveDebris.length)
++    
++    for (let i = 0; i < debrisToUse; i++) {
++      const debris = inactiveDebris[i]
++      
++      // Set position
++      debris.pos.copy(pos)
++      debris.mesh.position.set(pos.x, pos.y, 0)
++      
++      // Set random velocity
++      const angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 1.0
++      const speed = baseSpeed + (Math.random() - 0.5) * baseSpeed * 0.8
++      debris.vel.set(
++        Math.cos(angle) * speed,
++        Math.sin(angle) * speed
++      )
++      
++      // Set random angular velocity (small)
++      debris.angularVel = (Math.random() - 0.5) * 3.0
++      
++      // Set random lifetime in the range 900-1400ms
++      const lifeVariation = 1200 + (Math.random() - 0.5) * 500
++      debris.maxTtl = lifeVariation
++      debris.ttl = lifeVariation
++      
++      // Activate and make visible
++      debris.active = true
++      debris.mesh.visible = true
++      
++      // Reset material opacity
++      const mat = debris.mesh.material as THREE.MeshBasicMaterial
++      mat.opacity = 1.0
++      
++      // Random initial rotation
++      debris.mesh.rotation.set(
++        Math.random() * Math.PI * 2,
++        Math.random() * Math.PI * 2,
++        Math.random() * Math.PI * 2
++      )
++    }
++  }
++  
++  function update(dt: number): void {
++    for (const debris of debrisPool) {
++      if (!debris.active) continue
++      
++      // Update position
++      debris.pos.x += debris.vel.x * dt
++      debris.pos.y += debris.vel.y * dt
++      debris.mesh.position.x = debris.pos.x
++      debris.mesh.position.y = debris.pos.y
++      
++      // Update rotation
++      debris.mesh.rotation.x += debris.angularVel * dt
++      debris.mesh.rotation.y += debris.angularVel * dt * 0.7
++      debris.mesh.rotation.z += debris.angularVel * dt * 0.5
++      
++      // Update lifetime
++      debris.ttl -= dt * 1000 // Convert to milliseconds
++      
++      if (debris.ttl <= 0) {
++        debris.active = false
++        debris.mesh.visible = false
++        continue
++      }
++      
++      // Fade out over time
++      const alpha = debris.ttl / debris.maxTtl
++      const mat = debris.mesh.material as THREE.MeshBasicMaterial
++      mat.opacity = alpha
++    }
++  }
++  
++  function activeCount(): number {
++    return debrisPool.filter(d => d.active).length
++  }
++  
++  return {
++    spawn,
++    update,
++    activeCount
++  }
++}
++
++// Legacy class wrapper for consistency
++export class DebrisManager {
++  private debris: ReturnType<typeof createDebris>
++  
++  constructor(scene: THREE.Scene) {
++    this.debris = createDebris(scene)
++  }
++  
++  spawn(pos: THREE.Vector2, count: number, baseSpeed: number): void {
++    this.debris.spawn(pos, count, baseSpeed)
++  }
++  
++  update(dt: number): void {
++    this.debris.update(dt)
++  }
++  
++  getActiveCount(): number {
++    return this.debris.activeCount()
++  }
++}
+diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
+index 000000..000000 100644
+--- a/reactShell/src/game/GameCanvas.tsx
++++ b/reactShell/src/game/GameCanvas.tsx
+@@ -8,6 +8,7 @@
+ import { Spawning } from './systems/Spawning'
+ import { CollisionManager } from './systems/Collision'
+ import { ParticleManager } from './entities/Particles'
++import { DebrisManager } from './entities/Debris'
+ import { GameState } from './GameState'
+ import { createEnemyBullets } from './systems/EnemyBullets'
+ import { DevStats } from '../ui/DevPanel'
+@@ -41,6 +42,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+   const spawningRef = useRef<Spawning | null>(null)
+   const collisionManagerRef = useRef<CollisionManager | null>(null)
+   const particleManagerRef = useRef<ParticleManager | null>(null)
++  const debrisManagerRef = useRef<DebrisManager | null>(null)
+   const gameStateRef = useRef<GameState | null>(null)
+   const enemyBulletsRef = useRef<any>(null)
+ 
+@@ -63,8 +65,9 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+     const spawning = new Spawning(scene)
+     const particleManager = new ParticleManager(scene)
+     const enemyBullets = createEnemyBullets(scene)
+-    const collisionManager = new CollisionManager(bulletManager, spawning, ship, gameState, scene)
+-    
++    const debrisManager = new DebrisManager(scene)
++    const collisionManager = new CollisionManager(bulletManager, spawning, ship, gameState, scene, particleManager, debrisManager)
++
+     // Connect enemy bullets to collision manager
+     collisionManager.setEnemyBullets(enemyBullets)
+     
+@@ -74,6 +77,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+     spawningRef.current = spawning
+     collisionManagerRef.current = collisionManager
+     particleManagerRef.current = particleManager
++    debrisManagerRef.current = debrisManager
+     gameStateRef.current = gameState
+     enemyBulletsRef.current = enemyBullets
+     
+@@ -168,24 +172,14 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+     // Update enemy bullets
+     enemyBullets.update(dt)
+     
+-    // Update particles
++    // Update particles and debris
+     particleManager.update(dt)
++    debrisManager.update(dt)
+     
+-    // Update collision detection and handle events
+-    const collisionEvents = collisionManager.update(dt)
+-    
+-    // Handle collision events (create particle effects)
+-    for (const event of collisionEvents) {
+-      if (event.type === 'bullet-asteroid' && event.asteroidSize) {
+-        particleManager.asteroidBurst(event.position, event.asteroidSize)
+-      } else if (event.type === 'ship-asteroid') {
+-        particleManager.shipBurst(event.position)
+-      } else if (event.type === 'enemy-bullet-ship') {
+-        particleManager.shipBurst(event.position)
+-      }
+-    }
++    // Update collision detection (effects now handled internally)
++    collisionManager.update(dt)
+     
+-    // Check for wave completion after collision updates
++    // Check for wave completion
+     if (gameState.getGamePhase() === 'playing' && spawning.isWaveComplete()) {
+       gameState.completeWave()
+     }
+@@ -217,7 +211,8 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+             ships: 1, 
+             asteroids: spawning.getAsteroidCount(), 
+             bullets: bulletManager.getActiveCount(), 
+-            other: particleManager.getActiveCount() + spawning.getHunterCount() + enemyBullets.getActiveCount() 
++            particles: particleManager.getActiveCount(),
++            debris: debrisManager.getActiveCount(),
++            other: spawning.getHunterCount() + enemyBullets.getActiveCount() 
+           },
+           score: gameState.getScore(),
+           wave: gameState.getWave(),
+diff --git a/reactShell/src/game/systems/Collision.ts b/reactShell/src/game/systems/Collision.ts
+index 000000..000000 100644
+--- a/reactShell/src/game/systems/Collision.ts
++++ b/reactShell/src/game/systems/Collision.ts
+@@ -6,6 +6,8 @@ import type { Asteroid } from '../entities/Asteroid'
+ import type { BulletManager } from './BulletManager'
+ import type { Spawning } from './Spawning'
+ import type { GameState } from '../GameState'
++import type { ParticleManager } from '../entities/Particles'
++import type { DebrisManager } from '../entities/Debris'
+ 
+ export interface CollisionEvent {
+   type: 'bullet-asteroid' | 'ship-asteroid' | 'enemy-bullet-ship'
+@@ -20,16 +22,24 @@ export class CollisionManager {
+   private ship: Ship
+   private gameState: GameState
+   private scene: THREE.Scene
++  private particleManager: ParticleManager
++  private debrisManager: DebrisManager
+   private enemyBullets: any // EnemyBullets system will be injected
+   
+   constructor(
+     bulletManager: BulletManager,
+     spawning: Spawning,
+     ship: Ship,
+     gameState: GameState,
+-    scene: THREE.Scene
++    scene: THREE.Scene,
++    particleManager: ParticleManager,
++    debrisManager: DebrisManager
+   ) {
+     this.bulletManager = bulletManager
+     this.spawning = spawning
+     this.ship = ship
+     this.gameState = gameState
+     this.scene = scene
++    this.particleManager = particleManager
++    this.debrisManager = debrisManager
+     this.enemyBullets = null
+   }
+@@ -43,7 +53,7 @@ export class CollisionManager {
+   }
+ 
+   // Main collision detection method
+-  update(dt: number): CollisionEvent[] {
++  update(dt: number): void {
+     const events: CollisionEvent[] = []
+     
+     // Check bullet-asteroid collisions
+@@ -60,8 +70,20 @@ export class CollisionManager {
+       const enemyBulletShipEvents = this.checkEnemyBulletShipCollisions()
+       events.push(...enemyBulletShipEvents)
+     }
+-    
+-    return events
++
++    // Handle collision events (create particle and debris effects)
++    for (const event of events) {
++      if (event.type === 'bullet-asteroid' && event.asteroidSize) {
++        this.particleManager.asteroidBurst(event.position, event.asteroidSize)
++        
++        // Spawn debris based on asteroid size
++        this.spawnDebrisForAsteroid(event.position, event.asteroidSize)
++      } else if (event.type === 'ship-asteroid') {
++        this.particleManager.shipBurst(event.position)
++        this.debrisManager.spawn(event.position, 4, 50) // Small debris burst
++      } else if (event.type === 'enemy-bullet-ship') {
++        this.particleManager.shipBurst(event.position)
++      }
++    }
+   }
+ 
+   // Circle-circle collision detection
+@@ -134,18 +156,18 @@ export class CollisionManager {
+   // Handle bullet hitting asteroid
+   private handleBulletAsteroidHit(bullet: Bullet, asteroid: Asteroid): CollisionEvent | null {
+     if (!bullet.isActive || !asteroid.isAlive()) return null
+     
+     const position = asteroid.getPosition()
+     const size = asteroid.getSize()
+     const score = asteroid.getScore()
++    const wasDestroyed = asteroid.getHealth() === 1 // Will be destroyed by this hit
+     
+     // Destroy bullet
+     bullet.expire()
+     
+     // Damage asteroid
+     asteroid.takeDamage()
+     
+     // Add score
+     this.gameState.addScore(score)
+@@ -156,6 +178,7 @@ export class CollisionManager {
+       type: 'bullet-asteroid',
+       position: position.clone(),
+       asteroidSize: size
+     }
+   }
+ 
+@@ -227,4 +250,20 @@ export class CollisionManager {
+       damage: 1
+     }
+   }
++  
++  // Spawn debris based on asteroid size
++  private spawnDebrisForAsteroid(position: THREE.Vector2, size: 'large' | 'medium' | 'small'): void {
++    let count = 6
++    let speed = 40
++    
++    switch (size) {
++      case 'large':
++        count = 20
++        speed = 60
++        break
++      case 'medium':
++        count = 12
++        speed = 50
++        break
++      case 'small':
++        count = 6
++        speed = 40
++        break
++    }
++    
++    this.debrisManager.spawn(position, count, speed)
++  }
+ }
+diff --git a/reactShell/src/ui/DevPanel.tsx b/reactShell/src/ui/DevPanel.tsx
+index 000000..000000 100644
+--- a/reactShell/src/ui/DevPanel.tsx
++++ b/reactShell/src/ui/DevPanel.tsx
+@@ -4,7 +4,7 @@ import { DebugBus, LogEntry } from '../dev/DebugBus'
+ 
+ export type DevStats = {
+   fps: number
+-  entities: { ships: number; asteroids: number; bullets: number; other: number }
++  entities: { ships: number; asteroids: number; bullets: number; particles?: number; debris?: number; other: number }
+   score?: number
+   wave?: number
+   ship?: { x: number; y: number; vx: number; vy: number; angleDeg: number; pxHeight: number }
+@@ -58,9 +58,13 @@ export function DevPanel({ visible, stats }: DevPanelProps): JSX.Element | null
+         <div className="row">
+           <span>Entities:</span>
+           <span>
+-            Ships:{stats.entities.ships} 
+-            Asteroids:{stats.entities.asteroids} 
+-            Bullets:{stats.entities.bullets} 
+-            Particles:{stats.entities.other}
++            Ships:{stats.entities.ships}
++            Asteroids:{stats.entities.asteroids}
++            Bullets:{stats.entities.bullets}
++            {stats.entities.particles !== undefined && ` Particles:${stats.entities.particles}`}
++            {stats.entities.debris !== undefined && ` Debris:${stats.entities.debris}`}
++            {stats.entities.other > 0 && ` Other:${stats.entities.other}`}
+           </span>
+         </div>
+         {stats.score !== undefined && (
