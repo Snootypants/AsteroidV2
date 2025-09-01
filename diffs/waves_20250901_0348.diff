@@ -1,0 +1,269 @@
+diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
+index e41eedd..00ab102 100644
+--- a/reactShell/src/game/GameCanvas.tsx
++++ b/reactShell/src/game/GameCanvas.tsx
+@@ -70,8 +70,8 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+     particleManagerRef.current = particleManager
+     gameStateRef.current = gameState
+     
+-    // Initialize level with asteroids (5-8 for testing)
+-    spawning.initializeLevel()
++    // Initialize wave 1
++    spawning.initializeWave(gameState.getWave())
+     
+     // Dev panel greeting
+     DebugBus.push('info', 'DevPanel ready')
+@@ -160,6 +160,19 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+         }
+       }
+       
++      // Check for wave completion after collision updates
++      if (gameState.getGamePhase() === 'playing' && spawning.isWaveComplete()) {
++        gameState.completeWave()
++      }
++      
++      // Handle wave transitions
++      if (gameState.getGamePhase() === 'wave-complete') {
++        // Start next wave automatically
++        gameState.nextWave()
++        ship.resetForWave()
++        spawning.initializeWave(gameState.getWave())
++      }
++      
+       // Follow ship with camera (simple following)
+       const shipPos = ship.getPosition()
+       camera.position.x = shipPos.x
+@@ -182,6 +195,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+             other: particleManager.getActiveCount() 
+           },
+           score: gameState.getScore(),
++          wave: gameState.getWave(),
+           ship: {
+             x: shipPos.x,
+             y: shipPos.y,
+diff --git a/reactShell/src/game/GameState.ts b/reactShell/src/game/GameState.ts
+index c707475..29e8a5b 100644
+--- a/reactShell/src/game/GameState.ts
++++ b/reactShell/src/game/GameState.ts
+@@ -1,8 +1,14 @@
+ // GameState.ts - Central state management
++
++// Game phase types for wave progression
++export type GamePhase = 'playing' | 'wave-complete' | 'upgrade'
++
+ export class GameState {
+   private score: number = 0
+   private lives: number = 3
+   private level: number = 1
++  private wave: number = 1
++  private gamePhase: GamePhase = 'playing'
+   private gameOver: boolean = false
+   private paused: boolean = false
+ 
+@@ -50,6 +56,36 @@ export class GameState {
+     this.level++
+   }
+ 
++  // Wave management
++  getWave(): number {
++    return this.wave
++  }
++
++  nextWave(): void {
++    this.wave++
++    this.gamePhase = 'playing'
++  }
++
++  resetWave(): void {
++    // Reset to wave 1 (used for game restart)
++    this.wave = 1
++    this.gamePhase = 'playing'
++  }
++
++  // Game phase management
++  getGamePhase(): GamePhase {
++    return this.gamePhase
++  }
++
++  setGamePhase(phase: GamePhase): void {
++    this.gamePhase = phase
++  }
++
++  // Wave completion detection
++  completeWave(): void {
++    this.gamePhase = 'wave-complete'
++  }
++
+   // Game state management
+   isGameOver(): boolean {
+     return this.gameOver
+@@ -71,6 +107,8 @@ export class GameState {
+     this.score = 0
+     this.lives = 3
+     this.level = 1
++    this.wave = 1
++    this.gamePhase = 'playing'
+     this.gameOver = false
+     this.paused = false
+   }
+@@ -81,6 +119,8 @@ export class GameState {
+       score: this.score,
+       lives: this.lives,
+       level: this.level,
++      wave: this.wave,
++      gamePhase: this.gamePhase,
+       gameOver: this.gameOver,
+       paused: this.paused
+     }
+diff --git a/reactShell/src/game/entities/Ship.ts b/reactShell/src/game/entities/Ship.ts
+index fdea78e..46c794b 100644
+--- a/reactShell/src/game/entities/Ship.ts
++++ b/reactShell/src/game/entities/Ship.ts
+@@ -12,6 +12,9 @@ const PLAYER = {
+   fireRate: 0.16,
+ }
+ 
++// Wave invulnerability period (from vanilla INVULN_WAVE)
++const INVULN_WAVE = 3.0
++
+ const WORLD = {
+   width: 750,
+   height: 498,
+@@ -27,6 +30,7 @@ export class Ship {
+   private fireCooldown = 0
+   private minAimDistance = 20 // Minimum distance for mouse aiming
+   private bulletManager?: BulletManager
++  private invulnerabilityTime = 0 // Invulnerability timer
+ 
+   constructor(scene: THREE.Scene, bulletManager?: BulletManager) {
+     this.bulletManager = bulletManager
+@@ -38,7 +42,8 @@ export class Ship {
+       rot: 0,
+       alive: true,
+       fireCooldown: 0,
+-      radius: 1.5
++      radius: 1.5,
++      invulnerable: false
+     }
+     
+     // Start at origin facing left (like vanilla)
+@@ -132,6 +137,10 @@ export class Ship {
+     this.fireCooldown = Math.max(0, this.fireCooldown - dt)
+     s.fireCooldown = this.fireCooldown
+ 
++    // Invulnerability timer
++    this.invulnerabilityTime = Math.max(0, this.invulnerabilityTime - dt)
++    s.invulnerable = this.invulnerabilityTime > 0
++
+     // Handle firing
+     if (input.fire && this.canFire() && this.bulletManager) {
+       this.bulletManager.fire(this, false) // false = not enemy bullet
+@@ -190,4 +199,27 @@ export class Ship {
+       this.object.scale.set(imgW * scale, px, 1)
+     }
+   }
++
++  // Reset ship for new wave
++  resetForWave(): void {
++    // Reset position to center
++    this.object.position.set(0, 0, 0)
++    
++    // Reset velocity
++    this.velocity.set(0, 0)
++    this.object.userData.vx = 0
++    this.object.userData.vy = 0
++    
++    // Reset rotation to face left (like vanilla)
++    this.object.rotation.z = Math.PI
++    
++    // Apply 3-second invulnerability
++    this.invulnerabilityTime = INVULN_WAVE
++    this.object.userData.invulnerable = true
++  }
++
++  // Check if ship is invulnerable
++  isInvulnerable(): boolean {
++    return this.invulnerabilityTime > 0
++  }
+ }
+\ No newline at end of file
+diff --git a/reactShell/src/game/systems/Spawning.ts b/reactShell/src/game/systems/Spawning.ts
+index b489630..1f7f443 100644
+--- a/reactShell/src/game/systems/Spawning.ts
++++ b/reactShell/src/game/systems/Spawning.ts
+@@ -7,6 +7,9 @@ const WORLD = {
+   height: 498,
+ }
+ 
++// Wave spawning constants (from vanilla)
++const SPAWN_BUFFER = 20 // Units outside world bounds to spawn asteroids
++
+ export class Spawning {
+   private scene: THREE.Scene
+   private asteroids: Asteroid[] = []
+@@ -26,7 +29,7 @@ export class Spawning {
+     
+     const halfWidth = WORLD.width / 2   // ±375
+     const halfHeight = WORLD.height / 2 // ±249
+-    const margin = 50 // Spawn outside visible area
++    const margin = SPAWN_BUFFER // Spawn 20 units outside world bounds
+     
+     switch (edge) {
+       case 0: // Top
+@@ -72,6 +75,14 @@ export class Spawning {
+     this.spawnAsteroids(count, 'large')
+   }
+ 
++  // Initialize wave with specified wave number
++  initializeWave(waveNum: number): void {
++    // Wave asteroid count formula: (3 + wave) × 2
++    const asteroidCount = (3 + waveNum) * 2
++    this.clearAll() // Clear any existing asteroids
++    this.spawnAsteroids(asteroidCount, 'large')
++  }
++
+   // Add asteroid to tracking (for split asteroids)
+   addAsteroid(asteroid: Asteroid): void {
+     this.asteroids.push(asteroid)
+@@ -137,6 +148,16 @@ export class Spawning {
+     return this.getAsteroidCount() === 0
+   }
+ 
++  // Check if wave is complete (all asteroids destroyed)
++  isWaveComplete(): boolean {
++    return this.getAsteroidCount() === 0
++  }
++
++  // Clear wave (cleanup between waves)
++  clearWave(): void {
++    this.clearAll()
++  }
++
+   // Clear all asteroids
+   clearAll(): void {
+     for (const asteroid of this.asteroids) {
+diff --git a/reactShell/src/ui/DevPanel.tsx b/reactShell/src/ui/DevPanel.tsx
+index 002a36e..e922428 100644
+--- a/reactShell/src/ui/DevPanel.tsx
++++ b/reactShell/src/ui/DevPanel.tsx
+@@ -5,6 +5,7 @@ export type DevStats = {
+   fps: number
+   entities: { ships: number; asteroids: number; bullets: number; other: number }
+   score?: number
++  wave?: number
+   ship?: { x: number; y: number; vx: number; vy: number; angleDeg: number; pxHeight: number }
+   input?: { thrust: boolean; left: boolean; right: boolean; fire: boolean; mouseX: number; mouseY: number }
+ }
+@@ -69,6 +70,12 @@ export function DevPanel({ visible, stats }: DevPanelProps): JSX.Element | null
+             <span>{stats.score}</span>
+           </div>
+         )}
++        {stats.wave !== undefined && (
++          <div className="row">
++            <span>Wave:</span>
++            <span>{stats.wave}</span>
++          </div>
++        )}
+       </div>
+ 
+       {/* Ship Stats */}

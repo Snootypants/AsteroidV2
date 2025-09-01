@@ -1,0 +1,357 @@
+diff --git a/reactShell/src/App.tsx b/reactShell/src/App.tsx
+index dbf5b7c..eb428fc 100644
+--- a/reactShell/src/App.tsx
++++ b/reactShell/src/App.tsx
+@@ -1,5 +1,5 @@
+ import { useEffect, useState } from 'react'
+-import GameCanvas from './game/GameCanvas'
++import GameCanvas, { HudData } from './game/GameCanvas'
+ import Hud from './ui/Hud'
+ import UpgradeMenu from './ui/UpgradeMenu'
+ import StatusOverlay from './ui/StatusOverlay'
+@@ -14,6 +14,14 @@ function App() {
+     fps: 0,
+     entities: { ships: 0, asteroids: 0, bullets: 0, other: 0 }
+   })
++  const [hudData, setHudData] = useState<HudData>({
++    score: 0,
++    wave: 1,
++    combo: { value: 1.0, timer: 0, max: 2.3 },
++    currency: { salvage: 0, gold: 0, platinum: 0, adamantium: 0 },
++    upgrades: [],
++    gamePhase: 'playing'
++  })
+ 
+   useEffect(() => {
+     // Initialize game
+@@ -29,8 +37,15 @@ function App() {
+ 
+   return (
+     <div className="app">
+-      <GameCanvas onStats={setStats} />
+-      <Hud />
++      <GameCanvas onStats={setStats} onHudData={setHudData} />
++      <Hud 
++        score={hudData.score}
++        wave={hudData.wave}
++        combo={hudData.combo}
++        currency={hudData.currency}
++        upgrades={hudData.upgrades}
++        visible={hudData.gamePhase === 'playing' || hudData.gamePhase === 'wave-complete'}
++      />
+       <UpgradeMenu />
+       <StatusOverlay />
+       <PauseOverlay />
+diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
+index 9cd58f3..a863dc8 100644
+--- a/reactShell/src/game/GameCanvas.tsx
++++ b/reactShell/src/game/GameCanvas.tsx
+@@ -9,11 +9,21 @@ import { Spawning } from './systems/Spawning'
+ import { CollisionManager } from './systems/Collision'
+ import { ParticleManager } from './entities/Particles'
+ import { DebrisManager } from './entities/Debris'
+-import { GameState } from './GameState'
++import { GameState, selectScore, selectWave, selectCombo, selectCurrency, selectUpgrades } from './GameState'
+ import { createEnemyBullets } from './systems/EnemyBullets'
+ import { DevStats } from '../ui/DevPanel'
+ import { DebugBus } from '../dev/DebugBus'
+ 
++// HUD data type for passing game state to UI
++export interface HudData {
++  score: number
++  wave: number
++  combo: { value: number; timer: number; max: number }
++  currency: { salvage: number; gold: number; platinum: number; adamantium: number }
++  upgrades: Array<{ name: string; tier?: string }>
++  gamePhase: 'playing' | 'wave-complete' | 'upgrade'
++}
++
+ // World constants (from vanilla)
+ const WORLD = {
+   width: 750,
+@@ -31,9 +41,10 @@ function makeOrthoCamera(w: number, h: number): THREE.OrthographicCamera {
+ 
+ interface GameCanvasProps {
+   onStats?: (stats: DevStats) => void
++  onHudData?: (hudData: HudData) => void
+ }
+ 
+-export default function GameCanvas({ onStats }: GameCanvasProps) {
++export default function GameCanvas({ onStats, onHudData }: GameCanvasProps) {
+   const canvasRef = useRef<HTMLCanvasElement>(null)
+   const fpsHistoryRef = useRef<number[]>([])
+   const shipRef = useRef<Ship | null>(null)
+@@ -207,41 +218,58 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+       
+       // Update dev stats (throttled to ~10 Hz to avoid re-render spam)
+       statsUpdateCounter++
+-      if (onStats && statsUpdateCounter % 6 === 0) {
++      if ((onStats || onHudData) && statsUpdateCounter % 6 === 0) {
+         const shipPos = ship.getPosition()
+         const shipUserData = ship.object.userData
+         
+-        const stats: DevStats = {
+-          fps: avgFps,
+-          entities: { 
+-            ships: 1, 
+-            asteroids: spawning.getAsteroidCount(), 
+-            bullets: bulletManager.getActiveCount(), 
+-            particles: particleManager.getActiveCount(),
+-            debris: debrisManagerRef.current!.getActiveCount(),
+-            other: spawning.getHunterCount() + enemyBullets.getActiveCount() 
+-          },
+-          score: gameState.getScore(),
+-          wave: gameState.getWave(),
+-          ship: {
+-            x: shipPos.x,
+-            y: shipPos.y,
+-            vx: shipUserData.vx || 0,
+-            vy: shipUserData.vy || 0,
+-            angleDeg: (ship.object.rotation.z * 180 / Math.PI) % 360,
+-            pxHeight: 50 // Current ship size
+-          },
+-          input: {
+-            thrust: inputState.thrust,
+-            left: inputState.turnLeft,
+-            right: inputState.turnRight,
+-            fire: inputState.fire,
+-            mouseX: Math.round(inputState.mouseX),
+-            mouseY: Math.round(inputState.mouseY)
++        // Dev stats
++        if (onStats) {
++          const stats: DevStats = {
++            fps: avgFps,
++            entities: { 
++              ships: 1, 
++              asteroids: spawning.getAsteroidCount(), 
++              bullets: bulletManager.getActiveCount(), 
++              particles: particleManager.getActiveCount(),
++              debris: debrisManagerRef.current!.getActiveCount(),
++              other: spawning.getHunterCount() + enemyBullets.getActiveCount() 
++            },
++            score: gameState.getScore(),
++            wave: gameState.getWave(),
++            ship: {
++              x: shipPos.x,
++              y: shipPos.y,
++              vx: shipUserData.vx || 0,
++              vy: shipUserData.vy || 0,
++              angleDeg: (ship.object.rotation.z * 180 / Math.PI) % 360,
++              pxHeight: 50 // Current ship size
++            },
++            input: {
++              thrust: inputState.thrust,
++              left: inputState.turnLeft,
++              right: inputState.turnRight,
++              fire: inputState.fire,
++              mouseX: Math.round(inputState.mouseX),
++              mouseY: Math.round(inputState.mouseY)
++            }
+           }
++          
++          onStats(stats)
+         }
+         
+-        onStats(stats)
++        // HUD data
++        if (onHudData) {
++          const hudData: HudData = {
++            score: selectScore(gameState),
++            wave: selectWave(gameState),
++            combo: selectCombo(gameState),
++            currency: selectCurrency(gameState),
++            upgrades: selectUpgrades(gameState),
++            gamePhase: gameState.getGamePhase()
++          }
++          
++          onHudData(hudData)
++        }
+       }
+       
+       raf = requestAnimationFrame(animate)
+diff --git a/reactShell/src/game/GameState.ts b/reactShell/src/game/GameState.ts
+index aaa11d9..d3b8327 100644
+--- a/reactShell/src/game/GameState.ts
++++ b/reactShell/src/game/GameState.ts
+@@ -3,6 +3,20 @@
+ // Game phase types for wave progression
+ export type GamePhase = 'playing' | 'wave-complete' | 'upgrade'
+ 
++// Currency tracking
++interface Currency {
++  salvage: number
++  gold: number
++  platinum: number
++  adamantium: number
++}
++
++// Upgrade tracking for history display
++interface UpgradeHistoryItem {
++  name: string
++  tier?: string
++}
++
+ // Mods system for tracking upgrades
+ interface Mods {
+   shieldCharges: number
+@@ -17,6 +31,15 @@ export class GameState {
+   private gamePhase: GamePhase = 'playing'
+   private gameOver: boolean = false
+   private paused: boolean = false
++  private combo: number = 1.0
++  private comboTimer: number = 0
++  private currency: Currency = {
++    salvage: 0,
++    gold: 0,
++    platinum: 0,
++    adamantium: 0
++  }
++  private upgradeHistory: UpgradeHistoryItem[] = []
+   private mods: Mods = {
+     shieldCharges: 3  // Start with 3 shield charges for testing
+   }
+@@ -120,6 +143,15 @@ export class GameState {
+     this.gamePhase = 'playing'
+     this.gameOver = false
+     this.paused = false
++    this.combo = 1.0
++    this.comboTimer = 0
++    this.currency = {
++      salvage: 0,
++      gold: 0,
++      platinum: 0,
++      adamantium: 0
++    }
++    this.upgradeHistory = []
+     this.mods = {
+       shieldCharges: 3  // Start with 3 shield charges for testing
+     }
+@@ -160,7 +192,18 @@ export class GameState {
+       gamePhase: this.gamePhase,
+       gameOver: this.gameOver,
+       paused: this.paused,
++      combo: this.combo,
++      comboTimer: this.comboTimer,
++      currency: this.currency,
++      upgradeHistory: this.upgradeHistory,
+       mods: this.mods
+     }
+   }
+-}
+\ No newline at end of file
++}
++
++// HUD selectors (pure functions for read-only data access)
++export const selectScore = (s: GameState) => s.getScore()
++export const selectWave = (s: GameState) => s.getWave()
++export const selectCombo = (s: GameState) => ({ value: s['combo'], timer: s['comboTimer'], max: 2.3 })
++export const selectCurrency = (s: GameState) => s['currency']
++export const selectUpgrades = (s: GameState) => s['upgradeHistory'].slice(-8)
+\ No newline at end of file
+diff --git a/reactShell/src/styles.css b/reactShell/src/styles.css
+index f9ee628..01d163e 100644
+--- a/reactShell/src/styles.css
++++ b/reactShell/src/styles.css
+@@ -1,4 +1,19 @@
+ html, body, #root { height: 100%; margin: 0; }
+ canvas { display: block; }
+ .overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000; z-index: 1000; }
+-.overlay img { max-width: 90vw; max-height: 90vh; }
+\ No newline at end of file
++.overlay img { max-width: 90vw; max-height: 90vh; }
++
++/* HUD Styles */
++.hud { position: fixed; inset: 0; pointer-events: none; z-index: 5000; }
++.hud-tl, .hud-tr, .hud-tc, .hud-bl { position: absolute; pointer-events: none; color:#e6e6e6; text-shadow: 0 1px 2px rgba(0,0,0,.6); font: 14px/1.3 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
++.hud-tl{ top:12px; left:12px; }
++.hud-tr{ top:12px; right:12px; }
++.hud-tc{ top:12px; left:50%; transform: translateX(-50%); width: 360px; }
++.hud-bl{ bottom:12px; left:12px; max-width: 320px; }
++.hud-panel{ background: rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.18); border-radius:8px; padding:8px 10px; }
++.hud-row{ display:flex; gap:10px; align-items:center; justify-content:space-between; }
++.hud-chip{ background: rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); border-radius:6px; padding:4px 8px; font-weight:600; }
++.combo-wrap{ height:10px; background: rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); border-radius:999px; overflow:hidden; }
++.combo-bar{ height:100%; background: linear-gradient(90deg,#63b3ff,#7cffc1); }
++.hud-upgrades{ padding:0; margin:4px 0; }
++.hud-upgrades li{ list-style:none; margin:2px 0; opacity:.9; }
+\ No newline at end of file
+diff --git a/reactShell/src/ui/Hud.tsx b/reactShell/src/ui/Hud.tsx
+index d5f1bdb..9cba4fa 100644
+--- a/reactShell/src/ui/Hud.tsx
++++ b/reactShell/src/ui/Hud.tsx
+@@ -1,4 +1,72 @@
+ // Hud.tsx - Score, wave, combo display
+-export default function Hud() {
+-  return <div className="hud" />
++
++type HudProps = {
++  score: number
++  wave: number
++  combo: { value: number; timer: number; max: number }
++  currency: { salvage: number; gold: number; platinum: number; adamantium: number }
++  upgrades: Array<{ name: string; tier?: string }>
++  visible?: boolean // default true
++}
++
++export default function Hud({ 
++  score, 
++  wave, 
++  combo, 
++  currency, 
++  upgrades, 
++  visible = true 
++}: HudProps) {
++  if (!visible) return null
++
++  // Calculate combo bar width percentage
++  const comboBarWidth = Math.min((combo.timer / combo.max) * 100, 100)
++  const showCombo = combo.timer > 0 && combo.value > 1.0
++
++  return (
++    <div className="hud">
++      {/* Top-left: Wave and Score */}
++      <div className="hud-tl">
++        <div>Wave {wave}</div>
++        <div>{score.toLocaleString()}</div>
++      </div>
++
++      {/* Top-right: Currency panel */}
++      <div className="hud-tr">
++        <div className="hud-panel">
++          <div className="hud-row">
++            <div className="hud-chip">{currency.salvage}</div>
++            <div className="hud-chip">{currency.gold}</div>
++            <div className="hud-chip">{currency.platinum}</div>
++            <div className="hud-chip">{currency.adamantium}</div>
++          </div>
++        </div>
++      </div>
++
++      {/* Top-center: Combo meter */}
++      {showCombo && (
++        <div className="hud-tc">
++          <div>x{combo.value.toFixed(2)}</div>
++          <div className="combo-wrap">
++            <div 
++              className="combo-bar" 
++              style={{ width: `${comboBarWidth}%` }}
++            />
++          </div>
++        </div>
++      )}
++
++      {/* Bottom-left: Upgrades */}
++      <div className="hud-bl">
++        <div>Upgrades</div>
++        <ul className="hud-upgrades">
++          {upgrades.map((upgrade, i) => (
++            <li key={i}>
++              {upgrade.name}{upgrade.tier ? ` (${upgrade.tier})` : ''}
++            </li>
++          ))}
++        </ul>
++      </div>
++    </div>
++  )
+ }
+\ No newline at end of file

@@ -24,6 +24,16 @@ export interface HudData {
   gamePhase: 'playing' | 'wave-complete' | 'upgrade'
 }
 
+// Minimap snapshot type for tactical display
+export interface MiniSnapshot {
+  ship: { x: number; y: number }
+  asteroids: Array<{ x: number; y: number; r: number }>
+  hunters: Array<{ x: number; y: number; r: number }>
+  bullets: Array<{ x: number; y: number }>
+  enemyBullets: Array<{ x: number; y: number }>
+  world: { width: number; height: number }
+}
+
 // World constants (from vanilla)
 const WORLD = {
   width: 750,
@@ -42,9 +52,10 @@ function makeOrthoCamera(w: number, h: number): THREE.OrthographicCamera {
 interface GameCanvasProps {
   onStats?: (stats: DevStats) => void
   onHudData?: (hudData: HudData) => void
+  onMiniSnapshot?: (snapshot: MiniSnapshot) => void
 }
 
-export default function GameCanvas({ onStats, onHudData }: GameCanvasProps) {
+export default function GameCanvas({ onStats, onHudData, onMiniSnapshot }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fpsHistoryRef = useRef<number[]>([])
   const shipRef = useRef<Ship | null>(null)
@@ -218,7 +229,7 @@ export default function GameCanvas({ onStats, onHudData }: GameCanvasProps) {
       
       // Update dev stats (throttled to ~10 Hz to avoid re-render spam)
       statsUpdateCounter++
-      if ((onStats || onHudData) && statsUpdateCounter % 6 === 0) {
+      if ((onStats || onHudData || onMiniSnapshot) && statsUpdateCounter % 6 === 0) {
         const shipPos = ship.getPosition()
         const shipUserData = ship.object.userData
         
@@ -269,6 +280,42 @@ export default function GameCanvas({ onStats, onHudData }: GameCanvasProps) {
           }
           
           onHudData(hudData)
+        }
+        
+        // Minimap snapshot
+        if (onMiniSnapshot) {
+          const asteroids = spawning.getAsteroids().map(asteroid => ({
+            x: asteroid.object.position.x,
+            y: asteroid.object.position.y,
+            r: asteroid.userData?.radius || 10
+          }))
+          
+          const hunters = spawning.getHunters().map(hunter => ({
+            x: hunter.object.position.x,
+            y: hunter.object.position.y,
+            r: 8 // Hunter radius for minimap display
+          }))
+          
+          const bullets = bulletManager.getActiveBullets().map(bullet => ({
+            x: bullet.mesh.position.x,
+            y: bullet.mesh.position.y
+          }))
+          
+          const enemyBullets = enemyBulletsRef.current.getAll().map((eb: any) => ({
+            x: eb.pos.x,
+            y: eb.pos.y
+          }))
+          
+          const snapshot: MiniSnapshot = {
+            ship: { x: shipPos.x, y: shipPos.y },
+            asteroids,
+            hunters,
+            bullets,
+            enemyBullets,
+            world: { width: WORLD.width, height: WORLD.height }
+          }
+          
+          onMiniSnapshot(snapshot)
         }
       }
       

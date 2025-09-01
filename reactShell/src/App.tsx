@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import GameCanvas, { HudData } from './game/GameCanvas'
+import GameCanvas, { HudData, MiniSnapshot } from './game/GameCanvas'
 import Hud from './ui/Hud'
 import UpgradeMenu from './ui/UpgradeMenu'
 import StatusOverlay from './ui/StatusOverlay'
 import PauseOverlay from './ui/PauseOverlay'
 import StartScreen from './ui/StartScreen'
+import Minimap from './ui/Minimap'
 import { DevPanel, DevStats } from './ui/DevPanel'
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
     upgrades: [],
     gamePhase: 'playing'
   })
+  const [miniSnapshot, setMiniSnapshot] = useState<MiniSnapshot | null>(null)
 
   useEffect(() => {
     // Initialize game
@@ -37,13 +39,17 @@ function App() {
 
   return (
     <div className="app">
-      <GameCanvas onStats={setStats} onHudData={setHudData} />
+      <GameCanvas onStats={setStats} onHudData={setHudData} onMiniSnapshot={setMiniSnapshot} />
       <Hud 
         score={hudData.score}
         wave={hudData.wave}
         combo={hudData.combo}
         currency={hudData.currency}
         upgrades={hudData.upgrades}
+        visible={hudData.gamePhase === 'playing' || hudData.gamePhase === 'wave-complete'}
+      />
+      <Minimap 
+        data={miniSnapshot}
         visible={hudData.gamePhase === 'playing' || hudData.gamePhase === 'wave-complete'}
       />
       <UpgradeMenu />

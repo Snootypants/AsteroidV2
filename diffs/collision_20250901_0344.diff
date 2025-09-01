@@ -1,0 +1,540 @@
+diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
+index c39d0a4..e41eedd 100644
+--- a/reactShell/src/game/GameCanvas.tsx
++++ b/reactShell/src/game/GameCanvas.tsx
+@@ -6,6 +6,9 @@ import { Input } from './Input'
+ import { Ship } from './entities/Ship'
+ import { BulletManager } from './systems/BulletManager'
+ import { Spawning } from './systems/Spawning'
++import { CollisionManager } from './systems/Collision'
++import { ParticleManager } from './entities/Particles'
++import { GameState } from './GameState'
+ import { DevStats } from '../ui/DevPanel'
+ import { DebugBus } from '../dev/DebugBus'
+ 
+@@ -35,6 +38,9 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+   const inputRef = useRef<Input | null>(null)
+   const bulletManagerRef = useRef<BulletManager | null>(null)
+   const spawningRef = useRef<Spawning | null>(null)
++  const collisionManagerRef = useRef<CollisionManager | null>(null)
++  const particleManagerRef = useRef<ParticleManager | null>(null)
++  const gameStateRef = useRef<GameState | null>(null)
+ 
+   useEffect(() => {
+     if (!canvasRef.current) return
+@@ -49,14 +55,20 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+     
+     // Initialize game systems
+     const input = new Input()
++    const gameState = new GameState()
+     const bulletManager = new BulletManager(scene)
+     const ship = new Ship(scene, bulletManager)
+     const spawning = new Spawning(scene)
++    const particleManager = new ParticleManager(scene)
++    const collisionManager = new CollisionManager(bulletManager, spawning, ship, gameState, scene)
+     
+     shipRef.current = ship
+     inputRef.current = input
+     bulletManagerRef.current = bulletManager
+     spawningRef.current = spawning
++    collisionManagerRef.current = collisionManager
++    particleManagerRef.current = particleManager
++    gameStateRef.current = gameState
+     
+     // Initialize level with asteroids (5-8 for testing)
+     spawning.initializeLevel()
+@@ -133,6 +145,21 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+       // Update asteroids
+       spawning.update(dt)
+       
++      // Update particles
++      particleManager.update(dt)
++      
++      // Update collision detection and handle events
++      const collisionEvents = collisionManager.update(dt)
++      
++      // Handle collision events (create particle effects)
++      for (const event of collisionEvents) {
++        if (event.type === 'bullet-asteroid' && event.asteroidSize) {
++          particleManager.asteroidBurst(event.position, event.asteroidSize)
++        } else if (event.type === 'ship-asteroid') {
++          particleManager.shipBurst(event.position)
++        }
++      }
++      
+       // Follow ship with camera (simple following)
+       const shipPos = ship.getPosition()
+       camera.position.x = shipPos.x
+@@ -152,8 +179,9 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+             ships: 1, 
+             asteroids: spawning.getAsteroidCount(), 
+             bullets: bulletManager.getActiveCount(), 
+-            other: 0 
++            other: particleManager.getActiveCount() 
+           },
++          score: gameState.getScore(),
+           ship: {
+             x: shipPos.x,
+             y: shipPos.y,
+diff --git a/reactShell/src/game/GameState.ts b/reactShell/src/game/GameState.ts
+index fc17bc9..c707475 100644
+--- a/reactShell/src/game/GameState.ts
++++ b/reactShell/src/game/GameState.ts
+@@ -1,2 +1,88 @@
+ // GameState.ts - Central state management
+-export class GameState {}
+\ No newline at end of file
++export class GameState {
++  private score: number = 0
++  private lives: number = 3
++  private level: number = 1
++  private gameOver: boolean = false
++  private paused: boolean = false
++
++  constructor() {
++    this.resetGame()
++  }
++
++  // Score management
++  addScore(points: number): void {
++    this.score += points
++  }
++
++  getScore(): number {
++    return this.score
++  }
++
++  setScore(score: number): void {
++    this.score = score
++  }
++
++  // Lives management
++  getLives(): number {
++    return this.lives
++  }
++
++  loseLife(): void {
++    if (this.lives > 0) {
++      this.lives--
++    }
++    if (this.lives <= 0) {
++      this.gameOver = true
++    }
++  }
++
++  addLife(): void {
++    this.lives++
++  }
++
++  // Level management
++  getLevel(): number {
++    return this.level
++  }
++
++  nextLevel(): void {
++    this.level++
++  }
++
++  // Game state management
++  isGameOver(): boolean {
++    return this.gameOver
++  }
++
++  isPaused(): boolean {
++    return this.paused
++  }
++
++  pause(): void {
++    this.paused = true
++  }
++
++  resume(): void {
++    this.paused = false
++  }
++
++  resetGame(): void {
++    this.score = 0
++    this.lives = 3
++    this.level = 1
++    this.gameOver = false
++    this.paused = false
++  }
++
++  // Get full state snapshot for debugging
++  getState() {
++    return {
++      score: this.score,
++      lives: this.lives,
++      level: this.level,
++      gameOver: this.gameOver,
++      paused: this.paused
++    }
++  }
++}
+\ No newline at end of file
+diff --git a/reactShell/src/game/entities/Particles.ts b/reactShell/src/game/entities/Particles.ts
+index 8200cf3..2086878 100644
+--- a/reactShell/src/game/entities/Particles.ts
++++ b/reactShell/src/game/entities/Particles.ts
+@@ -1,2 +1,152 @@
+ // Particles.ts - Particle system
+-export class Particles {}
+\ No newline at end of file
++import * as THREE from 'three'
++
++interface Particle {
++  mesh: THREE.Mesh
++  velocity: THREE.Vector2
++  life: number
++  maxLife: number
++  isActive: boolean
++}
++
++export class ParticleManager {
++  private particles: Particle[] = []
++  private scene: THREE.Scene
++  private poolSize = 200 // Maximum particles that can exist
++
++  constructor(scene: THREE.Scene) {
++    this.scene = scene
++    
++    // Pre-create particle pool
++    for (let i = 0; i < this.poolSize; i++) {
++      const particle = this.createParticle()
++      this.particles.push(particle)
++      this.scene.add(particle.mesh)
++    }
++  }
++
++  private createParticle(): Particle {
++    // Create small colored sphere for particle visual
++    const geometry = new THREE.SphereGeometry(0.5, 4, 3) // Very small, low-poly
++    const material = new THREE.MeshBasicMaterial({ 
++      color: 0xffffff,
++      transparent: true,
++      opacity: 1.0
++    })
++    const mesh = new THREE.Mesh(geometry, material)
++    mesh.visible = false
++    
++    return {
++      mesh,
++      velocity: new THREE.Vector2(0, 0),
++      life: 0,
++      maxLife: 1.0,
++      isActive: false
++    }
++  }
++
++  // Create particle burst at position
++  burst(position: THREE.Vector2, color: number = 0xffffff, count: number = 8, speed: number = 30): void {
++    const inactiveParticles = this.particles.filter(p => !p.isActive)
++    const particlesToUse = Math.min(count, inactiveParticles.length)
++    
++    for (let i = 0; i < particlesToUse; i++) {
++      const particle = inactiveParticles[i]
++      
++      // Set position
++      particle.mesh.position.set(position.x, position.y, 0)
++      
++      // Set random velocity
++      const angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.5
++      const randomSpeed = speed + (Math.random() - 0.5) * speed * 0.5
++      particle.velocity.set(
++        Math.cos(angle) * randomSpeed,
++        Math.sin(angle) * randomSpeed
++      )
++      
++      // Set properties
++      particle.life = particle.maxLife
++      particle.isActive = true
++      particle.mesh.visible = true
++      
++      // Set color
++      const material = particle.mesh.material as THREE.MeshBasicMaterial
++      material.color.setHex(color)
++      material.opacity = 1.0
++    }
++  }
++
++  // Create asteroid destruction burst
++  asteroidBurst(position: THREE.Vector2, asteroidSize: 'large' | 'medium' | 'small'): void {
++    let color = 0x808080 // Default gray
++    let count = 6
++    let speed = 25
++    
++    switch (asteroidSize) {
++      case 'large':
++        color = 0xffffff
++        count = 12
++        speed = 35
++        break
++      case 'medium':
++        color = 0xdddddd
++        count = 8
++        speed = 30
++        break
++      case 'small':
++        color = 0xaaaaaa
++        count = 6
++        speed = 25
++        break
++    }
++    
++    this.burst(position, color, count, speed)
++  }
++
++  // Create ship collision burst
++  shipBurst(position: THREE.Vector2): void {
++    this.burst(position, 0xff4444, 10, 40) // Red particles for ship damage
++  }
++
++  // Update all particles
++  update(dt: number): void {
++    for (const particle of this.particles) {
++      if (!particle.isActive) continue
++      
++      // Update position
++      particle.mesh.position.x += particle.velocity.x * dt
++      particle.mesh.position.y += particle.velocity.y * dt
++      
++      // Update life
++      particle.life -= dt
++      
++      // Fade out
++      const alpha = particle.life / particle.maxLife
++      const material = particle.mesh.material as THREE.MeshBasicMaterial
++      material.opacity = alpha
++      
++      // Deactivate if expired
++      if (particle.life <= 0) {
++        particle.isActive = false
++        particle.mesh.visible = false
++      }
++    }
++  }
++
++  // Get active particle count
++  getActiveCount(): number {
++    return this.particles.filter(p => p.isActive).length
++  }
++
++  // Cleanup method
++  dispose(): void {
++    for (const particle of this.particles) {
++      this.scene.remove(particle.mesh)
++      particle.mesh.geometry.dispose()
++      if (particle.mesh.material instanceof THREE.Material) {
++        particle.mesh.material.dispose()
++      }
++    }
++    this.particles = []
++  }
++}
+\ No newline at end of file
+diff --git a/reactShell/src/game/systems/Collision.ts b/reactShell/src/game/systems/Collision.ts
+index cb9b6b5..edae1de 100644
+--- a/reactShell/src/game/systems/Collision.ts
++++ b/reactShell/src/game/systems/Collision.ts
+@@ -1,2 +1,169 @@
+ // Collision.ts - Circle-circle detection
+-export class Collision {}
+\ No newline at end of file
++import * as THREE from 'three'
++import type { Ship } from '../entities/Ship'
++import type { Bullet } from '../entities/Bullet'
++import type { Asteroid } from '../entities/Asteroid'
++import type { BulletManager } from './BulletManager'
++import type { Spawning } from './Spawning'
++import type { GameState } from '../GameState'
++
++export interface CollisionEvent {
++  type: 'bullet-asteroid' | 'ship-asteroid'
++  position: THREE.Vector2
++  asteroidSize?: 'large' | 'medium' | 'small'
++  damage?: number
++}
++
++export class CollisionManager {
++  private bulletManager: BulletManager
++  private spawning: Spawning
++  private ship: Ship
++  private gameState: GameState
++  private scene: THREE.Scene
++  
++  constructor(
++    bulletManager: BulletManager,
++    spawning: Spawning,
++    ship: Ship,
++    gameState: GameState,
++    scene: THREE.Scene
++  ) {
++    this.bulletManager = bulletManager
++    this.spawning = spawning
++    this.ship = ship
++    this.gameState = gameState
++    this.scene = scene
++  }
++
++  // Main collision detection method
++  update(dt: number): CollisionEvent[] {
++    const events: CollisionEvent[] = []
++    
++    // Check bullet-asteroid collisions
++    const bulletAsteroidEvents = this.checkBulletAsteroidCollisions()
++    events.push(...bulletAsteroidEvents)
++    
++    // Check ship-asteroid collisions
++    const shipAsteroidEvents = this.checkShipAsteroidCollisions()
++    events.push(...shipAsteroidEvents)
++    
++    return events
++  }
++
++  // Circle-circle collision detection
++  private circleCollision(pos1: THREE.Vector2, radius1: number, pos2: THREE.Vector2, radius2: number): boolean {
++    const dx = pos1.x - pos2.x
++    const dy = pos1.y - pos2.y
++    const distance = Math.sqrt(dx * dx + dy * dy)
++    return distance < (radius1 + radius2)
++  }
++
++  // Check bullet-asteroid collisions
++  private checkBulletAsteroidCollisions(): CollisionEvent[] {
++    const events: CollisionEvent[] = []
++    const bullets = this.bulletManager.getActiveBullets()
++    const asteroids = this.spawning.getAsteroids()
++    
++    for (const bullet of bullets) {
++      if (!bullet.isActive) continue
++      
++      const bulletPos = bullet.getPosition()
++      const bulletRadius = bullet.mesh.userData.radius
++      
++      for (const asteroid of asteroids) {
++        if (!asteroid.isAlive()) continue
++        
++        const asteroidPos = asteroid.getPosition()
++        const asteroidRadius = asteroid.getRadius()
++        
++        if (this.circleCollision(bulletPos, bulletRadius, asteroidPos, asteroidRadius)) {
++          // Handle collision
++          const event = this.handleBulletAsteroidHit(bullet, asteroid)
++          if (event) {
++            events.push(event)
++          }
++          break // Bullet can only hit one asteroid
++        }
++      }
++    }
++    
++    return events
++  }
++
++  // Check ship-asteroid collisions
++  private checkShipAsteroidCollisions(): CollisionEvent[] {
++    const events: CollisionEvent[] = []
++    const asteroids = this.spawning.getAsteroids()
++    
++    if (!this.ship.object.userData.alive) return events
++    
++    const shipPos = this.ship.getPosition()
++    const shipRadius = this.ship.object.userData.radius
++    
++    for (const asteroid of asteroids) {
++      if (!asteroid.isAlive()) continue
++      
++      const asteroidPos = asteroid.getPosition()
++      const asteroidRadius = asteroid.getRadius()
++      
++      if (this.circleCollision(shipPos, shipRadius, asteroidPos, asteroidRadius)) {
++        // Handle collision
++        const event = this.handleShipAsteroidHit(asteroid)
++        if (event) {
++          events.push(event)
++        }
++      }
++    }
++    
++    return events
++  }
++
++  // Handle bullet hitting asteroid
++  private handleBulletAsteroidHit(bullet: Bullet, asteroid: Asteroid): CollisionEvent | null {
++    if (!bullet.isActive || !asteroid.isAlive()) return null
++    
++    const position = asteroid.getPosition()
++    const size = asteroid.getSize()
++    const score = asteroid.getScore()
++    
++    // Destroy bullet
++    bullet.expire()
++    
++    // Damage asteroid
++    asteroid.takeDamage()
++    
++    // Add score
++    this.gameState.addScore(score)
++    
++    // Split asteroid if applicable
++    const newAsteroids = this.spawning.splitAsteroid(asteroid)
++    
++    return {
++      type: 'bullet-asteroid',
++      position: position.clone(),
++      asteroidSize: size
++    }
++  }
++
++  // Handle ship hitting asteroid
++  private handleShipAsteroidHit(asteroid: Asteroid): CollisionEvent | null {
++    if (!asteroid.isAlive() || !this.ship.object.userData.alive) return null
++    
++    // Check if ship is invulnerable (implement invulnerability later if needed)
++    const shipData = this.ship.object.userData
++    if (shipData.invulnerable) return null
++    
++    const position = asteroid.getPosition()
++    const size = asteroid.getSize()
++    
++    // Damage ship (implement ship damage system later)
++    // For now, just create the event for particle effects
++    
++    return {
++      type: 'ship-asteroid',
++      position: position.clone(),
++      asteroidSize: size,
++      damage: 1
++    }
++  }
++}
+\ No newline at end of file
+diff --git a/reactShell/src/ui/DevPanel.tsx b/reactShell/src/ui/DevPanel.tsx
+index a753f9d..002a36e 100644
+--- a/reactShell/src/ui/DevPanel.tsx
++++ b/reactShell/src/ui/DevPanel.tsx
+@@ -4,6 +4,7 @@ import { DebugBus, LogEntry } from '../dev/DebugBus'
+ export type DevStats = {
+   fps: number
+   entities: { ships: number; asteroids: number; bullets: number; other: number }
++  score?: number
+   ship?: { x: number; y: number; vx: number; vy: number; angleDeg: number; pxHeight: number }
+   input?: { thrust: boolean; left: boolean; right: boolean; fire: boolean; mouseX: number; mouseY: number }
+ }
+@@ -59,9 +60,15 @@ export function DevPanel({ visible, stats }: DevPanelProps): JSX.Element | null
+             Ships:{stats.entities.ships} 
+             Asteroids:{stats.entities.asteroids} 
+             Bullets:{stats.entities.bullets} 
+-            Other:{stats.entities.other}
++            Particles:{stats.entities.other}
+           </span>
+         </div>
++        {stats.score !== undefined && (
++          <div className="row">
++            <span>Score:</span>
++            <span>{stats.score}</span>
++          </div>
++        )}
+       </div>
+ 
+       {/* Ship Stats */}

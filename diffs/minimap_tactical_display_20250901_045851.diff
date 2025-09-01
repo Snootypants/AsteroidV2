@@ -1,0 +1,423 @@
+diff --git a/reactShell/src/App.tsx b/reactShell/src/App.tsx
+index eb428fc..deacace 100644
+--- a/reactShell/src/App.tsx
++++ b/reactShell/src/App.tsx
+@@ -1,10 +1,11 @@
+ import { useEffect, useState } from 'react'
+-import GameCanvas, { HudData } from './game/GameCanvas'
++import GameCanvas, { HudData, MiniSnapshot } from './game/GameCanvas'
+ import Hud from './ui/Hud'
+ import UpgradeMenu from './ui/UpgradeMenu'
+ import StatusOverlay from './ui/StatusOverlay'
+ import PauseOverlay from './ui/PauseOverlay'
+ import StartScreen from './ui/StartScreen'
++import Minimap from './ui/Minimap'
+ import { DevPanel, DevStats } from './ui/DevPanel'
+ 
+ function App() {
+@@ -22,6 +23,7 @@ function App() {
+     upgrades: [],
+     gamePhase: 'playing'
+   })
++  const [miniSnapshot, setMiniSnapshot] = useState<MiniSnapshot | null>(null)
+ 
+   useEffect(() => {
+     // Initialize game
+@@ -37,7 +39,7 @@ function App() {
+ 
+   return (
+     <div className="app">
+-      <GameCanvas onStats={setStats} onHudData={setHudData} />
++      <GameCanvas onStats={setStats} onHudData={setHudData} onMiniSnapshot={setMiniSnapshot} />
+       <Hud 
+         score={hudData.score}
+         wave={hudData.wave}
+@@ -46,6 +48,10 @@ function App() {
+         upgrades={hudData.upgrades}
+         visible={hudData.gamePhase === 'playing' || hudData.gamePhase === 'wave-complete'}
+       />
++      <Minimap 
++        data={miniSnapshot}
++        visible={hudData.gamePhase === 'playing' || hudData.gamePhase === 'wave-complete'}
++      />
+       <UpgradeMenu />
+       <StatusOverlay />
+       <PauseOverlay />
+diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
+index a863dc8..e658e57 100644
+--- a/reactShell/src/game/GameCanvas.tsx
++++ b/reactShell/src/game/GameCanvas.tsx
+@@ -24,6 +24,16 @@ export interface HudData {
+   gamePhase: 'playing' | 'wave-complete' | 'upgrade'
+ }
+ 
++// Minimap snapshot type for tactical display
++export interface MiniSnapshot {
++  ship: { x: number; y: number }
++  asteroids: Array<{ x: number; y: number; r: number }>
++  hunters: Array<{ x: number; y: number; r: number }>
++  bullets: Array<{ x: number; y: number }>
++  enemyBullets: Array<{ x: number; y: number }>
++  world: { width: number; height: number }
++}
++
+ // World constants (from vanilla)
+ const WORLD = {
+   width: 750,
+@@ -42,9 +52,10 @@ function makeOrthoCamera(w: number, h: number): THREE.OrthographicCamera {
+ interface GameCanvasProps {
+   onStats?: (stats: DevStats) => void
+   onHudData?: (hudData: HudData) => void
++  onMiniSnapshot?: (snapshot: MiniSnapshot) => void
+ }
+ 
+-export default function GameCanvas({ onStats, onHudData }: GameCanvasProps) {
++export default function GameCanvas({ onStats, onHudData, onMiniSnapshot }: GameCanvasProps) {
+   const canvasRef = useRef<HTMLCanvasElement>(null)
+   const fpsHistoryRef = useRef<number[]>([])
+   const shipRef = useRef<Ship | null>(null)
+@@ -218,7 +229,7 @@ export default function GameCanvas({ onStats, onHudData }: GameCanvasProps) {
+       
+       // Update dev stats (throttled to ~10 Hz to avoid re-render spam)
+       statsUpdateCounter++
+-      if ((onStats || onHudData) && statsUpdateCounter % 6 === 0) {
++      if ((onStats || onHudData || onMiniSnapshot) && statsUpdateCounter % 6 === 0) {
+         const shipPos = ship.getPosition()
+         const shipUserData = ship.object.userData
+         
+@@ -270,6 +281,42 @@ export default function GameCanvas({ onStats, onHudData }: GameCanvasProps) {
+           
+           onHudData(hudData)
+         }
++        
++        // Minimap snapshot
++        if (onMiniSnapshot) {
++          const asteroids = spawning.getAsteroids().map(asteroid => ({
++            x: asteroid.object.position.x,
++            y: asteroid.object.position.y,
++            r: asteroid.userData?.radius || 10
++          }))
++          
++          const hunters = spawning.getHunters().map(hunter => ({
++            x: hunter.object.position.x,
++            y: hunter.object.position.y,
++            r: 8 // Hunter radius for minimap display
++          }))
++          
++          const bullets = bulletManager.getActiveBullets().map(bullet => ({
++            x: bullet.mesh.position.x,
++            y: bullet.mesh.position.y
++          }))
++          
++          const enemyBullets = enemyBulletsRef.current.getAll().map((eb: any) => ({
++            x: eb.pos.x,
++            y: eb.pos.y
++          }))
++          
++          const snapshot: MiniSnapshot = {
++            ship: { x: shipPos.x, y: shipPos.y },
++            asteroids,
++            hunters,
++            bullets,
++            enemyBullets,
++            world: { width: WORLD.width, height: WORLD.height }
++          }
++          
++          onMiniSnapshot(snapshot)
++        }
+       }
+       
+       raf = requestAnimationFrame(animate)
+diff --git a/reactShell/src/styles.css b/reactShell/src/styles.css
+index 01d163e..0667e44 100644
+--- a/reactShell/src/styles.css
++++ b/reactShell/src/styles.css
+@@ -16,4 +16,9 @@ canvas { display: block; }
+ .combo-wrap{ height:10px; background: rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); border-radius:999px; overflow:hidden; }
+ .combo-bar{ height:100%; background: linear-gradient(90deg,#63b3ff,#7cffc1); }
+ .hud-upgrades{ padding:0; margin:4px 0; }
+-.hud-upgrades li{ list-style:none; margin:2px 0; opacity:.9; }
+\ No newline at end of file
++.hud-upgrades li{ list-style:none; margin:2px 0; opacity:.9; }
++
++/* Minimap Styles */
++.minimap-wrap { position: fixed; right: 12px; bottom: 12px; z-index: 5000; pointer-events: none; }
++.minimap-panel { background: rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.18); border-radius:8px; padding:8px; }
++.minimap-canvas { display:block; width:280px; height:187px; image-rendering: pixelated; }
+\ No newline at end of file
+diff --git a/reactShell/src/ui/Minimap.tsx b/reactShell/src/ui/Minimap.tsx
+new file mode 100644
+index 0000000..a21fc15
+--- /dev/null
++++ b/reactShell/src/ui/Minimap.tsx
+@@ -0,0 +1,131 @@
++// Minimap.tsx - Tactical display showing entity positions
++import { useEffect, useRef } from 'react'
++import { MiniSnapshot } from '../game/GameCanvas'
++
++interface MinimapProps {
++  data: MiniSnapshot | null
++  visible?: boolean
++}
++
++export default function Minimap({ data, visible = true }: MinimapProps) {
++  const canvasRef = useRef<HTMLCanvasElement>(null)
++
++  useEffect(() => {
++    const canvas = canvasRef.current
++    if (!canvas || !data || !visible) return
++
++    const ctx = canvas.getContext('2d')
++    if (!ctx) return
++
++    // Set canvas size
++    canvas.width = 280
++    canvas.height = 187
++
++    // Calculate scaling from world coordinates to minimap coordinates
++    // World: 750x498, Minimap: 280x187
++    const scaleX = 280 / data.world.width
++    const scaleY = 187 / data.world.height
++    
++    // Use the smaller scale to maintain aspect ratio
++    const scale = Math.min(scaleX, scaleY)
++    
++    // Calculate offset to center the scaled world
++    const scaledWorldWidth = data.world.width * scale
++    const scaledWorldHeight = data.world.height * scale
++    const offsetX = (280 - scaledWorldWidth) / 2
++    const offsetY = (187 - scaledWorldHeight) / 2
++
++    // Convert world coordinates to minimap coordinates
++    const worldToMinimap = (worldX: number, worldY: number) => {
++      // Convert from world coords (-375 to 375, -249 to 249) to minimap coords
++      const normalizedX = (worldX + data.world.width / 2) * scale
++      const normalizedY = (worldY + data.world.height / 2) * scale
++      return {
++        x: normalizedX + offsetX,
++        y: normalizedY + offsetY
++      }
++    }
++
++    // Clear canvas
++    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'
++    ctx.fillRect(0, 0, 280, 187)
++
++    // Draw asteroids (gray/ore-tinted circles)
++    ctx.fillStyle = '#808080'
++    for (const asteroid of data.asteroids) {
++      const pos = worldToMinimap(asteroid.x, asteroid.y)
++      const radius = Math.max(1, asteroid.r * scale * 0.3) // Scale down radius for minimap
++      
++      ctx.beginPath()
++      ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2)
++      ctx.fill()
++    }
++
++    // Draw hunters (red dots)
++    ctx.fillStyle = '#ff4444'
++    for (const hunter of data.hunters) {
++      const pos = worldToMinimap(hunter.x, hunter.y)
++      const radius = Math.max(2, hunter.r * scale * 0.5) // Slightly larger than bullets
++      
++      ctx.beginPath()
++      ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2)
++      ctx.fill()
++    }
++
++    // Draw enemy bullets (red tiny dots)
++    ctx.fillStyle = '#ff6666'
++    for (const bullet of data.enemyBullets) {
++      const pos = worldToMinimap(bullet.x, bullet.y)
++      
++      ctx.beginPath()
++      ctx.arc(pos.x, pos.y, 1, 0, Math.PI * 2)
++      ctx.fill()
++    }
++
++    // Draw player bullets (white tiny dots)
++    ctx.fillStyle = '#ffffff'
++    for (const bullet of data.bullets) {
++      const pos = worldToMinimap(bullet.x, bullet.y)
++      
++      ctx.beginPath()
++      ctx.arc(pos.x, pos.y, 1, 0, Math.PI * 2)
++      ctx.fill()
++    }
++
++    // Draw ship (bright dot/triangle on top)
++    const shipPos = worldToMinimap(data.ship.x, data.ship.y)
++    
++    // Draw ship as bright triangle
++    ctx.fillStyle = '#00ffff'
++    ctx.strokeStyle = '#ffffff'
++    ctx.lineWidth = 1
++    
++    const shipSize = 3
++    ctx.beginPath()
++    // Triangle pointing up (ship direction would require rotation data)
++    ctx.moveTo(shipPos.x, shipPos.y - shipSize)
++    ctx.lineTo(shipPos.x - shipSize, shipPos.y + shipSize)
++    ctx.lineTo(shipPos.x + shipSize, shipPos.y + shipSize)
++    ctx.closePath()
++    ctx.fill()
++    ctx.stroke()
++
++  }, [data, visible])
++
++  if (!visible || !data) {
++    return null
++  }
++
++  return (
++    <div className="minimap-wrap">
++      <div className="minimap-panel">
++        <canvas 
++          ref={canvasRef} 
++          className="minimap-canvas"
++          width={280}
++          height={187}
++        />
++      </div>
++    </div>
++  )
++}
+\ No newline at end of file
+diff --git a/reactShell/src/ui/Minimap.tsx b/reactShell/src/ui/Minimap.tsx
+new file mode 100644
+index 0000000..a21fc15
+--- /dev/null
++++ b/reactShell/src/ui/Minimap.tsx
+@@ -0,0 +1,131 @@
++// Minimap.tsx - Tactical display showing entity positions
++import { useEffect, useRef } from 'react'
++import { MiniSnapshot } from '../game/GameCanvas'
++
++interface MinimapProps {
++  data: MiniSnapshot | null
++  visible?: boolean
++}
++
++export default function Minimap({ data, visible = true }: MinimapProps) {
++  const canvasRef = useRef<HTMLCanvasElement>(null)
++
++  useEffect(() => {
++    const canvas = canvasRef.current
++    if (!canvas || !data || !visible) return
++
++    const ctx = canvas.getContext('2d')
++    if (!ctx) return
++
++    // Set canvas size
++    canvas.width = 280
++    canvas.height = 187
++
++    // Calculate scaling from world coordinates to minimap coordinates
++    // World: 750x498, Minimap: 280x187
++    const scaleX = 280 / data.world.width
++    const scaleY = 187 / data.world.height
++    
++    // Use the smaller scale to maintain aspect ratio
++    const scale = Math.min(scaleX, scaleY)
++    
++    // Calculate offset to center the scaled world
++    const scaledWorldWidth = data.world.width * scale
++    const scaledWorldHeight = data.world.height * scale
++    const offsetX = (280 - scaledWorldWidth) / 2
++    const offsetY = (187 - scaledWorldHeight) / 2
++
++    // Convert world coordinates to minimap coordinates
++    const worldToMinimap = (worldX: number, worldY: number) => {
++      // Convert from world coords (-375 to 375, -249 to 249) to minimap coords
++      const normalizedX = (worldX + data.world.width / 2) * scale
++      const normalizedY = (worldY + data.world.height / 2) * scale
++      return {
++        x: normalizedX + offsetX,
++        y: normalizedY + offsetY
++      }
++    }
++
++    // Clear canvas
++    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'
++    ctx.fillRect(0, 0, 280, 187)
++
++    // Draw asteroids (gray/ore-tinted circles)
++    ctx.fillStyle = '#808080'
++    for (const asteroid of data.asteroids) {
++      const pos = worldToMinimap(asteroid.x, asteroid.y)
++      const radius = Math.max(1, asteroid.r * scale * 0.3) // Scale down radius for minimap
++      
++      ctx.beginPath()
++      ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2)
++      ctx.fill()
++    }
++
++    // Draw hunters (red dots)
++    ctx.fillStyle = '#ff4444'
++    for (const hunter of data.hunters) {
++      const pos = worldToMinimap(hunter.x, hunter.y)
++      const radius = Math.max(2, hunter.r * scale * 0.5) // Slightly larger than bullets
++      
++      ctx.beginPath()
++      ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2)
++      ctx.fill()
++    }
++
++    // Draw enemy bullets (red tiny dots)
++    ctx.fillStyle = '#ff6666'
++    for (const bullet of data.enemyBullets) {
++      const pos = worldToMinimap(bullet.x, bullet.y)
++      
++      ctx.beginPath()
++      ctx.arc(pos.x, pos.y, 1, 0, Math.PI * 2)
++      ctx.fill()
++    }
++
++    // Draw player bullets (white tiny dots)
++    ctx.fillStyle = '#ffffff'
++    for (const bullet of data.bullets) {
++      const pos = worldToMinimap(bullet.x, bullet.y)
++      
++      ctx.beginPath()
++      ctx.arc(pos.x, pos.y, 1, 0, Math.PI * 2)
++      ctx.fill()
++    }
++
++    // Draw ship (bright dot/triangle on top)
++    const shipPos = worldToMinimap(data.ship.x, data.ship.y)
++    
++    // Draw ship as bright triangle
++    ctx.fillStyle = '#00ffff'
++    ctx.strokeStyle = '#ffffff'
++    ctx.lineWidth = 1
++    
++    const shipSize = 3
++    ctx.beginPath()
++    // Triangle pointing up (ship direction would require rotation data)
++    ctx.moveTo(shipPos.x, shipPos.y - shipSize)
++    ctx.lineTo(shipPos.x - shipSize, shipPos.y + shipSize)
++    ctx.lineTo(shipPos.x + shipSize, shipPos.y + shipSize)
++    ctx.closePath()
++    ctx.fill()
++    ctx.stroke()
++
++  }, [data, visible])
++
++  if (!visible || !data) {
++    return null
++  }
++
++  return (
++    <div className="minimap-wrap">
++      <div className="minimap-panel">
++        <canvas 
++          ref={canvasRef} 
++          className="minimap-canvas"
++          width={280}
++          height={187}
++        />
++      </div>
++    </div>
++  )
++}
+\ No newline at end of file
