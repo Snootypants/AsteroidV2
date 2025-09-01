@@ -9,6 +9,7 @@ import { Spawning } from './systems/Spawning'
 import { CollisionManager } from './systems/Collision'
 import { ParticleManager } from './entities/Particles'
 import { GameState } from './GameState'
+import { createEnemyBullets } from './systems/EnemyBullets'
 import { DevStats } from '../ui/DevPanel'
 import { DebugBus } from '../dev/DebugBus'
 
@@ -41,6 +42,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
   const collisionManagerRef = useRef<CollisionManager | null>(null)
   const particleManagerRef = useRef<ParticleManager | null>(null)
   const gameStateRef = useRef<GameState | null>(null)
+  const enemyBulletsRef = useRef<any>(null)
 
   useEffect(() => {
     if (!canvasRef.current) return
@@ -60,7 +62,11 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
     const ship = new Ship(scene, bulletManager)
     const spawning = new Spawning(scene)
     const particleManager = new ParticleManager(scene)
+    const enemyBullets = createEnemyBullets(scene)
     const collisionManager = new CollisionManager(bulletManager, spawning, ship, gameState, scene)
+    
+    // Connect enemy bullets to collision manager
+    collisionManager.setEnemyBullets(enemyBullets)
     
     shipRef.current = ship
     inputRef.current = input
@@ -69,6 +75,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
     collisionManagerRef.current = collisionManager
     particleManagerRef.current = particleManager
     gameStateRef.current = gameState
+    enemyBulletsRef.current = enemyBullets
     
     // Initialize wave 1
     spawning.initializeWave(gameState.getWave())
@@ -145,6 +152,22 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
       // Update asteroids
       spawning.update(dt)
       
+      // Update hunters (AI and firing)
+      const hunters = spawning.getHunters()
+      for (const hunter of hunters) {
+        hunter.update(dt, ship.getPosition())
+        
+        // Check if hunter can fire
+        if (hunter.canFire(performance.now())) {
+          const firingAngle = hunter.getFiringAngle(ship.getPosition())
+          enemyBullets.fire(hunter.getPosition(), firingAngle)
+          hunter.markFired(performance.now())
+        }
+      }
+      
+      // Update enemy bullets
+      enemyBullets.update(dt)
+      
       // Update particles
       particleManager.update(dt)
       
@@ -156,6 +179,8 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
         if (event.type === 'bullet-asteroid' && event.asteroidSize) {
           particleManager.asteroidBurst(event.position, event.asteroidSize)
         } else if (event.type === 'ship-asteroid') {
+          particleManager.shipBurst(event.position)
+        } else if (event.type === 'enemy-bullet-ship') {
           particleManager.shipBurst(event.position)
         }
       }
@@ -192,7 +217,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
             ships: 1, 
             asteroids: spawning.getAsteroidCount(), 
             bullets: bulletManager.getActiveCount(), 
-            other: particleManager.getActiveCount() 
+            other: particleManager.getActiveCount() + spawning.getHunterCount() + enemyBullets.getActiveCount() 
           },
           score: gameState.getScore(),
           wave: gameState.getWave(),

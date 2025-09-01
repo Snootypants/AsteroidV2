@@ -1,0 +1,653 @@
+diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
+index 00ab102..e82991a 100644
+--- a/reactShell/src/game/GameCanvas.tsx
++++ b/reactShell/src/game/GameCanvas.tsx
+@@ -9,6 +9,7 @@ import { Spawning } from './systems/Spawning'
+ import { CollisionManager } from './systems/Collision'
+ import { ParticleManager } from './entities/Particles'
+ import { GameState } from './GameState'
++import { createEnemyBullets } from './systems/EnemyBullets'
+ import { DevStats } from '../ui/DevPanel'
+ import { DebugBus } from '../dev/DebugBus'
+ 
+@@ -41,6 +42,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+   const collisionManagerRef = useRef<CollisionManager | null>(null)
+   const particleManagerRef = useRef<ParticleManager | null>(null)
+   const gameStateRef = useRef<GameState | null>(null)
++  const enemyBulletsRef = useRef<any>(null)
+ 
+   useEffect(() => {
+     if (!canvasRef.current) return
+@@ -60,8 +62,12 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+     const ship = new Ship(scene, bulletManager)
+     const spawning = new Spawning(scene)
+     const particleManager = new ParticleManager(scene)
++    const enemyBullets = createEnemyBullets(scene)
+     const collisionManager = new CollisionManager(bulletManager, spawning, ship, gameState, scene)
+     
++    // Connect enemy bullets to collision manager
++    collisionManager.setEnemyBullets(enemyBullets)
++    
+     shipRef.current = ship
+     inputRef.current = input
+     bulletManagerRef.current = bulletManager
+@@ -69,6 +75,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+     collisionManagerRef.current = collisionManager
+     particleManagerRef.current = particleManager
+     gameStateRef.current = gameState
++    enemyBulletsRef.current = enemyBullets
+     
+     // Initialize wave 1
+     spawning.initializeWave(gameState.getWave())
+@@ -145,6 +152,22 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+       // Update asteroids
+       spawning.update(dt)
+       
++      // Update hunters (AI and firing)
++      const hunters = spawning.getHunters()
++      for (const hunter of hunters) {
++        hunter.update(dt, ship.getPosition())
++        
++        // Check if hunter can fire
++        if (hunter.canFire(performance.now())) {
++          const firingAngle = hunter.getFiringAngle(ship.getPosition())
++          enemyBullets.fire(hunter.getPosition(), firingAngle)
++          hunter.markFired(performance.now())
++        }
++      }
++      
++      // Update enemy bullets
++      enemyBullets.update(dt)
++      
+       // Update particles
+       particleManager.update(dt)
+       
+@@ -157,6 +180,8 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+           particleManager.asteroidBurst(event.position, event.asteroidSize)
+         } else if (event.type === 'ship-asteroid') {
+           particleManager.shipBurst(event.position)
++        } else if (event.type === 'enemy-bullet-ship') {
++          particleManager.shipBurst(event.position)
+         }
+       }
+       
+@@ -192,7 +217,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+             ships: 1, 
+             asteroids: spawning.getAsteroidCount(), 
+             bullets: bulletManager.getActiveCount(), 
+-            other: particleManager.getActiveCount() 
++            other: particleManager.getActiveCount() + spawning.getHunterCount() + enemyBullets.getActiveCount() 
+           },
+           score: gameState.getScore(),
+           wave: gameState.getWave(),
+diff --git a/reactShell/src/game/entities/EnemyHunter.ts b/reactShell/src/game/entities/EnemyHunter.ts
+index 2f2868d..809b1db 100644
+--- a/reactShell/src/game/entities/EnemyHunter.ts
++++ b/reactShell/src/game/entities/EnemyHunter.ts
+@@ -1,2 +1,187 @@
+-// EnemyHunter.ts - Hunter AI
+-export class EnemyHunter {}
+\ No newline at end of file
++// EnemyHunter.ts - Hunter AI with strafing behavior
++import * as THREE from 'three'
++
++// Constants from requirements
++const HUNTER_RADIUS = 1.2
++const HUNTER_ACCEL = 20
++const HUNTER_MAX_SPEED = 26
++const FIRE_RATE = 0.9 // seconds
++const BULLET_SPEED = 55
++const BULLET_LIFE = 1.6 // seconds
++const PREFERRED_DISTANCE = 14 // strafing orbit distance
++const SPEED_SCALING = 1.2 // multiplier per level
++
++// World bounds for wrapping
++const WORLD = {
++  width: 750,
++  height: 498,
++}
++
++// Sprite selection helper
++class SpriteSelector {
++  private static lastSprite: string | null = null
++  private static availableSprites = [
++    'assets/boss/boss1.png',
++    'assets/boss/boss2.png', 
++    'assets/boss/boss3.png',
++    'assets/boss/boss4.png',
++    'assets/boss/boss5.png',
++    'assets/boss/boss6.png',
++    'assets/boss/boss7.png',
++    'assets/boss/boss8.png',
++    'assets/boss/boss9.png',
++    'assets/boss/boss10.png'
++  ]
++
++  static selectRandomSprite(): string {
++    let candidates = [...this.availableSprites]
++    
++    // Remove last sprite to avoid immediate repeats
++    if (this.lastSprite) {
++      candidates = candidates.filter(sprite => sprite !== this.lastSprite)
++    }
++    
++    const selected = candidates[Math.floor(Math.random() * candidates.length)]
++    this.lastSprite = selected
++    return selected
++  }
++}
++
++export class EnemyHunter {
++  object: THREE.Object3D
++  radius: number
++  level: number
++  lastFireAt: number
++  
++  private velocity: THREE.Vector2
++  private maxSpeed: number
++  private fireRate: number
++  
++  constructor(level: number, pos: THREE.Vector2, spriteUrl: string) {
++    this.level = level
++    this.radius = HUNTER_RADIUS
++    this.lastFireAt = 0
++    this.velocity = new THREE.Vector2(0, 0)
++    
++    // Speed scaling per level
++    this.maxSpeed = HUNTER_MAX_SPEED * Math.pow(SPEED_SCALING, level - 1)
++    this.fireRate = FIRE_RATE
++    
++    // Create visual representation
++    this.object = new THREE.Object3D()
++    this.object.position.set(pos.x, pos.y, 0)
++    
++    // Create sprite mesh
++    const loader = new THREE.TextureLoader()
++    loader.load(spriteUrl, (texture) => {
++      const material = new THREE.SpriteMaterial({ map: texture })
++      const sprite = new THREE.Sprite(material)
++      
++      // Scale sprite to appropriate size (roughly 24 units wide)
++      sprite.scale.set(24, 24, 1)
++      this.object.add(sprite)
++    })
++    
++    // Store hunter data
++    this.object.userData = {
++      type: 'enemy-hunter',
++      radius: this.radius,
++      level: this.level,
++      velocity: this.velocity
++    }
++  }
++  
++  // Strafing AI: maintain preferred distance while moving tangentially
++  update(dt: number, shipPos: THREE.Vector2): void {
++    const hunterPos = new THREE.Vector2(this.object.position.x, this.object.position.y)
++    const toShip = shipPos.clone().sub(hunterPos)
++    const distToShip = toShip.length()
++    
++    // Calculate desired movement
++    let acceleration = new THREE.Vector2(0, 0)
++    
++    if (distToShip > 0) {
++      // Normalize direction to ship
++      const dirToShip = toShip.clone().normalize()
++      
++      // Distance-based behavior
++      if (distToShip > PREFERRED_DISTANCE * 1.2) {
++        // Too far: move toward ship
++        acceleration = dirToShip.multiplyScalar(HUNTER_ACCEL)
++      } else if (distToShip < PREFERRED_DISTANCE * 0.8) {
++        // Too close: move away from ship
++        acceleration = dirToShip.multiplyScalar(-HUNTER_ACCEL)
++      } else {
++        // At preferred distance: strafe tangentially
++        const tangent = new THREE.Vector2(-dirToShip.y, dirToShip.x)
++        // Add some randomness to strafing direction
++        if (Math.random() < 0.01) {
++          tangent.multiplyScalar(-1)
++        }
++        acceleration = tangent.multiplyScalar(HUNTER_ACCEL * 0.8)
++        
++        // Add slight attraction to maintain orbit
++        const radialForce = dirToShip.multiplyScalar(HUNTER_ACCEL * 0.3)
++        if (distToShip > PREFERRED_DISTANCE) {
++          acceleration.add(radialForce)
++        } else {
++          acceleration.sub(radialForce)
++        }
++      }
++    }
++    
++    // Apply acceleration
++    this.velocity.add(acceleration.multiplyScalar(dt))
++    
++    // Limit velocity
++    if (this.velocity.length() > this.maxSpeed) {
++      this.velocity.normalize().multiplyScalar(this.maxSpeed)
++    }
++    
++    // Update position
++    this.object.position.x += this.velocity.x * dt
++    this.object.position.y += this.velocity.y * dt
++    
++    // World wrapping
++    const halfWidth = WORLD.width / 2
++    const halfHeight = WORLD.height / 2
++    
++    if (this.object.position.x > halfWidth) this.object.position.x = -halfWidth
++    if (this.object.position.x < -halfWidth) this.object.position.x = halfWidth
++    if (this.object.position.y > halfHeight) this.object.position.y = -halfHeight
++    if (this.object.position.y < -halfHeight) this.object.position.y = halfHeight
++    
++    // Rotate to face movement direction (for visual appeal)
++    if (this.velocity.length() > 0.1) {
++      const angle = Math.atan2(this.velocity.y, this.velocity.x)
++      this.object.rotation.z = angle
++    }
++  }
++  
++  canFire(now: number): boolean {
++    return (now - this.lastFireAt) >= (this.fireRate * 1000)
++  }
++  
++  // Get position as Vector2
++  getPosition(): THREE.Vector2 {
++    return new THREE.Vector2(this.object.position.x, this.object.position.y)
++  }
++  
++  // Get firing angle (toward ship)
++  getFiringAngle(shipPos: THREE.Vector2): number {
++    const hunterPos = this.getPosition()
++    const toShip = shipPos.clone().sub(hunterPos)
++    return Math.atan2(toShip.y, toShip.x)
++  }
++  
++  // Mark as fired
++  markFired(now: number): void {
++    this.lastFireAt = now
++  }
++  
++  // Static factory method with automatic sprite selection
++  static create(level: number, pos: THREE.Vector2): EnemyHunter {
++    const spriteUrl = SpriteSelector.selectRandomSprite()
++    return new EnemyHunter(level, pos, spriteUrl)
++  }
++}
+\ No newline at end of file
+diff --git a/reactShell/src/game/systems/Collision.ts b/reactShell/src/game/systems/Collision.ts
+index edae1de..56c2bc0 100644
+--- a/reactShell/src/game/systems/Collision.ts
++++ b/reactShell/src/game/systems/Collision.ts
+@@ -8,7 +8,7 @@ import type { Spawning } from './Spawning'
+ import type { GameState } from '../GameState'
+ 
+ export interface CollisionEvent {
+-  type: 'bullet-asteroid' | 'ship-asteroid'
++  type: 'bullet-asteroid' | 'ship-asteroid' | 'enemy-bullet-ship'
+   position: THREE.Vector2
+   asteroidSize?: 'large' | 'medium' | 'small'
+   damage?: number
+@@ -20,6 +20,7 @@ export class CollisionManager {
+   private ship: Ship
+   private gameState: GameState
+   private scene: THREE.Scene
++  private enemyBullets: any // EnemyBullets system will be injected
+   
+   constructor(
+     bulletManager: BulletManager,
+@@ -33,6 +34,12 @@ export class CollisionManager {
+     this.ship = ship
+     this.gameState = gameState
+     this.scene = scene
++    this.enemyBullets = null
++  }
++
++  // Set enemy bullets system (will be called from GameCanvas)
++  setEnemyBullets(enemyBullets: any): void {
++    this.enemyBullets = enemyBullets
+   }
+ 
+   // Main collision detection method
+@@ -47,6 +54,12 @@ export class CollisionManager {
+     const shipAsteroidEvents = this.checkShipAsteroidCollisions()
+     events.push(...shipAsteroidEvents)
+     
++    // Check enemy bullet-ship collisions (if enemy bullets system is available)
++    if (this.enemyBullets) {
++      const enemyBulletShipEvents = this.checkEnemyBulletShipCollisions()
++      events.push(...enemyBulletShipEvents)
++    }
++    
+     return events
+   }
+ 
+@@ -166,4 +179,51 @@ export class CollisionManager {
+       damage: 1
+     }
+   }
++
++  // Check enemy bullet-ship collisions
++  private checkEnemyBulletShipCollisions(): CollisionEvent[] {
++    const events: CollisionEvent[] = []
++    
++    if (!this.enemyBullets || !this.ship.object.userData.alive) return events
++    
++    const shipPos = this.ship.getPosition()
++    const shipRadius = this.ship.object.userData.radius
++    
++    // Check if ship is invulnerable
++    const shipData = this.ship.object.userData
++    if (shipData.invulnerable) return events
++    
++    const enemyBullets = this.enemyBullets.getAll()
++    
++    for (const bulletData of enemyBullets) {
++      if (this.circleCollision(bulletData.pos, bulletData.radius, shipPos, shipRadius)) {
++        // Handle collision
++        const event = this.handleEnemyBulletShipHit(bulletData)
++        if (event) {
++          events.push(event)
++        }
++      }
++    }
++    
++    return events
++  }
++
++  // Handle enemy bullet hitting ship
++  private handleEnemyBulletShipHit(bulletData: any): CollisionEvent | null {
++    if (!this.ship.object.userData.alive) return null
++    
++    const shipPos = this.ship.getPosition()
++    
++    // Expire the enemy bullet
++    this.enemyBullets.expire(bulletData.bullet)
++    
++    // For now, just create the event for particle effects
++    // Later can implement ship damage/lives system
++    
++    return {
++      type: 'enemy-bullet-ship',
++      position: shipPos.clone(),
++      damage: 1
++    }
++  }
+ }
+\ No newline at end of file
+diff --git a/reactShell/src/game/systems/Spawning.ts b/reactShell/src/game/systems/Spawning.ts
+index 1f7f443..4561fa6 100644
+--- a/reactShell/src/game/systems/Spawning.ts
++++ b/reactShell/src/game/systems/Spawning.ts
+@@ -1,6 +1,7 @@
+ // Spawning.ts - Wave generation, enemy spawning
+ import * as THREE from 'three'
+ import { Asteroid, chooseOreType, type AsteroidSize, type OreType } from '../entities/Asteroid'
++import { EnemyHunter } from '../entities/EnemyHunter'
+ 
+ const WORLD = {
+   width: 750,
+@@ -13,6 +14,7 @@ const SPAWN_BUFFER = 20 // Units outside world bounds to spawn asteroids
+ export class Spawning {
+   private scene: THREE.Scene
+   private asteroids: Asteroid[] = []
++  private hunters: EnemyHunter[] = []
+ 
+   constructor(scene: THREE.Scene) {
+     this.scene = scene
+@@ -81,6 +83,11 @@ export class Spawning {
+     const asteroidCount = (3 + waveNum) * 2
+     this.clearAll() // Clear any existing asteroids
+     this.spawnAsteroids(asteroidCount, 'large')
++    
++    // Spawn hunters for wave ≥ 3
++    if (waveNum >= 3) {
++      this.spawnHunters(waveNum)
++    }
+   }
+ 
+   // Add asteroid to tracking (for split asteroids)
+@@ -97,7 +104,7 @@ export class Spawning {
+     }
+   }
+ 
+-  // Update all asteroids
++  // Update all asteroids and hunters
+   update(dt: number): void {
+     // Update all asteroids
+     for (const asteroid of this.asteroids) {
+@@ -114,6 +121,9 @@ export class Spawning {
+       }
+       return true
+     })
++    
++    // Update hunters (they'll be updated from GameCanvas with ship position)
++    // Just keep them alive for now - actual update happens in GameCanvas
+   }
+ 
+   // Split asteroid and manage the resulting pieces
+@@ -158,11 +168,79 @@ export class Spawning {
+     this.clearAll()
+   }
+ 
+-  // Clear all asteroids
++  // Clear all asteroids and hunters
+   clearAll(): void {
+     for (const asteroid of this.asteroids) {
+       asteroid.destroy(this.scene)
+     }
+     this.asteroids = []
++    
++    for (const hunter of this.hunters) {
++      this.scene.remove(hunter.object)
++    }
++    this.hunters = []
++  }
++
++  // Spawn hunters for wave ≥ 3
++  private spawnHunters(waveNum: number): void {
++    // count = Math.min(1 + Math.floor((wave - 2)/2), 4)
++    const hunterCount = Math.min(1 + Math.floor((waveNum - 2) / 2), 4)
++    
++    for (let i = 0; i < hunterCount; i++) {
++      // level = 1..n (affects speed scaling)
++      const level = Math.min(waveNum - 2, 10) // Cap at level 10 for balance
++      
++      // Spawn outside world by 20 units buffer like asteroids
++      const edge = Math.floor(Math.random() * 4) // 0=top, 1=right, 2=bottom, 3=left
++      let x: number, y: number
++      
++      const halfWidth = WORLD.width / 2   // ±375
++      const halfHeight = WORLD.height / 2 // ±249
++      const margin = SPAWN_BUFFER // 20 units outside world bounds
++      
++      switch (edge) {
++        case 0: // Top
++          x = (Math.random() - 0.5) * WORLD.width
++          y = halfHeight + margin
++          break
++        case 1: // Right
++          x = halfWidth + margin
++          y = (Math.random() - 0.5) * WORLD.height
++          break
++        case 2: // Bottom
++          x = (Math.random() - 0.5) * WORLD.width
++          y = -halfHeight - margin
++          break
++        case 3: // Left
++        default:
++          x = -halfWidth - margin
++          y = (Math.random() - 0.5) * WORLD.height
++          break
++      }
++      
++      const position = new THREE.Vector2(x, y)
++      const hunter = EnemyHunter.create(level, position)
++      this.hunters.push(hunter)
++      this.scene.add(hunter.object)
++    }
++  }
++
++  // Get all active hunters
++  getHunters(): EnemyHunter[] {
++    return this.hunters
++  }
++
++  // Get hunter count
++  getHunterCount(): number {
++    return this.hunters.length
++  }
++
++  // Remove hunter (for collision handling)
++  removeHunter(hunter: EnemyHunter): void {
++    const index = this.hunters.indexOf(hunter)
++    if (index !== -1) {
++      this.hunters.splice(index, 1)
++      this.scene.remove(hunter.object)
++    }
+   }
+ }
+\ No newline at end of file
+diff --git a/reactShell/src/game/systems/EnemyBullets.ts b/reactShell/src/game/systems/EnemyBullets.ts
+new file mode 100644
+index 0000000..298f26d
+--- /dev/null
++++ b/reactShell/src/game/systems/EnemyBullets.ts
+@@ -0,0 +1,135 @@
++// EnemyBullets.ts - Pooled enemy bullet system
++import * as THREE from 'three'
++
++// Constants from requirements
++const BULLET_SPEED = 55
++const BULLET_LIFE = 1.6 // seconds  
++const BULLET_RADIUS = 1.5 // small radius for collisions
++const POOL_SIZE = 50 // Maximum simultaneous enemy bullets
++
++// World bounds for wrapping
++const WORLD = {
++  width: 750,
++  height: 498,
++}
++
++interface EnemyBullet {
++  mesh: THREE.Mesh
++  velocity: THREE.Vector2
++  timeToLive: number
++  active: boolean
++}
++
++export function createEnemyBullets(scene: THREE.Scene) {
++  const bullets: EnemyBullet[] = []
++  
++  // Pre-create bullet pool
++  for (let i = 0; i < POOL_SIZE; i++) {
++    const geometry = new THREE.CircleGeometry(BULLET_RADIUS, 8)
++    const material = new THREE.MeshBasicMaterial({ 
++      color: 0xff4444, // Red color to distinguish from player bullets
++      transparent: true,
++      opacity: 0.9
++    })
++    const mesh = new THREE.Mesh(geometry, material)
++    
++    // Store bullet data
++    mesh.userData = {
++      type: 'enemy-bullet',
++      radius: BULLET_RADIUS
++    }
++    
++    const bullet: EnemyBullet = {
++      mesh,
++      velocity: new THREE.Vector2(0, 0),
++      timeToLive: 0,
++      active: false
++    }
++    
++    bullets.push(bullet)
++    scene.add(mesh)
++    mesh.visible = false // Start invisible
++  }
++  
++  return {
++    // Fire a bullet from position at angle
++    fire(from: THREE.Vector2, angleRad: number): void {
++      // Find inactive bullet in pool
++      const bullet = bullets.find(b => !b.active)
++      if (!bullet) return // Pool exhausted
++      
++      // Activate bullet
++      bullet.active = true
++      bullet.timeToLive = BULLET_LIFE
++      bullet.mesh.visible = true
++      
++      // Set position
++      bullet.mesh.position.set(from.x, from.y, 0)
++      
++      // Set velocity
++      bullet.velocity.set(
++        Math.cos(angleRad) * BULLET_SPEED,
++        Math.sin(angleRad) * BULLET_SPEED
++      )
++    },
++    
++    // Update all active bullets
++    update(dt: number): void {
++      for (const bullet of bullets) {
++        if (!bullet.active) continue
++        
++        // Update lifetime
++        bullet.timeToLive -= dt
++        if (bullet.timeToLive <= 0) {
++          // Expire bullet
++          bullet.active = false
++          bullet.mesh.visible = false
++          continue
++        }
++        
++        // Update position
++        bullet.mesh.position.x += bullet.velocity.x * dt
++        bullet.mesh.position.y += bullet.velocity.y * dt
++        
++        // World wrapping
++        const halfWidth = WORLD.width / 2
++        const halfHeight = WORLD.height / 2
++        
++        if (bullet.mesh.position.x > halfWidth) {
++          bullet.mesh.position.x = -halfWidth
++        } else if (bullet.mesh.position.x < -halfWidth) {
++          bullet.mesh.position.x = halfWidth
++        }
++        
++        if (bullet.mesh.position.y > halfHeight) {
++          bullet.mesh.position.y = -halfHeight
++        } else if (bullet.mesh.position.y < -halfHeight) {
++          bullet.mesh.position.y = halfHeight
++        }
++      }
++    },
++    
++    // Get all active bullets for collision detection
++    getAll(): { pos: THREE.Vector2; radius: number; object: THREE.Object3D; bullet: EnemyBullet }[] {
++      return bullets
++        .filter(b => b.active)
++        .map(b => ({
++          pos: new THREE.Vector2(b.mesh.position.x, b.mesh.position.y),
++          radius: BULLET_RADIUS,
++          object: b.mesh,
++          bullet: b
++        }))
++    },
++    
++    // Expire a specific bullet (for collision handling)
++    expire(bullet: EnemyBullet): void {
++      bullet.active = false
++      bullet.mesh.visible = false
++    },
++    
++    // Get active count for stats
++    getActiveCount(): number {
++      return bullets.filter(b => b.active).length
++    }
++  }
++}
+\ No newline at end of file

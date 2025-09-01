@@ -1,6 +1,7 @@
 // Spawning.ts - Wave generation, enemy spawning
 import * as THREE from 'three'
 import { Asteroid, chooseOreType, type AsteroidSize, type OreType } from '../entities/Asteroid'
+import { EnemyHunter } from '../entities/EnemyHunter'
 
 const WORLD = {
   width: 750,
@@ -13,6 +14,7 @@ const SPAWN_BUFFER = 20 // Units outside world bounds to spawn asteroids
 export class Spawning {
   private scene: THREE.Scene
   private asteroids: Asteroid[] = []
+  private hunters: EnemyHunter[] = []
 
   constructor(scene: THREE.Scene) {
     this.scene = scene
@@ -81,6 +83,11 @@ export class Spawning {
     const asteroidCount = (3 + waveNum) * 2
     this.clearAll() // Clear any existing asteroids
     this.spawnAsteroids(asteroidCount, 'large')
+    
+    // Spawn hunters for wave ≥ 3
+    if (waveNum >= 3) {
+      this.spawnHunters(waveNum)
+    }
   }
 
   // Add asteroid to tracking (for split asteroids)
@@ -97,7 +104,7 @@ export class Spawning {
     }
   }
 
-  // Update all asteroids
+  // Update all asteroids and hunters
   update(dt: number): void {
     // Update all asteroids
     for (const asteroid of this.asteroids) {
@@ -114,6 +121,9 @@ export class Spawning {
       }
       return true
     })
+    
+    // Update hunters (they'll be updated from GameCanvas with ship position)
+    // Just keep them alive for now - actual update happens in GameCanvas
   }
 
   // Split asteroid and manage the resulting pieces
@@ -158,11 +168,79 @@ export class Spawning {
     this.clearAll()
   }
 
-  // Clear all asteroids
+  // Clear all asteroids and hunters
   clearAll(): void {
     for (const asteroid of this.asteroids) {
       asteroid.destroy(this.scene)
     }
     this.asteroids = []
+    
+    for (const hunter of this.hunters) {
+      this.scene.remove(hunter.object)
+    }
+    this.hunters = []
+  }
+
+  // Spawn hunters for wave ≥ 3
+  private spawnHunters(waveNum: number): void {
+    // count = Math.min(1 + Math.floor((wave - 2)/2), 4)
+    const hunterCount = Math.min(1 + Math.floor((waveNum - 2) / 2), 4)
+    
+    for (let i = 0; i < hunterCount; i++) {
+      // level = 1..n (affects speed scaling)
+      const level = Math.min(waveNum - 2, 10) // Cap at level 10 for balance
+      
+      // Spawn outside world by 20 units buffer like asteroids
+      const edge = Math.floor(Math.random() * 4) // 0=top, 1=right, 2=bottom, 3=left
+      let x: number, y: number
+      
+      const halfWidth = WORLD.width / 2   // ±375
+      const halfHeight = WORLD.height / 2 // ±249
+      const margin = SPAWN_BUFFER // 20 units outside world bounds
+      
+      switch (edge) {
+        case 0: // Top
+          x = (Math.random() - 0.5) * WORLD.width
+          y = halfHeight + margin
+          break
+        case 1: // Right
+          x = halfWidth + margin
+          y = (Math.random() - 0.5) * WORLD.height
+          break
+        case 2: // Bottom
+          x = (Math.random() - 0.5) * WORLD.width
+          y = -halfHeight - margin
+          break
+        case 3: // Left
+        default:
+          x = -halfWidth - margin
+          y = (Math.random() - 0.5) * WORLD.height
+          break
+      }
+      
+      const position = new THREE.Vector2(x, y)
+      const hunter = EnemyHunter.create(level, position)
+      this.hunters.push(hunter)
+      this.scene.add(hunter.object)
+    }
+  }
+
+  // Get all active hunters
+  getHunters(): EnemyHunter[] {
+    return this.hunters
+  }
+
+  // Get hunter count
+  getHunterCount(): number {
+    return this.hunters.length
+  }
+
+  // Remove hunter (for collision handling)
+  removeHunter(hunter: EnemyHunter): void {
+    const index = this.hunters.indexOf(hunter)
+    if (index !== -1) {
+      this.hunters.splice(index, 1)
+      this.scene.remove(hunter.object)
+    }
   }
 }

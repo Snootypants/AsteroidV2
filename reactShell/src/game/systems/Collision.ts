@@ -8,7 +8,7 @@ import type { Spawning } from './Spawning'
 import type { GameState } from '../GameState'
 
 export interface CollisionEvent {
-  type: 'bullet-asteroid' | 'ship-asteroid'
+  type: 'bullet-asteroid' | 'ship-asteroid' | 'enemy-bullet-ship'
   position: THREE.Vector2
   asteroidSize?: 'large' | 'medium' | 'small'
   damage?: number
@@ -20,6 +20,7 @@ export class CollisionManager {
   private ship: Ship
   private gameState: GameState
   private scene: THREE.Scene
+  private enemyBullets: any // EnemyBullets system will be injected
   
   constructor(
     bulletManager: BulletManager,
@@ -33,6 +34,12 @@ export class CollisionManager {
     this.ship = ship
     this.gameState = gameState
     this.scene = scene
+    this.enemyBullets = null
+  }
+
+  // Set enemy bullets system (will be called from GameCanvas)
+  setEnemyBullets(enemyBullets: any): void {
+    this.enemyBullets = enemyBullets
   }
 
   // Main collision detection method
@@ -46,6 +53,12 @@ export class CollisionManager {
     // Check ship-asteroid collisions
     const shipAsteroidEvents = this.checkShipAsteroidCollisions()
     events.push(...shipAsteroidEvents)
+    
+    // Check enemy bullet-ship collisions (if enemy bullets system is available)
+    if (this.enemyBullets) {
+      const enemyBulletShipEvents = this.checkEnemyBulletShipCollisions()
+      events.push(...enemyBulletShipEvents)
+    }
     
     return events
   }
@@ -163,6 +176,53 @@ export class CollisionManager {
       type: 'ship-asteroid',
       position: position.clone(),
       asteroidSize: size,
+      damage: 1
+    }
+  }
+
+  // Check enemy bullet-ship collisions
+  private checkEnemyBulletShipCollisions(): CollisionEvent[] {
+    const events: CollisionEvent[] = []
+    
+    if (!this.enemyBullets || !this.ship.object.userData.alive) return events
+    
+    const shipPos = this.ship.getPosition()
+    const shipRadius = this.ship.object.userData.radius
+    
+    // Check if ship is invulnerable
+    const shipData = this.ship.object.userData
+    if (shipData.invulnerable) return events
+    
+    const enemyBullets = this.enemyBullets.getAll()
+    
+    for (const bulletData of enemyBullets) {
+      if (this.circleCollision(bulletData.pos, bulletData.radius, shipPos, shipRadius)) {
+        // Handle collision
+        const event = this.handleEnemyBulletShipHit(bulletData)
+        if (event) {
+          events.push(event)
+        }
+      }
+    }
+    
+    return events
+  }
+
+  // Handle enemy bullet hitting ship
+  private handleEnemyBulletShipHit(bulletData: any): CollisionEvent | null {
+    if (!this.ship.object.userData.alive) return null
+    
+    const shipPos = this.ship.getPosition()
+    
+    // Expire the enemy bullet
+    this.enemyBullets.expire(bulletData.bullet)
+    
+    // For now, just create the event for particle effects
+    // Later can implement ship damage/lives system
+    
+    return {
+      type: 'enemy-bullet-ship',
+      position: shipPos.clone(),
       damage: 1
     }
   }
