@@ -1,5 +1,6 @@
 // Asteroid.ts - Asteroid variants
 import * as THREE from 'three'
+import { WORLD_BOUNDS } from '../utils/units'
 
 // Constants from vanilla (lines 28-33)
 const ASTEROIDS = {
@@ -9,10 +10,6 @@ const ASTEROIDS = {
   baseSpeed: 8,
 }
 
-const WORLD = {
-  width: 750,
-  height: 498,
-}
 
 // Ore types with colors and probabilities (from lines 819-825)
 export type OreType = 'iron' | 'gold' | 'platinum' | 'adamantium'
@@ -87,10 +84,12 @@ export class Asteroid {
     outlineMesh.position.z = -0.01 // Place behind main disk
     group.add(outlineMesh)
     
-    // Create main asteroid disk
+    // Create main asteroid disk with enhanced brightness
     const geometry = new THREE.CircleGeometry(radius, 16)
+    const baseColor = ORE_COLORS[this.oreType]
     const material = new THREE.MeshBasicMaterial({ 
-      color: ORE_COLORS[this.oreType],
+      // Enhanced brightness instead of emissive (not supported by MeshBasicMaterial)
+      color: new THREE.Color(baseColor).multiplyScalar(1.2), // Brighter color
       transparent: false
     })
     const mainMesh = new THREE.Mesh(geometry, material)
@@ -106,20 +105,17 @@ export class Asteroid {
     this.object.position.x += this.velocity.x * dt
     this.object.position.y += this.velocity.y * dt
     
-    // World wrapping at ±375×±249
-    const halfWidth = WORLD.width / 2  // ±375
-    const halfHeight = WORLD.height / 2 // ±249
-    
-    if (this.object.position.x > halfWidth) {
-      this.object.position.x = -halfWidth
-    } else if (this.object.position.x < -halfWidth) {
-      this.object.position.x = halfWidth
+    // World wrapping at world bounds
+    if (this.object.position.x > WORLD_BOUNDS.x) {
+      this.object.position.x = -WORLD_BOUNDS.x
+    } else if (this.object.position.x < -WORLD_BOUNDS.x) {
+      this.object.position.x = WORLD_BOUNDS.x
     }
     
-    if (this.object.position.y > halfHeight) {
-      this.object.position.y = -halfHeight
-    } else if (this.object.position.y < -halfHeight) {
-      this.object.position.y = halfHeight
+    if (this.object.position.y > WORLD_BOUNDS.y) {
+      this.object.position.y = -WORLD_BOUNDS.y
+    } else if (this.object.position.y < -WORLD_BOUNDS.y) {
+      this.object.position.y = WORLD_BOUNDS.y
     }
     
     // Rotation

@@ -14,6 +14,7 @@ import { GameState, selectScore, selectWave, selectCombo, selectCurrency, select
 import { createEnemyBullets } from './systems/EnemyBullets'
 import { DevStats } from '../ui/DevPanel'
 import { DebugBus } from '../dev/DebugBus'
+import { VISIBLE_HEIGHT, getVisibleWidth, pxToWorld, worldToPx } from '../utils/units'
 
 // HUD data type for passing game state to UI
 export interface HudData {
@@ -41,9 +42,11 @@ const WORLD = {
   height: 498,
 }
 
-// Pixel-perfect orthographic camera mapping
-function makeOrthoCamera(w: number, h: number): THREE.OrthographicCamera {
-  const halfW = w / 2, halfH = h / 2
+// World-unit based orthographic camera (vanilla parity)
+function makeOrthoCamera(aspect: number): THREE.OrthographicCamera {
+  const visibleWidth = getVisibleWidth(aspect)
+  const halfW = visibleWidth / 2
+  const halfH = VISIBLE_HEIGHT / 2
   const cam = new THREE.OrthographicCamera(-halfW, halfW, halfH, -halfH, 0.1, 1000)
   cam.position.set(0, 0, 10)
   cam.lookAt(0, 0, 0)
@@ -79,7 +82,7 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
     // Basic Three.js setup - placeholder for full game integration
     const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current })
     const scene = new THREE.Scene()
-    const camera = makeOrthoCamera(window.innerWidth, window.innerHeight)
+    const camera = makeOrthoCamera(window.innerWidth / window.innerHeight)
     
     renderer.setPixelRatio(window.devicePixelRatio)
     renderer.setSize(window.innerWidth, window.innerHeight)
@@ -132,10 +135,13 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
     const handleResize = () => {
       const width = window.innerWidth
       const height = window.innerHeight
+      const aspect = width / height
       renderer.setPixelRatio(window.devicePixelRatio)
       
-      // Update camera frustum to match new canvas size
-      const halfW = width / 2, halfH = height / 2
+      // Update camera to maintain world-unit scale
+      const visibleWidth = getVisibleWidth(aspect)
+      const halfW = visibleWidth / 2
+      const halfH = VISIBLE_HEIGHT / 2
       camera.left = -halfW
       camera.right = halfW
       camera.top = halfH
@@ -148,12 +154,18 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
     window.addEventListener('resize', handleResize)
     handleResize()
 
-    // Screen to world coordinate conversion (1:1 pixel mapping)
+    // Screen to world coordinate conversion (world-unit based)
     const screenToWorld = (screenX: number, screenY: number): THREE.Vector2 => {
       const rect = canvasRef.current!.getBoundingClientRect()
-      // Convert to world coordinates (1 world unit = 1 CSS pixel)
-      const worldX = screenX - rect.left - rect.width / 2
-      const worldY = -(screenY - rect.top - rect.height / 2)
+      const aspect = rect.width / rect.height
+      const visibleWidth = getVisibleWidth(aspect)
+      
+      // Convert screen pixels to world coordinates
+      const normalizedX = (screenX - rect.left - rect.width / 2) / (rect.width / 2)
+      const normalizedY = -((screenY - rect.top - rect.height / 2) / (rect.height / 2))
+      
+      const worldX = normalizedX * (visibleWidth / 2)
+      const worldY = normalizedY * (VISIBLE_HEIGHT / 2)
       
       return new THREE.Vector2(worldX, worldY)
     }

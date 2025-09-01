@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import type { InputState } from '../Input'
 import type { BulletManager } from '../systems/BulletManager'
 import type { GameState } from '../GameState'
+import { pxToWorld, WORLD_BOUNDS } from '../utils/units'
 
 // Constants from vanilla
 const PLAYER = {
@@ -18,13 +19,9 @@ const INVULN_WAVE = 3.0   // At wave start
 const INVULN_SPAWN = 2.0  // After respawn
 const INVULN_HIT = 1.0    // After taking damage
 
-const WORLD = {
-  width: 750,
-  height: 498,
-}
 
 // Ship visual scale
-const SHIP_DESIRED_PX = 50 // tweak 90–110 for parity with vanilla screenshot
+const SHIP_DESIRED_PX = 50 // Target 50px height on screen
 const ROTATION_OFFSET = -Math.PI / 2 // Ship sprite nose points "up" (+Y)
 
 export class Ship {
@@ -74,13 +71,16 @@ export class Ship {
       texture.minFilter = THREE.NearestFilter
       texture.generateMipmaps = false
       
-      // Scale ship to desired pixel height once texture is loaded
+      // Scale ship to world units based on target pixel height
       const imgH = texture.image?.height ?? SHIP_DESIRED_PX
       const imgW = texture.image?.width ?? SHIP_DESIRED_PX
-      const scale = SHIP_DESIRED_PX / imgH
+      const aspectRatio = imgW / imgH
       
-      // Scale the mesh to achieve desired on-screen size
-      this.object.scale.set(imgW * scale, SHIP_DESIRED_PX, 1)
+      // Convert target pixel height to world units (using window height as reference)
+      const targetWorldHeight = pxToWorld(SHIP_DESIRED_PX, window.innerHeight)
+      
+      // Scale the mesh to achieve desired world size
+      this.object.scale.set(targetWorldHeight * aspectRatio, targetWorldHeight, 1)
     })
     
     // Create ship geometry with texture (placeholder size will be scaled)
@@ -97,8 +97,9 @@ export class Ship {
   }
 
   private createShieldVisual(): void {
-    // Create transparent sphere around ship for shield visual
-    const shieldGeometry = new THREE.SphereGeometry(35, 16, 12) // Slightly larger than ship
+    // Create transparent sphere around ship for shield visual (world units)
+    const shieldRadius = 3.5 // World units, roughly ship size + buffer
+    const shieldGeometry = new THREE.SphereGeometry(shieldRadius, 16, 12)
     const shieldMaterial = new THREE.MeshBasicMaterial({
       color: 0x00ffff,
       transparent: true,
@@ -203,19 +204,16 @@ export class Ship {
   }
 
   private wrap(): void {
-    const halfWidth = WORLD.width / 2
-    const halfHeight = WORLD.height / 2
-    
-    if (this.object.position.x > halfWidth) {
-      this.object.position.x = -halfWidth
-    } else if (this.object.position.x < -halfWidth) {
-      this.object.position.x = halfWidth
+    if (this.object.position.x > WORLD_BOUNDS.x) {
+      this.object.position.x = -WORLD_BOUNDS.x
+    } else if (this.object.position.x < -WORLD_BOUNDS.x) {
+      this.object.position.x = WORLD_BOUNDS.x
     }
     
-    if (this.object.position.y > halfHeight) {
-      this.object.position.y = -halfHeight
-    } else if (this.object.position.y < -halfHeight) {
-      this.object.position.y = halfHeight
+    if (this.object.position.y > WORLD_BOUNDS.y) {
+      this.object.position.y = -WORLD_BOUNDS.y
+    } else if (this.object.position.y < -WORLD_BOUNDS.y) {
+      this.object.position.y = WORLD_BOUNDS.y
     }
   }
 
@@ -233,18 +231,19 @@ export class Ship {
     this.fireCooldown = PLAYER.fireRate
   }
 
-  // Set ship pixel height for runtime tuning
-  setPixelHeight(px: number): void {
-    // Reapply texture scaling using the same logic as createShipMesh
+  // Set ship pixel height for runtime tuning (converts to world units)
+  setPixelHeight(px: number, viewportHeight: number): void {
+    const targetWorldHeight = pxToWorld(px, viewportHeight)
+    
     const material = (this.object as THREE.Mesh).material as THREE.MeshBasicMaterial
     if (material.map && material.map.image) {
       const texture = material.map
       const imgH = texture.image.height
       const imgW = texture.image.width
-      const scale = px / imgH
+      const aspectRatio = imgW / imgH
       
-      // Scale the mesh to achieve desired on-screen size
-      this.object.scale.set(imgW * scale, px, 1)
+      // Scale to target world height, maintaining aspect ratio
+      this.object.scale.set(targetWorldHeight * aspectRatio, targetWorldHeight, 1)
     }
   }
 

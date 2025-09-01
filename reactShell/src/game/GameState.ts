@@ -56,7 +56,7 @@ export class GameState {
     spread: 0,
     pierce: 0,
     ricochet: 0,
-    shieldCharges: 3,  // Start with 3 shield charges for testing
+    shieldCharges: 0,  // Start with no shields (acquired through upgrades)
     bulletBounce: 0,
     bulletLifeMul: 1.0,
     bulletSpeedMul: 1.0,
@@ -179,7 +179,7 @@ export class GameState {
       spread: 0,
       pierce: 0,
       ricochet: 0,
-      shieldCharges: 3,  // Start with 3 shield charges for testing
+      shieldCharges: 0,  // Start with no shields (acquired through upgrades)
       bulletBounce: 0,
       bulletLifeMul: 1.0,
       bulletSpeedMul: 1.0,

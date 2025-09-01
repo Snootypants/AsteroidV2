@@ -1,5 +1,6 @@
 // Bullet.ts - Projectile system
 import * as THREE from 'three'
+import { pxToWorld, WORLD_BOUNDS } from '../utils/units'
 
 // Constants from vanilla
 const BULLET = { 
@@ -8,10 +9,8 @@ const BULLET = {
   r: 0.2 
 }
 
-const WORLD = {
-  width: 750,
-  height: 498,
-}
+// Default bullet visual size in pixels
+const DEFAULT_BULLET_PX = 3
 
 export class Bullet {
   mesh: THREE.Mesh
@@ -22,12 +21,12 @@ export class Bullet {
   public isEnemy = false
 
   constructor() {
-    // Create brighter, more visible bullet visual
-    // Use slightly larger visual size (2-3px equivalent) while keeping collision radius unchanged
-    const visualRadius = 1.0 // Larger visual size for better visibility
+    // Create brighter, more visible bullet visual with world-unit scaling
+    // Convert target pixel size to world units (using window height as reference)
+    const visualRadius = pxToWorld(DEFAULT_BULLET_PX, window.innerHeight)
     const geometry = new THREE.SphereGeometry(visualRadius, 8, 6)
     const material = new THREE.MeshBasicMaterial({ 
-      color: 0xE6E6E6 // Brighter than pure white for better visibility on dark backgrounds
+      color: 0xE6E6E6, // Brighter than pure white for better visibility
     })
     this.mesh = new THREE.Mesh(geometry, material)
     this.mesh.userData = {
@@ -64,19 +63,16 @@ export class Bullet {
   }
 
   private wrap(): void {
-    const halfWidth = WORLD.width / 2  // ±375
-    const halfHeight = WORLD.height / 2 // ±249
-    
-    if (this.mesh.position.x > halfWidth) {
-      this.mesh.position.x = -halfWidth
-    } else if (this.mesh.position.x < -halfWidth) {
-      this.mesh.position.x = halfWidth
+    if (this.mesh.position.x > WORLD_BOUNDS.x) {
+      this.mesh.position.x = -WORLD_BOUNDS.x
+    } else if (this.mesh.position.x < -WORLD_BOUNDS.x) {
+      this.mesh.position.x = WORLD_BOUNDS.x
     }
     
-    if (this.mesh.position.y > halfHeight) {
-      this.mesh.position.y = -halfHeight
-    } else if (this.mesh.position.y < -halfHeight) {
-      this.mesh.position.y = halfHeight
+    if (this.mesh.position.y > WORLD_BOUNDS.y) {
+      this.mesh.position.y = -WORLD_BOUNDS.y
+    } else if (this.mesh.position.y < -WORLD_BOUNDS.y) {
+      this.mesh.position.y = WORLD_BOUNDS.y
     }
   }
 
