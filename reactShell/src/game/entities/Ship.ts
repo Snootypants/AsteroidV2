@@ -16,6 +16,10 @@ const WORLD = {
   height: 498,
 }
 
+// Ship visual scale
+const SHIP_DESIRED_PX = 100 // tweak 90–110 for parity with vanilla screenshot
+const ROTATION_OFFSET = -Math.PI / 2 // Ship sprite nose points "up" (+Y)
+
 export class Ship {
   object: THREE.Object3D
   private velocity = new THREE.Vector2(0, 0)
@@ -44,10 +48,18 @@ export class Ship {
   private createShipMesh(): THREE.Object3D {
     // Load ship texture
     const loader = new THREE.TextureLoader()
-    const shipTexture = loader.load('assets/ship/ship.png')
+    const shipTexture = loader.load('assets/ship/ship.png', (texture) => {
+      // Scale ship to desired pixel height once texture is loaded
+      const imgH = texture.image?.height ?? SHIP_DESIRED_PX
+      const imgW = texture.image?.width ?? SHIP_DESIRED_PX
+      const scale = SHIP_DESIRED_PX / imgH
+      
+      // Scale the mesh to achieve desired on-screen size
+      this.object.scale.set(imgW * scale, SHIP_DESIRED_PX, 1)
+    })
     
-    // Create ship geometry with texture (same as vanilla)
-    const shipGeometry = new THREE.PlaneGeometry(6.0, 6.0)
+    // Create ship geometry with texture (placeholder size will be scaled)
+    const shipGeometry = new THREE.PlaneGeometry(1.0, 1.0)
     const shipMaterial = new THREE.MeshBasicMaterial({
       map: shipTexture,
       transparent: true,
@@ -59,14 +71,15 @@ export class Ship {
   }
 
   setAimWorld(target: THREE.Vector2): void {
-    const dx = target.x - this.object.position.x
-    const dy = target.y - this.object.position.y
+    const pos = this.object.position
+    const dx = target.x - pos.x
+    const dy = target.y - pos.y
     const distance = Math.hypot(dx, dy)
     
     // Only update rotation if mouse is not too close to ship (vanilla behavior)
     if (distance > this.minAimDistance) {
       const angle = Math.atan2(dy, dx)
-      this.object.rotation.z = angle + Math.PI/2 // Adjust for mesh facing up by default, flipped around
+      this.object.rotation.z = angle + ROTATION_OFFSET
     }
   }
 

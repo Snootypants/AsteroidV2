@@ -11,6 +11,15 @@ const WORLD = {
   height: 498,
 }
 
+// Pixel-perfect orthographic camera mapping
+function makeOrthoCamera(w: number, h: number): THREE.OrthographicCamera {
+  const halfW = w / 2, halfH = h / 2
+  const cam = new THREE.OrthographicCamera(-halfW, halfW, halfH, -halfH, 0.1, 1000)
+  cam.position.set(0, 0, 10)
+  cam.lookAt(0, 0, 0)
+  return cam
+}
+
 export default function GameCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -20,18 +29,10 @@ export default function GameCanvas() {
     // Basic Three.js setup - placeholder for full game integration
     const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current })
     const scene = new THREE.Scene()
-    const camera = new THREE.OrthographicCamera(
-      -WORLD.width/2, WORLD.width/2, 
-      WORLD.height/2, -WORLD.height/2, 
-      0.1, 1000
-    )
+    const camera = makeOrthoCamera(window.innerWidth, window.innerHeight)
     
     renderer.setPixelRatio(window.devicePixelRatio)
     renderer.setSize(window.innerWidth, window.innerHeight)
-    
-    // Position camera for 2D view
-    camera.position.z = 5
-    camera.lookAt(0, 0, 0)
     
     // Initialize game systems
     const input = new Input()
@@ -48,22 +49,27 @@ export default function GameCanvas() {
       const width = window.innerWidth
       const height = window.innerHeight
       renderer.setPixelRatio(window.devicePixelRatio)
+      
+      // Update camera frustum to match new canvas size
+      const halfW = width / 2, halfH = height / 2
+      camera.left = -halfW
+      camera.right = halfW
+      camera.top = halfH
+      camera.bottom = -halfH
+      camera.updateProjectionMatrix()
+      
       resize(width, height)
     }
 
     window.addEventListener('resize', handleResize)
     handleResize()
 
-    // Screen to world coordinate conversion
+    // Screen to world coordinate conversion (1:1 pixel mapping)
     const screenToWorld = (screenX: number, screenY: number): THREE.Vector2 => {
-      // Convert screen coords to normalized device coordinates
       const rect = canvasRef.current!.getBoundingClientRect()
-      const x = ((screenX - rect.left) / rect.width) * 2 - 1
-      const y = -((screenY - rect.top) / rect.height) * 2 + 1
-      
-      // Convert to world coordinates using orthographic camera
-      const worldX = x * WORLD.width / 2
-      const worldY = y * WORLD.height / 2
+      // Convert to world coordinates (1 world unit = 1 CSS pixel)
+      const worldX = screenX - rect.left - rect.width / 2
+      const worldY = -(screenY - rect.top - rect.height / 2)
       
       return new THREE.Vector2(worldX, worldY)
     }
