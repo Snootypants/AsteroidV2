@@ -5,6 +5,7 @@ import { createComposer, resize, render } from './render/PostFX'
 import { Input } from './Input'
 import { Ship } from './entities/Ship'
 import { BulletManager } from './systems/BulletManager'
+import { Spawning } from './systems/Spawning'
 import { DevStats } from '../ui/DevPanel'
 import { DebugBus } from '../dev/DebugBus'
 
@@ -33,6 +34,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
   const shipRef = useRef<Ship | null>(null)
   const inputRef = useRef<Input | null>(null)
   const bulletManagerRef = useRef<BulletManager | null>(null)
+  const spawningRef = useRef<Spawning | null>(null)
 
   useEffect(() => {
     if (!canvasRef.current) return
@@ -49,10 +51,15 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
     const input = new Input()
     const bulletManager = new BulletManager(scene)
     const ship = new Ship(scene, bulletManager)
+    const spawning = new Spawning(scene)
     
     shipRef.current = ship
     inputRef.current = input
     bulletManagerRef.current = bulletManager
+    spawningRef.current = spawning
+    
+    // Initialize level with asteroids (5-8 for testing)
+    spawning.initializeLevel()
     
     // Dev panel greeting
     DebugBus.push('info', 'DevPanel ready')
@@ -123,6 +130,9 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
       // Update bullets
       bulletManager.update(dt)
       
+      // Update asteroids
+      spawning.update(dt)
+      
       // Follow ship with camera (simple following)
       const shipPos = ship.getPosition()
       camera.position.x = shipPos.x
@@ -140,7 +150,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
           fps: avgFps,
           entities: { 
             ships: 1, 
-            asteroids: 0, 
+            asteroids: spawning.getAsteroidCount(), 
             bullets: bulletManager.getActiveCount(), 
             other: 0 
           },
