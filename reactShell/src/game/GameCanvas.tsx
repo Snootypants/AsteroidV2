@@ -20,13 +20,8 @@ function makeOrthoCamera(w: number, h: number): THREE.OrthographicCamera {
   return cam
 }
 
-interface GameCanvasProps {
-  shipPixelSize?: number
-}
-
-export default function GameCanvas({ shipPixelSize }: GameCanvasProps) {
+export default function GameCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const shipRef = useRef<Ship | null>(null)
 
   useEffect(() => {
     if (!canvasRef.current) return
@@ -42,13 +37,6 @@ export default function GameCanvas({ shipPixelSize }: GameCanvasProps) {
     // Initialize game systems
     const input = new Input()
     const ship = new Ship(scene)
-    shipRef.current = ship
-    
-    // Apply initial ship pixel size if provided
-    if (shipPixelSize) {
-      // Wait for texture to load before applying scale
-      setTimeout(() => ship.setPixelHeight(shipPixelSize), 100)
-    }
     
     // Initialize PostFX with default direct rendering (vanilla parity)
     createComposer(renderer, scene, camera, {
@@ -119,13 +107,6 @@ export default function GameCanvas({ shipPixelSize }: GameCanvasProps) {
       cancelAnimationFrame(raf)
     }
   }, [])
-
-  // Apply ship pixel size changes
-  useEffect(() => {
-    if (shipRef.current && shipPixelSize) {
-      shipRef.current.setPixelHeight(shipPixelSize)
-    }
-  }, [shipPixelSize])
 
   return <canvas ref={canvasRef} id="game-canvas" />
 }
