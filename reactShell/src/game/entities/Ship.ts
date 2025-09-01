@@ -166,4 +166,19 @@ export class Ship {
   setFireCooldown(): void {
     this.fireCooldown = PLAYER.fireRate
   }
+
+  // Set ship pixel height for runtime tuning
+  setPixelHeight(px: number): void {
+    // Reapply texture scaling using the same logic as createShipMesh
+    const material = (this.object as THREE.Mesh).material as THREE.MeshBasicMaterial
+    if (material.map && material.map.image) {
+      const texture = material.map
+      const imgH = texture.image.height
+      const imgW = texture.image.width
+      const scale = px / imgH
+      
+      // Scale the mesh to achieve desired on-screen size
+      this.object.scale.set(imgW * scale, px, 1)
+    }
+  }
 }
