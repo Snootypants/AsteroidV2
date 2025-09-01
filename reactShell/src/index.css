@@ -19,3 +19,71 @@ body {
   width: 100vw;
   height: 100vh;
 }
+
+.dev-panel {
+  position: fixed; 
+  right: 12px; 
+  bottom: 12px; 
+  z-index: 100000;
+  width: 360px; 
+  max-height: 60vh; 
+  overflow: hidden;
+  background: rgba(0,0,0,.85); 
+  color:#e6e6e6; 
+  border:1px solid rgba(255,255,255,.2);
+  border-radius: 8px; 
+  box-shadow: 0 4px 16px rgba(0,0,0,.5);
+  font: 12px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+}
+
+.dev-panel h4 { 
+  margin: 8px 10px; 
+  font-size: 12px; 
+  color:#9fd3ff; 
+}
+
+.dev-panel .sec { 
+  padding: 6px 10px; 
+  border-top:1px solid rgba(255,255,255,.08); 
+}
+
+.dev-panel .row { 
+  display:flex; 
+  justify-content:space-between; 
+  gap:8px; 
+}
+
+.dev-panel .logs { 
+  height: 180px; 
+  overflow:auto; 
+  background: rgba(255,255,255,.03); 
+  padding:6px 8px; 
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; 
+}
+
+.dev-panel .btns { 
+  display:flex; 
+  gap:8px; 
+  margin:6px 10px 10px; 
+}
+
+.dev-panel button { 
+  background:#1f2937; 
+  color:#fff; 
+  border:1px solid rgba(255,255,255,.2); 
+  border-radius:6px; 
+  padding:4px 8px; 
+  cursor:pointer; 
+}
+
+.dev-panel button:hover { 
+  background:#111827; 
+}
+
+.dev-panel .logs .error {
+  color: #ff6b6b;
+}
+
+.dev-panel .logs .warn {
+  color: #ffd93d;
+}
