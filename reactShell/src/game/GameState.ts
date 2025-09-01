@@ -3,6 +3,20 @@
 // Game phase types for wave progression
 export type GamePhase = 'playing' | 'wave-complete' | 'upgrade'
 
+// Currency tracking
+interface Currency {
+  salvage: number
+  gold: number
+  platinum: number
+  adamantium: number
+}
+
+// Upgrade tracking for history display
+interface UpgradeHistoryItem {
+  name: string
+  tier?: string
+}
+
 // Mods system for tracking upgrades
 interface Mods {
   shieldCharges: number
@@ -17,6 +31,15 @@ export class GameState {
   private gamePhase: GamePhase = 'playing'
   private gameOver: boolean = false
   private paused: boolean = false
+  private combo: number = 1.0
+  private comboTimer: number = 0
+  private currency: Currency = {
+    salvage: 0,
+    gold: 0,
+    platinum: 0,
+    adamantium: 0
+  }
+  private upgradeHistory: UpgradeHistoryItem[] = []
   private mods: Mods = {
     shieldCharges: 3  // Start with 3 shield charges for testing
   }
@@ -120,6 +143,15 @@ export class GameState {
     this.gamePhase = 'playing'
     this.gameOver = false
     this.paused = false
+    this.combo = 1.0
+    this.comboTimer = 0
+    this.currency = {
+      salvage: 0,
+      gold: 0,
+      platinum: 0,
+      adamantium: 0
+    }
+    this.upgradeHistory = []
     this.mods = {
       shieldCharges: 3  // Start with 3 shield charges for testing
     }
@@ -160,7 +192,18 @@ export class GameState {
       gamePhase: this.gamePhase,
       gameOver: this.gameOver,
       paused: this.paused,
+      combo: this.combo,
+      comboTimer: this.comboTimer,
+      currency: this.currency,
+      upgradeHistory: this.upgradeHistory,
       mods: this.mods
     }
   }
 }
+
+// HUD selectors (pure functions for read-only data access)
+export const selectScore = (s: GameState) => s.getScore()
+export const selectWave = (s: GameState) => s.getWave()
+export const selectCombo = (s: GameState) => ({ value: s['combo'], timer: s['comboTimer'], max: 2.3 })
+export const selectCurrency = (s: GameState) => s['currency']
+export const selectUpgrades = (s: GameState) => s['upgradeHistory'].slice(-8)

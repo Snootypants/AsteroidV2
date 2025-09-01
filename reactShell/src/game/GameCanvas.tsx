@@ -9,10 +9,20 @@ import { Spawning } from './systems/Spawning'
 import { CollisionManager } from './systems/Collision'
 import { ParticleManager } from './entities/Particles'
 import { DebrisManager } from './entities/Debris'
-import { GameState } from './GameState'
+import { GameState, selectScore, selectWave, selectCombo, selectCurrency, selectUpgrades } from './GameState'
 import { createEnemyBullets } from './systems/EnemyBullets'
 import { DevStats } from '../ui/DevPanel'
 import { DebugBus } from '../dev/DebugBus'
+
+// HUD data type for passing game state to UI
+export interface HudData {
+  score: number
+  wave: number
+  combo: { value: number; timer: number; max: number }
+  currency: { salvage: number; gold: number; platinum: number; adamantium: number }
+  upgrades: Array<{ name: string; tier?: string }>
+  gamePhase: 'playing' | 'wave-complete' | 'upgrade'
+}
 
 // World constants (from vanilla)
 const WORLD = {
@@ -31,9 +41,10 @@ function makeOrthoCamera(w: number, h: number): THREE.OrthographicCamera {
 
 interface GameCanvasProps {
   onStats?: (stats: DevStats) => void
+  onHudData?: (hudData: HudData) => void
 }
 
-export default function GameCanvas({ onStats }: GameCanvasProps) {
+export default function GameCanvas({ onStats, onHudData }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fpsHistoryRef = useRef<number[]>([])
   const shipRef = useRef<Ship | null>(null)
@@ -207,41 +218,58 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
       
       // Update dev stats (throttled to ~10 Hz to avoid re-render spam)
       statsUpdateCounter++
-      if (onStats && statsUpdateCounter % 6 === 0) {
+      if ((onStats || onHudData) && statsUpdateCounter % 6 === 0) {
         const shipPos = ship.getPosition()
         const shipUserData = ship.object.userData
         
-        const stats: DevStats = {
-          fps: avgFps,
-          entities: { 
-            ships: 1, 
-            asteroids: spawning.getAsteroidCount(), 
-            bullets: bulletManager.getActiveCount(), 
-            particles: particleManager.getActiveCount(),
-            debris: debrisManagerRef.current!.getActiveCount(),
-            other: spawning.getHunterCount() + enemyBullets.getActiveCount() 
-          },
-          score: gameState.getScore(),
-          wave: gameState.getWave(),
-          ship: {
-            x: shipPos.x,
-            y: shipPos.y,
-            vx: shipUserData.vx || 0,
-            vy: shipUserData.vy || 0,
-            angleDeg: (ship.object.rotation.z * 180 / Math.PI) % 360,
-            pxHeight: 50 // Current ship size
-          },
-          input: {
-            thrust: inputState.thrust,
-            left: inputState.turnLeft,
-            right: inputState.turnRight,
-            fire: inputState.fire,
-            mouseX: Math.round(inputState.mouseX),
-            mouseY: Math.round(inputState.mouseY)
+        // Dev stats
+        if (onStats) {
+          const stats: DevStats = {
+            fps: avgFps,
+            entities: { 
+              ships: 1, 
+              asteroids: spawning.getAsteroidCount(), 
+              bullets: bulletManager.getActiveCount(), 
+              particles: particleManager.getActiveCount(),
+              debris: debrisManagerRef.current!.getActiveCount(),
+              other: spawning.getHunterCount() + enemyBullets.getActiveCount() 
+            },
+            score: gameState.getScore(),
+            wave: gameState.getWave(),
+            ship: {
+              x: shipPos.x,
+              y: shipPos.y,
+              vx: shipUserData.vx || 0,
+              vy: shipUserData.vy || 0,
+              angleDeg: (ship.object.rotation.z * 180 / Math.PI) % 360,
+              pxHeight: 50 // Current ship size
+            },
+            input: {
+              thrust: inputState.thrust,
+              left: inputState.turnLeft,
+              right: inputState.turnRight,
+              fire: inputState.fire,
+              mouseX: Math.round(inputState.mouseX),
+              mouseY: Math.round(inputState.mouseY)
+            }
           }
+          
+          onStats(stats)
         }
         
-        onStats(stats)
+        // HUD data
+        if (onHudData) {
+          const hudData: HudData = {
+            score: selectScore(gameState),
+            wave: selectWave(gameState),
+            combo: selectCombo(gameState),
+            currency: selectCurrency(gameState),
+            upgrades: selectUpgrades(gameState),
+            gamePhase: gameState.getGamePhase()
+          }
+          
+          onHudData(hudData)
+        }
       }
       
       raf = requestAnimationFrame(animate)
