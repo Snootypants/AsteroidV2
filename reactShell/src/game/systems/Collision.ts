@@ -76,10 +76,16 @@ export class CollisionManager {
         // Spawn debris based on asteroid size
         this.spawnDebrisForAsteroid(event.position, event.asteroidSize)
       } else if (event.type === 'ship-asteroid') {
-        this.particleManager.shipBurst(event.position)
-        this.debrisManager.spawn(event.position, 4, 50) // Small debris burst
+        // Only create ship explosion if actual damage was taken
+        if (event.damage && event.damage > 0) {
+          this.particleManager.shipBurst(event.position)
+          this.debrisManager.spawn(event.position, 4, 50) // Small debris burst
+        }
       } else if (event.type === 'enemy-bullet-ship') {
-        this.particleManager.shipBurst(event.position)
+        // Only create ship explosion if actual damage was taken
+        if (event.damage && event.damage > 0) {
+          this.particleManager.shipBurst(event.position)
+        }
       }
     }
   }
@@ -141,7 +147,7 @@ export class CollisionManager {
       const asteroidRadius = asteroid.getRadius()
       
       if (this.circleCollision(shipPos, shipRadius, asteroidPos, asteroidRadius)) {
-        // Handle collision
+        // Handle collision (ship.takeDamage() will handle invulnerability and shield checks)
         const event = this.handleShipAsteroidHit(asteroid)
         if (event) {
           events.push(event)
@@ -183,21 +189,30 @@ export class CollisionManager {
   private handleShipAsteroidHit(asteroid: Asteroid): CollisionEvent | null {
     if (!asteroid.isAlive() || !this.ship.object.userData.alive) return null
     
-    // Check if ship is invulnerable (implement invulnerability later if needed)
-    const shipData = this.ship.object.userData
-    if (shipData.invulnerable) return null
-    
     const position = asteroid.getPosition()
     const size = asteroid.getSize()
     
-    // Damage ship (implement ship damage system later)
-    // For now, just create the event for particle effects
+    // Attempt to damage the ship (handles invulnerability and shields internally)
+    const damageTaken = this.ship.takeDamage()
     
+    if (damageTaken) {
+      // Ship took actual damage - lose a life
+      this.gameState.loseLife()
+      
+      // If ship is dead, mark it as not alive
+      if (this.gameState.isGameOver()) {
+        this.ship.object.userData.alive = false
+      } else {
+        // Ship still has lives - respawn will be handled by game loop
+      }
+    }
+    
+    // Always return event for particle effects (even if damage was absorbed)
     return {
       type: 'ship-asteroid',
       position: position.clone(),
       asteroidSize: size,
-      damage: 1
+      damage: damageTaken ? 1 : 0
     }
   }
 
@@ -210,15 +225,11 @@ export class CollisionManager {
     const shipPos = this.ship.getPosition()
     const shipRadius = this.ship.object.userData.radius
     
-    // Check if ship is invulnerable
-    const shipData = this.ship.object.userData
-    if (shipData.invulnerable) return events
-    
     const enemyBullets = this.enemyBullets.getAll()
     
     for (const bulletData of enemyBullets) {
       if (this.circleCollision(bulletData.pos, bulletData.radius, shipPos, shipRadius)) {
-        // Handle collision
+        // Handle collision (ship.takeDamage() will handle invulnerability check)
         const event = this.handleEnemyBulletShipHit(bulletData)
         if (event) {
           events.push(event)
@@ -238,13 +249,25 @@ export class CollisionManager {
     // Expire the enemy bullet
     this.enemyBullets.expire(bulletData.bullet)
     
-    // For now, just create the event for particle effects
-    // Later can implement ship damage/lives system
+    // Attempt to damage the ship (handles invulnerability and shields internally)
+    const damageTaken = this.ship.takeDamage()
+    
+    if (damageTaken) {
+      // Ship took actual damage - lose a life
+      this.gameState.loseLife()
+      
+      // If ship is dead, mark it as not alive
+      if (this.gameState.isGameOver()) {
+        this.ship.object.userData.alive = false
+      } else {
+        // Ship still has lives - respawn will be handled by game loop
+      }
+    }
     
     return {
       type: 'enemy-bullet-ship',
       position: shipPos.clone(),
-      damage: 1
+      damage: damageTaken ? 1 : 0
     }
   }
   

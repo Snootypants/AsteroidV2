@@ -61,7 +61,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
     const input = new Input()
     const gameState = new GameState()
     const bulletManager = new BulletManager(scene)
-    const ship = new Ship(scene, bulletManager)
+    const ship = new Ship(scene, bulletManager, gameState)
     const spawning = new Spawning(scene)
     const particleManager = new ParticleManager(scene)
     const debrisManager = new DebrisManager(scene)
@@ -179,6 +179,12 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
       // Update collision detection (effects now handled internally)
       collisionManager.update(dt)
       
+      // Handle ship respawning after death
+      if (!ship.object.userData.alive && !gameState.isGameOver()) {
+        // Ship died but still has lives - respawn
+        ship.respawn()
+      }
+      
       // Check for wave completion
       if (gameState.getGamePhase() === 'playing' && spawning.isWaveComplete()) {
         gameState.completeWave()
@@ -245,6 +251,10 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
     return () => {
       window.removeEventListener('resize', handleResize)
       cancelAnimationFrame(raf)
+      // Cleanup ship resources
+      if (shipRef.current) {
+        shipRef.current.dispose()
+      }
     }
   }, [])
 

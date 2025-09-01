@@ -3,6 +3,12 @@
 // Game phase types for wave progression
 export type GamePhase = 'playing' | 'wave-complete' | 'upgrade'
 
+// Mods system for tracking upgrades
+interface Mods {
+  shieldCharges: number
+  // Future mods can be added here
+}
+
 export class GameState {
   private score: number = 0
   private lives: number = 3
@@ -11,6 +17,9 @@ export class GameState {
   private gamePhase: GamePhase = 'playing'
   private gameOver: boolean = false
   private paused: boolean = false
+  private mods: Mods = {
+    shieldCharges: 3  // Start with 3 shield charges for testing
+  }
 
   constructor() {
     this.resetGame()
@@ -111,6 +120,34 @@ export class GameState {
     this.gamePhase = 'playing'
     this.gameOver = false
     this.paused = false
+    this.mods = {
+      shieldCharges: 3  // Start with 3 shield charges for testing
+    }
+  }
+
+  // Shield charge management
+  getShieldCharges(): number {
+    return this.mods.shieldCharges
+  }
+
+  setShieldCharges(charges: number): void {
+    this.mods.shieldCharges = Math.max(0, charges)
+  }
+
+  addShieldCharges(charges: number): void {
+    this.mods.shieldCharges += charges
+  }
+
+  consumeShieldCharge(): boolean {
+    if (this.mods.shieldCharges > 0) {
+      this.mods.shieldCharges--
+      return true
+    }
+    return false
+  }
+
+  hasShields(): boolean {
+    return this.mods.shieldCharges > 0
   }
 
   // Get full state snapshot for debugging
@@ -122,7 +159,8 @@ export class GameState {
       wave: this.wave,
       gamePhase: this.gamePhase,
       gameOver: this.gameOver,
-      paused: this.paused
+      paused: this.paused,
+      mods: this.mods
     }
   }
 }

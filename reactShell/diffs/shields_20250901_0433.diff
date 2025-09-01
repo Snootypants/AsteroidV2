@@ -1,0 +1,394 @@
+diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
+index a849468..9cd58f3 100644
+--- a/reactShell/src/game/GameCanvas.tsx
++++ b/reactShell/src/game/GameCanvas.tsx
+@@ -61,7 +61,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+     const input = new Input()
+     const gameState = new GameState()
+     const bulletManager = new BulletManager(scene)
+-    const ship = new Ship(scene, bulletManager)
++    const ship = new Ship(scene, bulletManager, gameState)
+     const spawning = new Spawning(scene)
+     const particleManager = new ParticleManager(scene)
+     const debrisManager = new DebrisManager(scene)
+@@ -179,6 +179,12 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+       // Update collision detection (effects now handled internally)
+       collisionManager.update(dt)
+       
++      // Handle ship respawning after death
++      if (!ship.object.userData.alive && !gameState.isGameOver()) {
++        // Ship died but still has lives - respawn
++        ship.respawn()
++      }
++      
+       // Check for wave completion
+       if (gameState.getGamePhase() === 'playing' && spawning.isWaveComplete()) {
+         gameState.completeWave()
+@@ -245,6 +251,10 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+     return () => {
+       window.removeEventListener('resize', handleResize)
+       cancelAnimationFrame(raf)
++      // Cleanup ship resources
++      if (shipRef.current) {
++        shipRef.current.dispose()
++      }
+     }
+   }, [])
+ 
+diff --git a/reactShell/src/game/GameState.ts b/reactShell/src/game/GameState.ts
+index 29e8a5b..aaa11d9 100644
+--- a/reactShell/src/game/GameState.ts
++++ b/reactShell/src/game/GameState.ts
+@@ -3,6 +3,12 @@
+ // Game phase types for wave progression
+ export type GamePhase = 'playing' | 'wave-complete' | 'upgrade'
+ 
++// Mods system for tracking upgrades
++interface Mods {
++  shieldCharges: number
++  // Future mods can be added here
++}
++
+ export class GameState {
+   private score: number = 0
+   private lives: number = 3
+@@ -11,6 +17,9 @@ export class GameState {
+   private gamePhase: GamePhase = 'playing'
+   private gameOver: boolean = false
+   private paused: boolean = false
++  private mods: Mods = {
++    shieldCharges: 3  // Start with 3 shield charges for testing
++  }
+ 
+   constructor() {
+     this.resetGame()
+@@ -111,6 +120,34 @@ export class GameState {
+     this.gamePhase = 'playing'
+     this.gameOver = false
+     this.paused = false
++    this.mods = {
++      shieldCharges: 3  // Start with 3 shield charges for testing
++    }
++  }
++
++  // Shield charge management
++  getShieldCharges(): number {
++    return this.mods.shieldCharges
++  }
++
++  setShieldCharges(charges: number): void {
++    this.mods.shieldCharges = Math.max(0, charges)
++  }
++
++  addShieldCharges(charges: number): void {
++    this.mods.shieldCharges += charges
++  }
++
++  consumeShieldCharge(): boolean {
++    if (this.mods.shieldCharges > 0) {
++      this.mods.shieldCharges--
++      return true
++    }
++    return false
++  }
++
++  hasShields(): boolean {
++    return this.mods.shieldCharges > 0
+   }
+ 
+   // Get full state snapshot for debugging
+@@ -122,7 +159,8 @@ export class GameState {
+       wave: this.wave,
+       gamePhase: this.gamePhase,
+       gameOver: this.gameOver,
+-      paused: this.paused
++      paused: this.paused,
++      mods: this.mods
+     }
+   }
+ }
+\ No newline at end of file
+diff --git a/reactShell/src/game/entities/Ship.ts b/reactShell/src/game/entities/Ship.ts
+index 46c794b..de479e9 100644
+--- a/reactShell/src/game/entities/Ship.ts
++++ b/reactShell/src/game/entities/Ship.ts
+@@ -2,6 +2,7 @@
+ import * as THREE from 'three'
+ import type { InputState } from '../Input'
+ import type { BulletManager } from '../systems/BulletManager'
++import type { GameState } from '../GameState'
+ 
+ // Constants from vanilla
+ const PLAYER = {
+@@ -12,8 +13,10 @@ const PLAYER = {
+   fireRate: 0.16,
+ }
+ 
+-// Wave invulnerability period (from vanilla INVULN_WAVE)
+-const INVULN_WAVE = 3.0
++// Invulnerability periods (from vanilla constants)
++const INVULN_WAVE = 3.0   // At wave start
++const INVULN_SPAWN = 2.0  // After respawn
++const INVULN_HIT = 1.0    // After taking damage
+ 
+ const WORLD = {
+   width: 750,
+@@ -30,10 +33,14 @@ export class Ship {
+   private fireCooldown = 0
+   private minAimDistance = 20 // Minimum distance for mouse aiming
+   private bulletManager?: BulletManager
++  private gameState?: GameState
+   private invulnerabilityTime = 0 // Invulnerability timer
++  private shieldMesh?: THREE.Mesh // Shield visual sphere
++  private flashTime = 0 // Ship flashing during invulnerability
+ 
+-  constructor(scene: THREE.Scene, bulletManager?: BulletManager) {
++  constructor(scene: THREE.Scene, bulletManager?: BulletManager, gameState?: GameState) {
+     this.bulletManager = bulletManager
++    this.gameState = gameState
+     this.object = this.createShipMesh()
+     this.object.userData = {
+       kind: 'ship',
+@@ -46,6 +53,10 @@ export class Ship {
+       invulnerable: false
+     }
+     
++    // Create shield visual
++    this.createShieldVisual()
++    scene.add(this.shieldMesh!)
++    
+     // Start at origin facing left (like vanilla)
+     this.object.position.set(0, 0, 0)
+     this.object.rotation.z = Math.PI // pointing left (flipped around)
+@@ -78,6 +89,21 @@ export class Ship {
+     return new THREE.Mesh(shipGeometry, shipMaterial)
+   }
+ 
++  private createShieldVisual(): void {
++    // Create transparent sphere around ship for shield visual
++    const shieldGeometry = new THREE.SphereGeometry(35, 16, 12) // Slightly larger than ship
++    const shieldMaterial = new THREE.MeshBasicMaterial({
++      color: 0x00ffff,
++      transparent: true,
++      opacity: 0.6,
++      side: THREE.DoubleSide,
++      wireframe: false
++    })
++    
++    this.shieldMesh = new THREE.Mesh(shieldGeometry, shieldMaterial)
++    this.shieldMesh.visible = false // Initially hidden
++  }
++
+   setAimWorld(target: THREE.Vector2): void {
+     const pos = this.object.position
+     const dx = target.x - pos.x
+@@ -140,6 +166,21 @@ export class Ship {
+     // Invulnerability timer
+     this.invulnerabilityTime = Math.max(0, this.invulnerabilityTime - dt)
+     s.invulnerable = this.invulnerabilityTime > 0
++    
++    // Flash timer for visual feedback during invulnerability
++    if (s.invulnerable) {
++      this.flashTime += dt * 8 // Flash frequency
++      const shipMaterial = (this.object as THREE.Mesh).material as THREE.MeshBasicMaterial
++      shipMaterial.opacity = Math.abs(Math.sin(this.flashTime)) * 0.5 + 0.5
++    } else {
++      // Reset opacity when not invulnerable
++      const shipMaterial = (this.object as THREE.Mesh).material as THREE.MeshBasicMaterial
++      shipMaterial.opacity = 1.0
++      this.flashTime = 0
++    }
++    
++    // Update shield visual position and visibility
++    this.updateShieldVisual()
+ 
+     // Handle firing
+     if (input.fire && this.canFire() && this.bulletManager) {
+@@ -222,4 +263,69 @@ export class Ship {
+   isInvulnerable(): boolean {
+     return this.invulnerabilityTime > 0
+   }
++
++  // Update shield visual
++  private updateShieldVisual(): void {
++    if (!this.shieldMesh) return
++    
++    // Position shield at ship location
++    this.shieldMesh.position.copy(this.object.position)
++    
++    // Show shield if invulnerable or has shield charges
++    const hasShields = this.gameState?.hasShields() ?? false
++    const shouldShowShield = this.isInvulnerable() || hasShields
++    this.shieldMesh.visible = shouldShowShield
++  }
++
++  // Take damage - check shields first, then activate hit invulnerability
++  takeDamage(): boolean {
++    if (this.isInvulnerable()) {
++      return false // No damage taken due to invulnerability
++    }
++    
++    // Check if shields can absorb damage
++    if (this.gameState?.consumeShieldCharge()) {
++      // Shield absorbed the damage - no invulnerability needed
++      return false // No actual damage taken
++    }
++    
++    // No shields - take damage and activate hit invulnerability
++    this.invulnerabilityTime = INVULN_HIT
++    this.object.userData.invulnerable = true
++    
++    return true // Damage taken
++  }
++
++  // Respawn ship with spawn invulnerability
++  respawn(): void {
++    // Reset position to center
++    this.object.position.set(0, 0, 0)
++    
++    // Reset velocity
++    this.velocity.set(0, 0)
++    this.object.userData.vx = 0
++    this.object.userData.vy = 0
++    
++    // Reset rotation to face left (like vanilla)
++    this.object.rotation.z = Math.PI
++    
++    // Apply spawn invulnerability
++    this.invulnerabilityTime = INVULN_SPAWN
++    this.object.userData.invulnerable = true
++    this.object.userData.alive = true
++  }
++
++  // Get shield mesh for scene management
++  getShieldMesh(): THREE.Mesh | undefined {
++    return this.shieldMesh
++  }
++
++  // Cleanup method for proper disposal
++  dispose(): void {
++    if (this.shieldMesh) {
++      this.shieldMesh.removeFromParent()
++      this.shieldMesh.geometry.dispose()
++      ;(this.shieldMesh.material as THREE.Material).dispose()
++    }
++  }
+ }
+\ No newline at end of file
+diff --git a/reactShell/src/game/systems/Collision.ts b/reactShell/src/game/systems/Collision.ts
+index 56677a4..4e60bc1 100644
+--- a/reactShell/src/game/systems/Collision.ts
++++ b/reactShell/src/game/systems/Collision.ts
+@@ -76,10 +76,16 @@ export class CollisionManager {
+         // Spawn debris based on asteroid size
+         this.spawnDebrisForAsteroid(event.position, event.asteroidSize)
+       } else if (event.type === 'ship-asteroid') {
+-        this.particleManager.shipBurst(event.position)
+-        this.debrisManager.spawn(event.position, 4, 50) // Small debris burst
++        // Only create ship explosion if actual damage was taken
++        if (event.damage && event.damage > 0) {
++          this.particleManager.shipBurst(event.position)
++          this.debrisManager.spawn(event.position, 4, 50) // Small debris burst
++        }
+       } else if (event.type === 'enemy-bullet-ship') {
+-        this.particleManager.shipBurst(event.position)
++        // Only create ship explosion if actual damage was taken
++        if (event.damage && event.damage > 0) {
++          this.particleManager.shipBurst(event.position)
++        }
+       }
+     }
+   }
+@@ -141,7 +147,7 @@ export class CollisionManager {
+       const asteroidRadius = asteroid.getRadius()
+       
+       if (this.circleCollision(shipPos, shipRadius, asteroidPos, asteroidRadius)) {
+-        // Handle collision
++        // Handle collision (ship.takeDamage() will handle invulnerability and shield checks)
+         const event = this.handleShipAsteroidHit(asteroid)
+         if (event) {
+           events.push(event)
+@@ -183,21 +189,30 @@ export class CollisionManager {
+   private handleShipAsteroidHit(asteroid: Asteroid): CollisionEvent | null {
+     if (!asteroid.isAlive() || !this.ship.object.userData.alive) return null
+     
+-    // Check if ship is invulnerable (implement invulnerability later if needed)
+-    const shipData = this.ship.object.userData
+-    if (shipData.invulnerable) return null
+-    
+     const position = asteroid.getPosition()
+     const size = asteroid.getSize()
+     
+-    // Damage ship (implement ship damage system later)
+-    // For now, just create the event for particle effects
++    // Attempt to damage the ship (handles invulnerability and shields internally)
++    const damageTaken = this.ship.takeDamage()
++    
++    if (damageTaken) {
++      // Ship took actual damage - lose a life
++      this.gameState.loseLife()
++      
++      // If ship is dead, mark it as not alive
++      if (this.gameState.isGameOver()) {
++        this.ship.object.userData.alive = false
++      } else {
++        // Ship still has lives - respawn will be handled by game loop
++      }
++    }
+     
++    // Always return event for particle effects (even if damage was absorbed)
+     return {
+       type: 'ship-asteroid',
+       position: position.clone(),
+       asteroidSize: size,
+-      damage: 1
++      damage: damageTaken ? 1 : 0
+     }
+   }
+ 
+@@ -210,15 +225,11 @@ export class CollisionManager {
+     const shipPos = this.ship.getPosition()
+     const shipRadius = this.ship.object.userData.radius
+     
+-    // Check if ship is invulnerable
+-    const shipData = this.ship.object.userData
+-    if (shipData.invulnerable) return events
+-    
+     const enemyBullets = this.enemyBullets.getAll()
+     
+     for (const bulletData of enemyBullets) {
+       if (this.circleCollision(bulletData.pos, bulletData.radius, shipPos, shipRadius)) {
+-        // Handle collision
++        // Handle collision (ship.takeDamage() will handle invulnerability check)
+         const event = this.handleEnemyBulletShipHit(bulletData)
+         if (event) {
+           events.push(event)
+@@ -238,13 +249,25 @@ export class CollisionManager {
+     // Expire the enemy bullet
+     this.enemyBullets.expire(bulletData.bullet)
+     
+-    // For now, just create the event for particle effects
+-    // Later can implement ship damage/lives system
++    // Attempt to damage the ship (handles invulnerability and shields internally)
++    const damageTaken = this.ship.takeDamage()
++    
++    if (damageTaken) {
++      // Ship took actual damage - lose a life
++      this.gameState.loseLife()
++      
++      // If ship is dead, mark it as not alive
++      if (this.gameState.isGameOver()) {
++        this.ship.object.userData.alive = false
++      } else {
++        // Ship still has lives - respawn will be handled by game loop
++      }
++    }
+     
+     return {
+       type: 'enemy-bullet-ship',
+       position: shipPos.clone(),
+-      damage: 1
++      damage: damageTaken ? 1 : 0
+     }
+   }
+   
