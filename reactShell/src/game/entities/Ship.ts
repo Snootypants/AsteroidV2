@@ -1,2 +1,156 @@
 // Ship.ts - Player ship
-export class Ship {}
+import * as THREE from 'three'
+import type { InputState } from '../Input'
+
+// Constants from vanilla
+const PLAYER = {
+  accel: 40,
+  maxSpeed: 40,
+  friction: 0.98,
+  turn: 3.2,
+  fireRate: 0.16,
+}
+
+const WORLD = {
+  width: 564,
+  height: 498,
+}
+
+export class Ship {
+  object: THREE.Object3D
+  private velocity = new THREE.Vector2(0, 0)
+  private fireCooldown = 0
+  private minAimDistance = 20 // Minimum distance for mouse aiming
+
+  constructor(scene: THREE.Scene) {
+    this.object = this.createShipMesh()
+    this.object.userData = {
+      kind: 'ship',
+      vx: 0,
+      vy: 0,
+      rot: 0,
+      alive: true,
+      fireCooldown: 0,
+      radius: 1.5
+    }
+    
+    // Start at origin facing left (like vanilla)
+    this.object.position.set(0, 0, 0)
+    this.object.rotation.z = Math.PI // pointing left (flipped around)
+    
+    scene.add(this.object)
+  }
+
+  private createShipMesh(): THREE.Object3D {
+    // Load ship texture
+    const loader = new THREE.TextureLoader()
+    const shipTexture = loader.load('assets/ship/ship.png')
+    
+    // Create ship geometry with texture (same as vanilla)
+    const shipGeometry = new THREE.PlaneGeometry(6.0, 6.0)
+    const shipMaterial = new THREE.MeshBasicMaterial({
+      map: shipTexture,
+      transparent: true,
+      opacity: 1.0,
+      side: THREE.DoubleSide
+    })
+    
+    return new THREE.Mesh(shipGeometry, shipMaterial)
+  }
+
+  setAimWorld(target: THREE.Vector2): void {
+    const dx = target.x - this.object.position.x
+    const dy = target.y - this.object.position.y
+    const distance = Math.hypot(dx, dy)
+    
+    // Only update rotation if mouse is not too close to ship (vanilla behavior)
+    if (distance > this.minAimDistance) {
+      const angle = Math.atan2(dy, dx)
+      this.object.rotation.z = angle + Math.PI/2 // Adjust for mesh facing up by default, flipped around
+    }
+  }
+
+  update(dt: number, input: InputState): void {
+    const s = this.object.userData
+
+    // Handle manual turning when not using mouse aim
+    if (input.turnLeft && !this.isMouseAimActive(input)) {
+      this.object.rotation.z += PLAYER.turn * dt
+    }
+    if (input.turnRight && !this.isMouseAimActive(input)) {
+      this.object.rotation.z -= PLAYER.turn * dt
+    }
+
+    // Thrust mechanics
+    if (input.thrust) {
+      // Ship mesh faces up, rotation.z is already the direction to move
+      const shipDirection = this.object.rotation.z + Math.PI/2 // Convert ship rotation to movement direction
+      const ax = Math.cos(shipDirection) * PLAYER.accel * dt
+      const ay = Math.sin(shipDirection) * PLAYER.accel * dt
+      
+      s.vx += ax
+      s.vy += ay
+      this.velocity.set(s.vx, s.vy)
+    }
+
+    // Apply speed limits and friction
+    const speed = this.velocity.length()
+    if (speed > PLAYER.maxSpeed) {
+      this.velocity.normalize().multiplyScalar(PLAYER.maxSpeed)
+      s.vx = this.velocity.x
+      s.vy = this.velocity.y
+    }
+
+    s.vx *= PLAYER.friction
+    s.vy *= PLAYER.friction
+    this.velocity.set(s.vx, s.vy)
+
+    // Update position
+    this.object.position.x += s.vx * dt
+    this.object.position.y += s.vy * dt
+
+    // World wrapping
+    this.wrap()
+
+    // Fire cooldown
+    this.fireCooldown = Math.max(0, this.fireCooldown - dt)
+    s.fireCooldown = this.fireCooldown
+  }
+
+  private isMouseAimActive(input: InputState): boolean {
+    // For now, always use mouse aim (vanilla behavior)
+    // Later this could be toggled based on game state
+    return true
+  }
+
+  private wrap(): void {
+    const halfWidth = WORLD.width / 2
+    const halfHeight = WORLD.height / 2
+    
+    if (this.object.position.x > halfWidth) {
+      this.object.position.x = -halfWidth
+    } else if (this.object.position.x < -halfWidth) {
+      this.object.position.x = halfWidth
+    }
+    
+    if (this.object.position.y > halfHeight) {
+      this.object.position.y = -halfHeight
+    } else if (this.object.position.y < -halfHeight) {
+      this.object.position.y = halfHeight
+    }
+  }
+
+  getPosition(): THREE.Vector2 {
+    return new THREE.Vector2(this.object.position.x, this.object.position.y)
+  }
+
+  // Utility method for firing (will be used later)
+  canFire(): boolean {
+    return this.fireCooldown <= 0
+  }
+
+  // Set fire cooldown after shooting
+  setFireCooldown(): void {
+    this.fireCooldown = PLAYER.fireRate
+  }
+}
