@@ -17,7 +17,7 @@ const WORLD = {
 }
 
 // Ship visual scale
-const SHIP_DESIRED_PX = 85 // tweak 90–110 for parity with vanilla screenshot
+const SHIP_DESIRED_PX = 65 // tweak 90–110 for parity with vanilla screenshot
 const ROTATION_OFFSET = -Math.PI / 2 // Ship sprite nose points "up" (+Y)
 
 export class Ship {
