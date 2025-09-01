@@ -8,6 +8,7 @@ import type { Spawning } from './Spawning'
 import type { GameState } from '../GameState'
 import type { ParticleManager } from '../entities/Particles'
 import type { DebrisManager } from '../entities/Debris'
+import type { PickupManager } from './PickupManager'
 
 export interface CollisionEvent {
   type: 'bullet-asteroid' | 'ship-asteroid' | 'enemy-bullet-ship'
@@ -24,6 +25,7 @@ export class CollisionManager {
   private scene: THREE.Scene
   private particleManager: ParticleManager
   private debrisManager: DebrisManager
+  private pickupManager: PickupManager | null = null
   private enemyBullets: any // EnemyBullets system will be injected
   
   constructor(
@@ -42,12 +44,18 @@ export class CollisionManager {
     this.scene = scene
     this.particleManager = particleManager
     this.debrisManager = debrisManager
+    this.pickupManager = null
     this.enemyBullets = null
   }
 
   // Set enemy bullets system (will be called from GameCanvas)
   setEnemyBullets(enemyBullets: any): void {
     this.enemyBullets = enemyBullets
+  }
+
+  // Set pickup manager (will be called from GameCanvas)
+  setPickupManager(pickupManager: PickupManager): void {
+    this.pickupManager = pickupManager
   }
 
   // Main collision detection method
@@ -165,6 +173,7 @@ export class CollisionManager {
     const position = asteroid.getPosition()
     const size = asteroid.getSize()
     const score = asteroid.getScore()
+    const oreType = asteroid.getOreType()
     
     // Destroy bullet
     bullet.expire()
@@ -174,6 +183,11 @@ export class CollisionManager {
     
     // Add score
     this.gameState.addScore(score)
+    
+    // Spawn pickups based on ore type (if pickup manager is available)
+    if (this.pickupManager) {
+      this.pickupManager.spawnPickupsForAsteroid(position, oreType)
+    }
     
     // Split asteroid if applicable
     const newAsteroids = this.spawning.splitAsteroid(asteroid)

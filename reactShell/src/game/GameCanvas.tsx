@@ -9,6 +9,7 @@ import { Spawning } from './systems/Spawning'
 import { CollisionManager } from './systems/Collision'
 import { ParticleManager } from './entities/Particles'
 import { DebrisManager } from './entities/Debris'
+import { PickupManager } from './systems/PickupManager'
 import { GameState, selectScore, selectWave, selectCombo, selectCurrency, selectUpgrades } from './GameState'
 import { createEnemyBullets } from './systems/EnemyBullets'
 import { DevStats } from '../ui/DevPanel'
@@ -68,6 +69,7 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
   const collisionManagerRef = useRef<CollisionManager | null>(null)
   const particleManagerRef = useRef<ParticleManager | null>(null)
   const debrisManagerRef = useRef<DebrisManager | null>(null)
+  const pickupManagerRef = useRef<PickupManager | null>(null)
   const gameStateRef = useRef<GameState | null>(null)
   const enemyBulletsRef = useRef<any>(null)
 
@@ -90,11 +92,13 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
     const spawning = new Spawning(scene)
     const particleManager = new ParticleManager(scene)
     const debrisManager = new DebrisManager(scene)
+    const pickupManager = new PickupManager(scene, gameState)
     const enemyBullets = createEnemyBullets(scene)
     const collisionManager = new CollisionManager(bulletManager, spawning, ship, gameState, scene, particleManager, debrisManager)
     
-    // Connect enemy bullets to collision manager
+    // Connect enemy bullets and pickup manager to collision manager
     collisionManager.setEnemyBullets(enemyBullets)
+    collisionManager.setPickupManager(pickupManager)
     
     shipRef.current = ship
     inputRef.current = input
@@ -103,6 +107,7 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
     collisionManagerRef.current = collisionManager
     particleManagerRef.current = particleManager
     debrisManagerRef.current = debrisManager
+    pickupManagerRef.current = pickupManager
     gameStateRef.current = gameState
     enemyBulletsRef.current = enemyBullets
     
@@ -206,6 +211,12 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
       particleManager.update(dt)
       debrisManagerRef.current!.update(dt)
       
+      // Update pickups (magnetic collection and timeout)
+      const shipPos = ship.getPosition()
+      const mods = gameState.getMods()
+      const magnetRadius = 3 + mods.magnetRadius // Base radius + upgrade scaling
+      pickupManagerRef.current!.update(dt, shipPos, magnetRadius)
+      
       // Update collision detection (effects now handled internally)
       collisionManager.update(dt)
       
@@ -252,6 +263,7 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
               bullets: bulletManager.getActiveCount(), 
               particles: particleManager.getActiveCount(),
               debris: debrisManagerRef.current!.getActiveCount(),
+              pickups: pickupManagerRef.current!.getActiveCount(),
               other: spawning.getHunterCount() + enemyBullets.getActiveCount() 
             },
             score: gameState.getScore(),

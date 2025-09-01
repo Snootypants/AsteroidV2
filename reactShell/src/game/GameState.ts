@@ -236,6 +236,23 @@ export class GameState {
     this.takenUpgrades.add(upgradeId)
   }
 
+  // Currency management
+  getCurrency() {
+    return this.currency
+  }
+
+  addCurrency(type: 'salvage' | 'gold' | 'platinum' | 'adamantium', amount: number): void {
+    this.currency[type] += amount
+  }
+
+  spendCurrency(type: 'salvage' | 'gold' | 'platinum' | 'adamantium', amount: number): boolean {
+    if (this.currency[type] >= amount) {
+      this.currency[type] -= amount
+      return true
+    }
+    return false
+  }
+
   // Get full state snapshot for debugging
   getState() {
     return {
