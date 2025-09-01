@@ -211,8 +211,10 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
       particleManager.update(dt)
       debrisManagerRef.current!.update(dt)
       
-      // Update pickups (magnetic collection and timeout)
+      // Get ship position once for all operations that need it
       const shipPos = ship.getPosition()
+      
+      // Update pickups (magnetic collection and timeout)
       const mods = gameState.getMods()
       const magnetRadius = 3 + mods.magnetRadius // Base radius + upgrade scaling
       pickupManagerRef.current!.update(dt, shipPos, magnetRadius)
@@ -241,7 +243,6 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
       }
       
       // Follow ship with camera (simple following)
-      const shipPos = ship.getPosition()
       camera.position.x = shipPos.x
       camera.position.y = shipPos.y
       
@@ -250,7 +251,6 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
       // Update dev stats (throttled to ~10 Hz to avoid re-render spam)
       statsUpdateCounter++
       if ((onStats || onHudData || onMiniSnapshot) && statsUpdateCounter % 6 === 0) {
-        const shipPos = ship.getPosition()
         const shipUserData = ship.object.userData
         
         // Dev stats
@@ -308,7 +308,7 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
           const asteroids = spawning.getAsteroids().map(asteroid => ({
             x: asteroid.object.position.x,
             y: asteroid.object.position.y,
-            r: asteroid.userData?.radius || 10
+            r: asteroid.object.userData?.radius || 10
           }))
           
           const hunters = spawning.getHunters().map(hunter => ({
