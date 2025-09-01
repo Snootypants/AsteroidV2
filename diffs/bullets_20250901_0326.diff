@@ -1,0 +1,318 @@
+diff --git a/reactShell/src/game/systems/BulletManager.ts b/reactShell/src/game/systems/BulletManager.ts
+new file mode 100644
+index 0000000..4f73712
+--- /dev/null
++++ b/reactShell/src/game/systems/BulletManager.ts
+@@ -0,0 +1,106 @@
++// BulletManager.ts - Manage all bullets with object pooling
++import * as THREE from 'three'
++import { Bullet } from '../entities/Bullet'
++import { Ship } from '../entities/Ship'
++
++// Constants from vanilla
++const BULLET = { 
++  speed: 70, 
++  life: 1.1, 
++  r: 0.2 
++}
++
++export class BulletManager {
++  private bullets: Bullet[] = []
++  private activeBullets: Bullet[] = []
++  private scene: THREE.Scene
++  private poolSize = 50 // Pre-allocate bullet pool
++
++  constructor(scene: THREE.Scene) {
++    this.scene = scene
++    this.initializePool()
++  }
++
++  private initializePool(): void {
++    // Pre-create bullet pool for performance
++    for (let i = 0; i < this.poolSize; i++) {
++      const bullet = new Bullet()
++      bullet.mesh.visible = false
++      this.bullets.push(bullet)
++      this.scene.add(bullet.mesh)
++    }
++  }
++
++  // Fire a bullet from the ship
++  fire(ship: Ship, isEnemy: boolean = false): void {
++    // Find an inactive bullet from the pool
++    const bullet = this.bullets.find(b => !b.isActive)
++    if (!bullet) {
++      console.warn('Bullet pool exhausted!')
++      return
++    }
++
++    // Calculate firing position at ship nose
++    const shipPos = ship.getPosition()
++    const shipRotation = ship.object.rotation.z
++    
++    // Ship nose position (offset from center in ship's facing direction)
++    const noseDistance = 25 // Distance from ship center to nose
++    const noseX = shipPos.x + Math.cos(shipRotation + Math.PI/2) * noseDistance
++    const noseY = shipPos.y + Math.sin(shipRotation + Math.PI/2) * noseDistance
++    
++    const firePosition = new THREE.Vector2(noseX, noseY)
++
++    // Calculate bullet velocity (ship direction + ship velocity inheritance)
++    const bulletDirection = new THREE.Vector2(
++      Math.cos(shipRotation + Math.PI/2),
++      Math.sin(shipRotation + Math.PI/2)
++    )
++    
++    // Get ship velocity from userData
++    const shipVelocity = new THREE.Vector2(
++      ship.object.userData.vx || 0,
++      ship.object.userData.vy || 0
++    )
++    
++    // Bullet velocity = ship velocity + bullet speed in firing direction
++    const bulletVelocity = new THREE.Vector2()
++      .copy(shipVelocity)
++      .add(bulletDirection.multiplyScalar(BULLET.speed))
++
++    // Initialize the bullet
++    bullet.reset(firePosition, bulletVelocity, isEnemy)
++    
++    // Add to active bullets list
++    if (!this.activeBullets.includes(bullet)) {
++      this.activeBullets.push(bullet)
++    }
++  }
++
++  update(dt: number): void {
++    // Update all active bullets
++    for (let i = this.activeBullets.length - 1; i >= 0; i--) {
++      const bullet = this.activeBullets[i]
++      bullet.update(dt)
++      
++      // Remove expired bullets from active list
++      if (bullet.isExpired()) {
++        this.activeBullets.splice(i, 1)
++      }
++    }
++  }
++
++  getActiveBullets(): Bullet[] {
++    return this.activeBullets.slice() // Return a copy
++  }
++
++  getActiveBulletCount(): number {
++    return this.activeBullets.length
++  }
++
++  // Clear all bullets (for game reset)
++  clear(): void {
++    this.activeBullets.forEach(bullet => bullet.expire())
++    this.activeBullets.length = 0
++  }
++}
+\ No newline at end of file
+diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
+index b11c0fc..d1dc756 100644
+--- a/reactShell/src/game/GameCanvas.tsx
++++ b/reactShell/src/game/GameCanvas.tsx
+@@ -4,12 +4,13 @@ import * as THREE from 'three'
+ import { createComposer, resize, render } from './render/PostFX'
+ import { Input } from './Input'
+ import { Ship } from './entities/Ship'
++import { BulletManager } from './systems/BulletManager'
+ import { DevStats } from '../ui/DevPanel'
+ import { DebugBus } from '../dev/DebugBus'
+ 
+ // World constants (from vanilla)
+ const WORLD = {
+-  width: 564,
++  width: 750,
+   height: 498,
+ }
+ 
+@@ -31,6 +32,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+   const fpsHistoryRef = useRef<number[]>([])
+   const shipRef = useRef<Ship | null>(null)
+   const inputRef = useRef<Input | null>(null)
++  const bulletManagerRef = useRef<BulletManager | null>(null)
+ 
+   useEffect(() => {
+     if (!canvasRef.current) return
+@@ -45,9 +47,12 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+     
+     // Initialize game systems
+     const input = new Input()
+-    const ship = new Ship(scene)
++    const bulletManager = new BulletManager(scene)
++    const ship = new Ship(scene, bulletManager)
++    
+     shipRef.current = ship
+     inputRef.current = input
++    bulletManagerRef.current = bulletManager
+     
+     // Dev panel greeting
+     DebugBus.push('info', 'DevPanel ready')
+@@ -115,6 +120,9 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+       ship.setAimWorld(mouseWorld)
+       ship.update(dt, inputState)
+       
++      // Update bullets
++      bulletManager.update(dt)
++      
+       // Follow ship with camera (simple following)
+       const shipPos = ship.getPosition()
+       camera.position.x = shipPos.x
+@@ -133,7 +141,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
+           entities: { 
+             ships: 1, 
+             asteroids: 0, 
+-            bullets: 0, 
++            bullets: bulletManager.getActiveBulletCount(), 
+             other: 0 
+           },
+           ship: {
+diff --git a/reactShell/src/game/entities/Bullet.ts b/reactShell/src/game/entities/Bullet.ts
+index b8aee89..55b3546 100644
+--- a/reactShell/src/game/entities/Bullet.ts
++++ b/reactShell/src/game/entities/Bullet.ts
+@@ -1,2 +1,91 @@
+ // Bullet.ts - Projectile system
+-export class Bullet {}
+\ No newline at end of file
++import * as THREE from 'three'
++
++// Constants from vanilla
++const BULLET = { 
++  speed: 70, 
++  life: 1.1, 
++  r: 0.2 
++}
++
++const WORLD = {
++  width: 750,
++  height: 498,
++}
++
++export class Bullet {
++  mesh: THREE.Mesh
++  private velocity = new THREE.Vector2(0, 0)
++  private life = 0
++  private maxLife = BULLET.life
++  public isActive = false
++  public isEnemy = false
++
++  constructor() {
++    // Create small white sphere for bullet visual
++    const geometry = new THREE.SphereGeometry(BULLET.r, 8, 6)
++    const material = new THREE.MeshBasicMaterial({ color: 0xffffff })
++    this.mesh = new THREE.Mesh(geometry, material)
++    this.mesh.userData = {
++      kind: 'bullet',
++      radius: BULLET.r
++    }
++  }
++
++  // Initialize/reset bullet for object pooling
++  reset(position: THREE.Vector2, velocity: THREE.Vector2, isEnemy: boolean = false): void {
++    this.mesh.position.set(position.x, position.y, 0)
++    this.velocity.copy(velocity)
++    this.life = this.maxLife
++    this.isActive = true
++    this.isEnemy = isEnemy
++    this.mesh.visible = true
++  }
++
++  update(dt: number): void {
++    if (!this.isActive) return
++
++    // Update position
++    this.mesh.position.x += this.velocity.x * dt
++    this.mesh.position.y += this.velocity.y * dt
++
++    // Handle world wrapping
++    this.wrap()
++
++    // Update life timer
++    this.life -= dt
++    if (this.life <= 0) {
++      this.expire()
++    }
++  }
++
++  private wrap(): void {
++    const halfWidth = WORLD.width / 2  // ±375
++    const halfHeight = WORLD.height / 2 // ±249
++    
++    if (this.mesh.position.x > halfWidth) {
++      this.mesh.position.x = -halfWidth
++    } else if (this.mesh.position.x < -halfWidth) {
++      this.mesh.position.x = halfWidth
++    }
++    
++    if (this.mesh.position.y > halfHeight) {
++      this.mesh.position.y = -halfHeight
++    } else if (this.mesh.position.y < -halfHeight) {
++      this.mesh.position.y = halfHeight
++    }
++  }
++
++  isExpired(): boolean {
++    return !this.isActive
++  }
++
++  expire(): void {
++    this.isActive = false
++    this.mesh.visible = false
++  }
++
++  getPosition(): THREE.Vector2 {
++    return new THREE.Vector2(this.mesh.position.x, this.mesh.position.y)
++  }
++}
+\ No newline at end of file
+diff --git a/reactShell/src/game/entities/Ship.ts b/reactShell/src/game/entities/Ship.ts
+index d861b11..fdea78e 100644
+--- a/reactShell/src/game/entities/Ship.ts
++++ b/reactShell/src/game/entities/Ship.ts
+@@ -1,6 +1,7 @@
+ // Ship.ts - Player ship
+ import * as THREE from 'three'
+ import type { InputState } from '../Input'
++import type { BulletManager } from '../systems/BulletManager'
+ 
+ // Constants from vanilla
+ const PLAYER = {
+@@ -12,7 +13,7 @@ const PLAYER = {
+ }
+ 
+ const WORLD = {
+-  width: 564,
++  width: 750,
+   height: 498,
+ }
+ 
+@@ -25,8 +26,10 @@ export class Ship {
+   private velocity = new THREE.Vector2(0, 0)
+   private fireCooldown = 0
+   private minAimDistance = 20 // Minimum distance for mouse aiming
++  private bulletManager?: BulletManager
+ 
+-  constructor(scene: THREE.Scene) {
++  constructor(scene: THREE.Scene, bulletManager?: BulletManager) {
++    this.bulletManager = bulletManager
+     this.object = this.createShipMesh()
+     this.object.userData = {
+       kind: 'ship',
+@@ -128,6 +131,12 @@ export class Ship {
+     // Fire cooldown
+     this.fireCooldown = Math.max(0, this.fireCooldown - dt)
+     s.fireCooldown = this.fireCooldown
++
++    // Handle firing
++    if (input.fire && this.canFire() && this.bulletManager) {
++      this.bulletManager.fire(this, false) // false = not enemy bullet
++      this.setFireCooldown()
++    }
+   }
+ 
+   private isMouseAimActive(input: InputState): boolean {

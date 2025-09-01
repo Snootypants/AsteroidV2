@@ -1,0 +1,420 @@
+diff --git a/docs/prompts/21.md b/docs/prompts/21.md
+new file mode 100644
+index 0000000..e3be633
+--- /dev/null
++++ b/docs/prompts/21.md
+@@ -0,0 +1,85 @@
++EXECUTION MODE — add live Ship size tuning slider (debug only). Output ONE unified diff under `/diffs/` only. Then commit and push.
++
++Goal
++- Add a small overlay with a slider to adjust the ship’s on-screen height (in pixels) at runtime.
++- Show the current px value so I can report it back and we’ll hardcode it later.
++- Default hidden; toggle with the backtick key (`).
++
++Scope
++- UPDATE: `/AsteroidsV2/reactShell/src/game/entities/Ship.ts`
++- UPDATE: `/AsteroidsV2/reactShell/src/game/GameCanvas.tsx`
++- UPDATE: `/AsteroidsV2/reactShell/src/App.tsx`
++- NEW:    `/AsteroidsV2/reactShell/src/ui/DevTuningOverlay.tsx`
++- (If needed) UPDATE: `/AsteroidsV2/reactShell/src/styles.css` (append minimal styles)
++
++Requirements
++
++1) Ship API: add setter to apply pixel height
++- In `Ship.ts`, add a method that re-applies the existing texture/geometry scale logic using a provided pixel height:
++  ```ts
++  setPixelHeight(px: number): void
++
++	•	Reuse the current texture-based scaling path (keep aspect ratio). Do not change physics/rotation.
++	•	Remove or ignore the hardcoded SHIP_DESIRED_PX for runtime scaling; keep it only as the initial default.
++
++	2.	GameCanvas: accept live pixel size and apply to Ship
++
++	•	In GameCanvas.tsx, accept a new prop:
++
++shipPixelSize?: number
++
++
++	•	On ship creation, use this value for initial size (fallback to the existing default if undefined).
++	•	When the prop changes, call ship.setPixelHeight(newValue) exactly once (e.g., via useEffect watching the prop).
++
++	3.	DevTuningOverlay component (new)
++
++	•	File: src/ui/DevTuningOverlay.tsx
++	•	Props:
++
++visible: boolean
++value: number
++min?: number // default 40
++max?: number // default 140
++step?: number // default 1
++onChange: (v: number) => void
++
++
++	•	Renders a small fixed panel (top-left), with:
++	•	Label: “Ship size:  px”
++	•	Range input (slider)
++	•	An input[type=number] for direct entry (bound to same value)
++	•	Styles: minimal inline or class .dev-overlay (if using styles.css). Keep unobtrusive, z-index above canvas.
++
++	4.	App wiring + toggle
++
++	•	In App.tsx:
++	•	Add state: const [shipPx, setShipPx] = useState<number>(65);
++	•	Add state: const [showDev, setShowDev] = useState(false);
++	•	Key listener: toggle showDev on backtick (`) press.
++	•	Render <DevTuningOverlay visible={showDev} value={shipPx} onChange={setShipPx} />.
++	•	Pass shipPixelSize={shipPx} into <GameCanvas ... />.
++
++	5.	Styles (optional)
++
++	•	If needed, append to styles.css:
++
++.dev-overlay {
++  position: fixed; top: 8px; left: 8px; z-index: 9999;
++  background: rgba(0,0,0,0.7); color: #fff; padding: 8px 10px; border-radius: 6px;
++  font: 12px/1.3 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
++}
++.dev-overlay input[type="range"] { width: 180px; }
++.dev-overlay input[type="number"] { width: 64px; margin-left: 8px; }
++
++
++
++Constraints
++	•	Do NOT modify any gameplay logic (physics, input, PostFX).
++	•	Default behavior unchanged when overlay hidden; ship uses the current default (65 px).
++	•	All changes behind a dev UI; only added files/props/state as above.
++
++Deliverable
++	•	Print ONE timestamped unified diff under /diffs/ with the full patch (new DevTuningOverlay, App/GameCanvas updates, Ship setter, any CSS additions). No truncation, no summaries.
++	•	After diff, commit and push.
++
+diff --git a/docs/prompts/1.md b/docs/prompts/done/1.md
+similarity index 100%
+rename from docs/prompts/1.md
+rename to docs/prompts/done/1.md
+diff --git a/docs/prompts/10.md b/docs/prompts/done/10.md
+similarity index 100%
+rename from docs/prompts/10.md
+rename to docs/prompts/done/10.md
+diff --git a/docs/prompts/11.md b/docs/prompts/done/11.md
+similarity index 100%
+rename from docs/prompts/11.md
+rename to docs/prompts/done/11.md
+diff --git a/docs/prompts/12.md b/docs/prompts/done/12.md
+similarity index 100%
+rename from docs/prompts/12.md
+rename to docs/prompts/done/12.md
+diff --git a/docs/prompts/13.md b/docs/prompts/done/13.md
+similarity index 100%
+rename from docs/prompts/13.md
+rename to docs/prompts/done/13.md
+diff --git a/docs/prompts/14.md b/docs/prompts/done/14.md
+similarity index 100%
+rename from docs/prompts/14.md
+rename to docs/prompts/done/14.md
+diff --git a/docs/prompts/15.md b/docs/prompts/done/15.md
+similarity index 100%
+rename from docs/prompts/15.md
+rename to docs/prompts/done/15.md
+diff --git a/docs/prompts/16.md b/docs/prompts/done/16.md
+similarity index 100%
+rename from docs/prompts/16.md
+rename to docs/prompts/done/16.md
+diff --git a/docs/prompts/17.md b/docs/prompts/done/17.md
+similarity index 100%
+rename from docs/prompts/17.md
+rename to docs/prompts/done/17.md
+diff --git a/docs/prompts/18.md b/docs/prompts/done/18.md
+similarity index 100%
+rename from docs/prompts/18.md
+rename to docs/prompts/done/18.md
+diff --git a/docs/prompts/19.md b/docs/prompts/done/19.md
+similarity index 100%
+rename from docs/prompts/19.md
+rename to docs/prompts/done/19.md
+diff --git a/docs/prompts/2.md b/docs/prompts/done/2.md
+similarity index 100%
+rename from docs/prompts/2.md
+rename to docs/prompts/done/2.md
+diff --git a/docs/prompts/done/20.md b/docs/prompts/done/20.md
+new file mode 100644
+index 0000000..88cf9d6
+--- /dev/null
++++ b/docs/prompts/done/20.md
+@@ -0,0 +1,26 @@
++
++EXECUTION MODE — adjust ship visual size to 65px height. Output ONE unified diff under `/diffs/` only. Then commit and push.
++
++Scope
++- `/AsteroidsV2/reactShell/src/game/entities/Ship.ts`
++
++Changes
++- Find the constant:
++  ```ts
++  const SHIP_DESIRED_PX = 85;
++
++	•	Change it to:
++
++const SHIP_DESIRED_PX = 65;
++
++
++	•	This sets the ship’s rendered height to ~65 pixels on screen, preserving aspect ratio.
++
++Constraints
++	•	Do not modify any other logic or files.
++	•	Ensure scaling still happens automatically when the texture loads.
++
++Deliverable
++	•	Print ONE timestamped unified diff under /diffs/ with this single-line change. No truncation, no summaries.
++	•	After diff, commit and push.
++
+diff --git a/docs/prompts/3.md b/docs/prompts/done/3.md
+similarity index 100%
+rename from docs/prompts/3.md
+rename to docs/prompts/done/3.md
+diff --git a/docs/prompts/4.md b/docs/prompts/done/4.md
+similarity index 100%
+rename from docs/prompts/4.md
+rename to docs/prompts/done/4.md
+diff --git a/docs/prompts/5.md b/docs/prompts/done/5.md
+similarity index 100%
+rename from docs/prompts/5.md
+rename to docs/prompts/done/5.md
+diff --git a/docs/prompts/6.md b/docs/prompts/done/6.md
+similarity index 100%
+rename from docs/prompts/6.md
+rename to docs/prompts/done/6.md
+diff --git a/docs/prompts/7.md b/docs/prompts/done/7.md
+similarity index 100%
+rename from docs/prompts/7.md
+rename to docs/prompts/done/7.md
+diff --git a/docs/prompts/8.md b/docs/prompts/done/8.md
+similarity index 100%
+rename from docs/prompts/8.md
+rename to docs/prompts/done/8.md
+diff --git a/docs/prompts/9.md b/docs/prompts/done/9.md
+similarity index 100%
+rename from docs/prompts/9.md
+rename to docs/prompts/done/9.md
+diff --git a/reactShell/public/assets/ship/ship.png b/reactShell/public/assets/ship/ship.png
+index 3020c73..4c713f2 100644
+Binary files a/reactShell/public/assets/ship/ship.png and b/reactShell/public/assets/ship/ship.png differ
+diff --git a/reactShell/public/assets/ship/ship1.png b/reactShell/public/assets/ship/ship1.png
+new file mode 100644
+index 0000000..3020c73
+Binary files /dev/null and b/reactShell/public/assets/ship/ship1.png differ
+diff --git a/reactShell/src/App.tsx b/reactShell/src/App.tsx
+index 7e15bc5..fa7b3fa 100644
+--- a/reactShell/src/App.tsx
++++ b/reactShell/src/App.tsx
+@@ -5,23 +5,41 @@ import UpgradeMenu from './ui/UpgradeMenu'
+ import StatusOverlay from './ui/StatusOverlay'
+ import PauseOverlay from './ui/PauseOverlay'
+ import StartScreen from './ui/StartScreen'
++import DevTuningOverlay from './ui/DevTuningOverlay'
+ 
+ function App() {
+   const [showStart, setShowStart] = useState(true)
++  const [shipPx, setShipPx] = useState<number>(65)
++  const [showDev, setShowDev] = useState(false)
+ 
+   useEffect(() => {
+     // Initialize game
+     console.log('Asteroids React Shell initializing...')
++    
++    // Backtick key listener for dev overlay toggle
++    const handleKeyDown = (event: KeyboardEvent) => {
++      if (event.key === '`') {
++        setShowDev(prev => !prev)
++      }
++    }
++    
++    window.addEventListener('keydown', handleKeyDown)
++    return () => window.removeEventListener('keydown', handleKeyDown)
+   }, [])
+ 
+   return (
+     <div className="app">
+-      <GameCanvas />
++      <GameCanvas shipPixelSize={shipPx} />
+       <Hud />
+       <UpgradeMenu />
+       <StatusOverlay />
+       <PauseOverlay />
+       <StartScreen visible={showStart} onDismiss={() => setShowStart(false)} />
++      <DevTuningOverlay 
++        visible={showDev} 
++        value={shipPx} 
++        onChange={setShipPx} 
++      />
+     </div>
+   )
+ }
+diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
+index 20c92e7..1d2b032 100644
+--- a/reactShell/src/game/GameCanvas.tsx
++++ b/reactShell/src/game/GameCanvas.tsx
+@@ -20,8 +20,13 @@ function makeOrthoCamera(w: number, h: number): THREE.OrthographicCamera {
+   return cam
+ }
+ 
+-export default function GameCanvas() {
++interface GameCanvasProps {
++  shipPixelSize?: number
++}
++
++export default function GameCanvas({ shipPixelSize }: GameCanvasProps) {
+   const canvasRef = useRef<HTMLCanvasElement>(null)
++  const shipRef = useRef<Ship | null>(null)
+ 
+   useEffect(() => {
+     if (!canvasRef.current) return
+@@ -37,6 +42,13 @@ export default function GameCanvas() {
+     // Initialize game systems
+     const input = new Input()
+     const ship = new Ship(scene)
++    shipRef.current = ship
++    
++    // Apply initial ship pixel size if provided
++    if (shipPixelSize) {
++      // Wait for texture to load before applying scale
++      setTimeout(() => ship.setPixelHeight(shipPixelSize), 100)
++    }
+     
+     // Initialize PostFX with default direct rendering (vanilla parity)
+     createComposer(renderer, scene, camera, {
+@@ -108,5 +120,12 @@ export default function GameCanvas() {
+     }
+   }, [])
+ 
++  // Apply ship pixel size changes
++  useEffect(() => {
++    if (shipRef.current && shipPixelSize) {
++      shipRef.current.setPixelHeight(shipPixelSize)
++    }
++  }, [shipPixelSize])
++
+   return <canvas ref={canvasRef} id="game-canvas" />
+ }
+\ No newline at end of file
+diff --git a/reactShell/src/game/entities/Ship.ts b/reactShell/src/game/entities/Ship.ts
+index dd828c6..c12c35c 100644
+--- a/reactShell/src/game/entities/Ship.ts
++++ b/reactShell/src/game/entities/Ship.ts
+@@ -166,4 +166,19 @@ export class Ship {
+   setFireCooldown(): void {
+     this.fireCooldown = PLAYER.fireRate
+   }
++
++  // Set ship pixel height for runtime tuning
++  setPixelHeight(px: number): void {
++    // Reapply texture scaling using the same logic as createShipMesh
++    const material = (this.object as THREE.Mesh).material as THREE.MeshBasicMaterial
++    if (material.map && material.map.image) {
++      const texture = material.map
++      const imgH = texture.image.height
++      const imgW = texture.image.width
++      const scale = px / imgH
++      
++      // Scale the mesh to achieve desired on-screen size
++      this.object.scale.set(imgW * scale, px, 1)
++    }
++  }
+ }
+\ No newline at end of file
+diff --git a/reactShell/src/index.css b/reactShell/src/index.css
+index c0263f0..2a2b270 100644
+--- a/reactShell/src/index.css
++++ b/reactShell/src/index.css
+@@ -18,4 +18,25 @@ body {
+ #root {
+   width: 100vw;
+   height: 100vh;
++}
++
++.dev-overlay {
++  position: fixed; 
++  top: 8px; 
++  left: 8px; 
++  z-index: 9999;
++  background: rgba(0,0,0,0.7); 
++  color: #fff; 
++  padding: 8px 10px; 
++  border-radius: 6px;
++  font: 12px/1.3 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
++}
++
++.dev-overlay input[type="range"] { 
++  width: 180px; 
++}
++
++.dev-overlay input[type="number"] { 
++  width: 64px; 
++  margin-left: 8px; 
+ }
+\ No newline at end of file
+diff --git a/reactShell/src/ui/DevTuningOverlay.tsx b/reactShell/src/ui/DevTuningOverlay.tsx
+new file mode 100644
+index 0000000..4c24aa4
+--- /dev/null
++++ b/reactShell/src/ui/DevTuningOverlay.tsx
+@@ -0,0 +1,57 @@
++import React from 'react'
++
++interface DevTuningOverlayProps {
++  visible: boolean
++  value: number
++  min?: number
++  max?: number
++  step?: number
++  onChange: (v: number) => void
++}
++
++export default function DevTuningOverlay({
++  visible,
++  value,
++  min = 40,
++  max = 140,
++  step = 1,
++  onChange
++}: DevTuningOverlayProps) {
++  if (!visible) return null
++
++  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
++    onChange(Number(e.target.value))
++  }
++
++  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
++    const newValue = Number(e.target.value)
++    if (!isNaN(newValue) && newValue >= min && newValue <= max) {
++      onChange(newValue)
++    }
++  }
++
++  return (
++    <div className="dev-overlay">
++      <label>
++        Ship size: {value} px
++        <br />
++        <input
++          type="range"
++          min={min}
++          max={max}
++          step={step}
++          value={value}
++          onChange={handleSliderChange}
++        />
++        <input
++          type="number"
++          min={min}
++          max={max}
++          step={step}
++          value={value}
++          onChange={handleNumberChange}
++        />
++      </label>
++    </div>
++  )
++}
+\ No newline at end of file

@@ -1,7 +1,7 @@
-// BulletManager.ts - Manage all bullets with object pooling
+// BulletManager.ts - Manages all bullets with object pooling
 import * as THREE from 'three'
 import { Bullet } from '../entities/Bullet'
-import { Ship } from '../entities/Ship'
+import type { Ship } from '../entities/Ship'
 
 // Constants from vanilla
 const BULLET = { 
@@ -12,95 +12,82 @@ const BULLET = {
 
 export class BulletManager {
   private bullets: Bullet[] = []
-  private activeBullets: Bullet[] = []
   private scene: THREE.Scene
-  private poolSize = 50 // Pre-allocate bullet pool
+  private poolSize = 100 // Maximum bullets that can exist
 
   constructor(scene: THREE.Scene) {
     this.scene = scene
-    this.initializePool()
-  }
-
-  private initializePool(): void {
-    // Pre-create bullet pool for performance
+    
+    // Pre-create bullet pool
     for (let i = 0; i < this.poolSize; i++) {
       const bullet = new Bullet()
-      bullet.mesh.visible = false
       this.bullets.push(bullet)
       this.scene.add(bullet.mesh)
     }
   }
 
-  // Fire a bullet from the ship
-  fire(ship: Ship, isEnemy: boolean = false): void {
+  fire(ship: Ship, isEnemy: boolean = false): Bullet | null {
     // Find an inactive bullet from the pool
     const bullet = this.bullets.find(b => !b.isActive)
     if (!bullet) {
-      console.warn('Bullet pool exhausted!')
-      return
+      console.warn('BulletManager: No available bullets in pool')
+      return null
     }
 
-    // Calculate firing position at ship nose
+    // Get ship's position and rotation
     const shipPos = ship.getPosition()
     const shipRotation = ship.object.rotation.z
     
-    // Ship nose position (offset from center in ship's facing direction)
-    const noseDistance = 25 // Distance from ship center to nose
-    const noseX = shipPos.x + Math.cos(shipRotation + Math.PI/2) * noseDistance
-    const noseY = shipPos.y + Math.sin(shipRotation + Math.PI/2) * noseDistance
+    // Calculate bullet spawn position at ship's nose
+    const noseOffset = 2.0 // Distance from ship center to nose
+    const noseX = shipPos.x + Math.cos(shipRotation + Math.PI/2) * noseOffset
+    const noseY = shipPos.y + Math.sin(shipRotation + Math.PI/2) * noseOffset
     
-    const firePosition = new THREE.Vector2(noseX, noseY)
-
-    // Calculate bullet velocity (ship direction + ship velocity inheritance)
-    const bulletDirection = new THREE.Vector2(
-      Math.cos(shipRotation + Math.PI/2),
-      Math.sin(shipRotation + Math.PI/2)
-    )
+    // Calculate bullet velocity direction (ship's facing direction)
+    const bulletVelX = Math.cos(shipRotation + Math.PI/2) * BULLET.speed
+    const bulletVelY = Math.sin(shipRotation + Math.PI/2) * BULLET.speed
     
-    // Get ship velocity from userData
-    const shipVelocity = new THREE.Vector2(
-      ship.object.userData.vx || 0,
-      ship.object.userData.vy || 0
-    )
+    // Inherit ship's velocity (add to bullet velocity)
+    const shipVel = ship.object.userData
+    const totalVelX = bulletVelX + (shipVel.vx || 0)
+    const totalVelY = bulletVelY + (shipVel.vy || 0)
     
-    // Bullet velocity = ship velocity + bullet speed in firing direction
-    const bulletVelocity = new THREE.Vector2()
-      .copy(shipVelocity)
-      .add(bulletDirection.multiplyScalar(BULLET.speed))
-
     // Initialize the bullet
-    bullet.reset(firePosition, bulletVelocity, isEnemy)
-    
-    // Add to active bullets list
-    if (!this.activeBullets.includes(bullet)) {
-      this.activeBullets.push(bullet)
-    }
+    bullet.reset(
+      new THREE.Vector2(noseX, noseY),
+      new THREE.Vector2(totalVelX, totalVelY),
+      isEnemy
+    )
+
+    return bullet
   }
 
   update(dt: number): void {
     // Update all active bullets
-    for (let i = this.activeBullets.length - 1; i >= 0; i--) {
-      const bullet = this.activeBullets[i]
-      bullet.update(dt)
-      
-      // Remove expired bullets from active list
-      if (bullet.isExpired()) {
-        this.activeBullets.splice(i, 1)
+    for (const bullet of this.bullets) {
+      if (bullet.isActive) {
+        bullet.update(dt)
       }
     }
   }
 
   getActiveBullets(): Bullet[] {
-    return this.activeBullets.slice() // Return a copy
+    return this.bullets.filter(b => b.isActive)
   }
 
-  getActiveBulletCount(): number {
-    return this.activeBullets.length
+  getActiveCount(): number {
+    return this.bullets.filter(b => b.isActive).length
   }
 
-  // Clear all bullets (for game reset)
-  clear(): void {
-    this.activeBullets.forEach(bullet => bullet.expire())
-    this.activeBullets.length = 0
+  // Cleanup method
+  dispose(): void {
+    for (const bullet of this.bullets) {
+      this.scene.remove(bullet.mesh)
+      bullet.mesh.geometry.dispose()
+      if (bullet.mesh.material instanceof THREE.Material) {
+        bullet.mesh.material.dispose()
+      }
+    }
+    this.bullets = []
   }
 }

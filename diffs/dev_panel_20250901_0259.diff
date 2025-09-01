@@ -1,0 +1,586 @@
+diff --git a/docs/prompts/23.md b/docs/prompts/23.md
+new file mode 100644
+index 0000000..52184d3
+--- /dev/null
++++ b/docs/prompts/23.md
+@@ -0,0 +1,133 @@
++EXECUTION MODE — add Dev Panel (toggle with backtick). Output ONE unified diff under `/diffs/` only. Then commit and push.
++
++Goal
++- Build a lightweight in-app Dev Panel to speed TS’ing:
++  - Toggle with backtick (`).
++  - Sections: FPS, Entities, Ship, Input, Logs.
++  - Simple logging API: `window.debug.log/info/warn/error(...)`.
++
++Scope (create/update only these)
++- NEW: `/AsteroidsV2/reactShell/src/dev/DebugBus.ts`
++- NEW: `/AsteroidsV2/reactShell/src/ui/DevPanel.tsx`
++- UPDATE: `/AsteroidsV2/reactShell/src/App.tsx` (toggle + mount)
++- UPDATE: `/AsteroidsV2/reactShell/src/game/GameCanvas.tsx` (stats feed)
++- UPDATE: `/AsteroidsV2/reactShell/src/styles.css` (append minimal styles)
++
++Requirements
++
++1) DebugBus (singleton)
++- File: `src/dev/DebugBus.ts`
++- Expose:
++  ```ts
++  export type LogLevel = 'log'|'info'|'warn'|'error';
++  export type LogEntry = { t:number; level:LogLevel; msg:string };
++  export const DebugBus: {
++    subscribe(cb:(entries:LogEntry[])=>void):()=>void; // returns unsubscribe
++    push(level:LogLevel, ...args:any[]):void;
++    get(): LogEntry[];
++    setMax(n:number):void; // default 500
++  };
++
++	•	Keep a ring buffer (default 500). Format args via JSON.stringify fallback, join by space.
++	•	Attach helpers on window.debug:
++
++(window as any).debug = {
++  log: (...a:any[]) => DebugBus.push('log', ...a),
++  info: (...a:any[]) => DebugBus.push('info', ...a),
++  warn: (...a:any[]) => DebugBus.push('warn', ...a),
++  error: (...a:any[]) => DebugBus.push('error', ...a),
++};
++
++
++
++	2.	DevPanel UI
++
++	•	File: src/ui/DevPanel.tsx
++	•	Props:
++
++type DevStats = {
++  fps:number;
++  entities:{ ships:number; asteroids:number; bullets:number; other:number };
++  ship?: { x:number; y:number; vx:number; vy:number; angleDeg:number; pxHeight:number };
++  input?: { thrust:boolean; left:boolean; right:boolean; fire:boolean; mouseX:number; mouseY:number };
++};
++export function DevPanel({ visible, stats }:{ visible:boolean; stats:DevStats }): JSX.Element | null
++
++
++	•	Layout (fixed, resizable not required):
++	•	Top row: FPS (1-decimal), entity counts.
++	•	Grid/rows: Ship (position/velocity/angle/px), Input states.
++	•	Logs section (auto-scroll to bottom, last ~500).
++	•	Buttons: “Clear Logs”, “Copy Logs”.
++	•	Subscribe to DebugBus to display log stream.
++
++	3.	App integration
++
++	•	In App.tsx:
++	•	Add const [showDev, setShowDev] = useState(false);
++	•	Backtick toggle:
++
++useEffect(() => {
++  const onKey = (e: KeyboardEvent) => { if (e.code === 'Backquote') setShowDev(v=>!v); };
++  window.addEventListener('keydown', onKey);
++  return () => window.removeEventListener('keydown', onKey);
++}, []);
++
++
++	•	Render <DevPanel visible={showDev} stats={/* from GameCanvas via prop */} />.
++
++	4.	GameCanvas stats feed
++
++	•	In GameCanvas.tsx, compute:
++	•	FPS via rolling average over the last ~30 frames (store in ref).
++	•	Entities: report counts from whatever exists now (at minimum ships:1, others 0).
++	•	Ship state: read from Ship instance (position, velocity, angle in degrees, pxHeight if available).
++	•	Input state: from Input (thrust/left/right/fire + mouse screen coords).
++	•	Lift these into a useState<DevStats> and update once per frame (or ~10 Hz using a throttle to avoid re-render spam).
++	•	Pass stats up to App via a prop callback:
++	•	Add prop on <GameCanvas onStats={(s:DevStats)=>setStats(s)} />.
++	•	In App.tsx, keep const [stats, setStats] = useState<DevStats>(/* defaults */); and pass to <DevPanel>.
++
++	5.	Styles (append to styles.css)
++
++	•	Minimal:
++
++.dev-panel {
++  position: fixed; right: 12px; bottom: 12px; z-index: 100000;
++  width: 360px; max-height: 60vh; overflow: hidden;
++  background: rgba(0,0,0,.85); color:#e6e6e6; border:1px solid rgba(255,255,255,.2);
++  border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.5);
++  font: 12px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
++}
++.dev-panel h4 { margin: 8px 10px; font-size: 12px; color:#9fd3ff; }
++.dev-panel .sec { padding: 6px 10px; border-top:1px solid rgba(255,255,255,.08); }
++.dev-panel .row { display:flex; justify-content:space-between; gap:8px; }
++.dev-panel .logs { height: 180px; overflow:auto; background: rgba(255,255,255,.03); padding:6px 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
++.dev-panel .btns { display:flex; gap:8px; margin:6px 10px 10px; }
++.dev-panel button { background:#1f2937; color:#fff; border:1px solid rgba(255,255,255,.2); border-radius:6px; padding:4px 8px; cursor:pointer; }
++.dev-panel button:hover { background:#111827; }
++
++
++
++	6.	Convenience hooks
++
++	•	On mount of GameCanvas, push a greeting to logs:
++
++DebugBus.push('info', 'DevPanel ready');
++
++
++	•	Catch runtime errors into the log (optional):
++
++window.addEventListener('error', e => DebugBus.push('error', e.message));
++window.addEventListener('unhandledrejection', e => DebugBus.push('error', (e.reason && e.reason.message) || 'unhandled rejection'));
++
++(Guard to avoid duplicate listeners on HMR.)
++
++Constraints
++	•	Do NOT change gameplay (physics, controls, PostFX).
++	•	Keep panel entirely optional (controlled by backtick).
++	•	No dependencies beyond what’s already in the repo.
++
++Deliverable
++	•	Print ONE timestamped unified diff under /diffs/ with the full patch (new files + edits + styles). No truncation/summaries.
++	•	After printing, commit and push.
+diff --git a/reactShell/src/App.tsx b/reactShell/src/App.tsx
+index 7e15bc5..dbf5b7c 100644
+--- a/reactShell/src/App.tsx
++++ b/reactShell/src/App.tsx
+@@ -5,23 +5,37 @@ import UpgradeMenu from './ui/UpgradeMenu'
+ import StatusOverlay from './ui/StatusOverlay'
+ import PauseOverlay from './ui/PauseOverlay'
+ import StartScreen from './ui/StartScreen'
++import { DevPanel, DevStats } from './ui/DevPanel'
+ 
+ function App() {
+   const [showStart, setShowStart] = useState(true)
++  const [showDev, setShowDev] = useState(false)
++  const [stats, setStats] = useState<DevStats>({
++    fps: 0,
++    entities: { ships: 0, asteroids: 0, bullets: 0, other: 0 }
++  })
+ 
+   useEffect(() => {
+     // Initialize game
+     console.log('Asteroids React Shell initializing...')
++    
++    // Backtick key listener for dev panel toggle
++    const onKey = (e: KeyboardEvent) => { 
++      if (e.code === 'Backquote') setShowDev(v => !v)
++    }
++    window.addEventListener('keydown', onKey)
++    return () => window.removeEventListener('keydown', onKey)
+   }, [])
+ 
+   return (
+     <div className="app">
+-      <GameCanvas />
++      <GameCanvas onStats={setStats} />
+       <Hud />
+       <UpgradeMenu />
+       <StatusOverlay />
+       <PauseOverlay />
+       <StartScreen visible={showStart} onDismiss={() => setShowStart(false)} />
++      <DevPanel visible={showDev} stats={stats} />
+     </div>
+   )
+ }
+diff --git a/reactShell/src/dev/DebugBus.ts b/reactShell/src/dev/DebugBus.ts
+new file mode 100644
+index 0000000..cb5a735
+--- /dev/null
++++ b/reactShell/src/dev/DebugBus.ts
+@@ -0,0 +1,76 @@
++export type LogLevel = 'log' | 'info' | 'warn' | 'error'
++export type LogEntry = { t: number; level: LogLevel; msg: string }
++
++class DebugBusImpl {
++  private entries: LogEntry[] = []
++  private maxEntries = 500
++  private subscribers: ((entries: LogEntry[]) => void)[] = []
++
++  subscribe(cb: (entries: LogEntry[]) => void): () => void {
++    this.subscribers.push(cb)
++    return () => {
++      const index = this.subscribers.indexOf(cb)
++      if (index > -1) {
++        this.subscribers.splice(index, 1)
++      }
++    }
++  }
++
++  push(level: LogLevel, ...args: any[]): void {
++    const msg = args.map(arg => {
++      try {
++        return typeof arg === 'string' ? arg : JSON.stringify(arg)
++      } catch {
++        return String(arg)
++      }
++    }).join(' ')
++
++    const entry: LogEntry = { t: Date.now(), level, msg }
++    
++    // Ring buffer - remove oldest if at capacity
++    if (this.entries.length >= this.maxEntries) {
++      this.entries.shift()
++    }
++    
++    this.entries.push(entry)
++    
++    // Notify subscribers
++    this.subscribers.forEach(cb => cb([...this.entries]))
++  }
++
++  get(): LogEntry[] {
++    return [...this.entries]
++  }
++
++  setMax(n: number): void {
++    this.maxEntries = n
++    // Trim existing entries if needed
++    if (this.entries.length > n) {
++      this.entries = this.entries.slice(-n)
++    }
++  }
++
++  clear(): void {
++    this.entries = []
++    this.subscribers.forEach(cb => cb([]))
++  }
++}
++
++export const DebugBus = new DebugBusImpl()
++
++// Attach helpers to window.debug
++;(window as any).debug = {
++  log: (...a: any[]) => DebugBus.push('log', ...a),
++  info: (...a: any[]) => DebugBus.push('info', ...a),
++  warn: (...a: any[]) => DebugBus.push('warn', ...a),
++  error: (...a: any[]) => DebugBus.push('error', ...a),
++}
++
++// Catch runtime errors (with guard for HMR)
++if (!(window as any).__debugBusErrorHandlersAdded) {
++  window.addEventListener('error', e => DebugBus.push('error', e.message))
++  window.addEventListener('unhandledrejection', e => 
++    DebugBus.push('error', (e.reason && e.reason.message) || 'unhandled rejection')
++  )
++  ;(window as any).__debugBusErrorHandlersAdded = true
++}
+\ No newline at end of file
+diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
+index 20c92e7..b11c0fc 100644
+--- a/reactShell/src/game/GameCanvas.tsx
++++ b/reactShell/src/game/GameCanvas.tsx
+@@ -4,6 +4,8 @@ import * as THREE from 'three'
+ import { createComposer, resize, render } from './render/PostFX'
+ import { Input } from './Input'
+ import { Ship } from './entities/Ship'
++import { DevStats } from '../ui/DevPanel'
++import { DebugBus } from '../dev/DebugBus'
+ 
+ // World constants (from vanilla)
+ const WORLD = {
+@@ -20,8 +22,15 @@ function makeOrthoCamera(w: number, h: number): THREE.OrthographicCamera {
+   return cam
+ }
+ 
+-export default function GameCanvas() {
++interface GameCanvasProps {
++  onStats?: (stats: DevStats) => void
++}
++
++export default function GameCanvas({ onStats }: GameCanvasProps) {
+   const canvasRef = useRef<HTMLCanvasElement>(null)
++  const fpsHistoryRef = useRef<number[]>([])
++  const shipRef = useRef<Ship | null>(null)
++  const inputRef = useRef<Input | null>(null)
+ 
+   useEffect(() => {
+     if (!canvasRef.current) return
+@@ -37,6 +46,11 @@ export default function GameCanvas() {
+     // Initialize game systems
+     const input = new Input()
+     const ship = new Ship(scene)
++    shipRef.current = ship
++    inputRef.current = input
++    
++    // Dev panel greeting
++    DebugBus.push('info', 'DevPanel ready')
+     
+     // Initialize PostFX with default direct rendering (vanilla parity)
+     createComposer(renderer, scene, camera, {
+@@ -77,10 +91,19 @@ export default function GameCanvas() {
+     // Game loop
+     let raf = 0
+     let last = performance.now()
++    let statsUpdateCounter = 0
+     const animate = (now: number) => {
+       const dt = (now - last) / 1000
+       last = now
+       
++      // Calculate FPS (rolling average over 30 frames)
++      const fps = dt > 0 ? 1 / dt : 0
++      fpsHistoryRef.current.push(fps)
++      if (fpsHistoryRef.current.length > 30) {
++        fpsHistoryRef.current.shift()
++      }
++      const avgFps = fpsHistoryRef.current.reduce((a, b) => a + b, 0) / fpsHistoryRef.current.length
++      
+       // Update input
+       input.update()
+       const inputState = input.getState()
+@@ -98,6 +121,42 @@ export default function GameCanvas() {
+       camera.position.y = shipPos.y
+       
+       render(dt) // Uses direct rendering by default (vanilla parity)
++      
++      // Update dev stats (throttled to ~10 Hz to avoid re-render spam)
++      statsUpdateCounter++
++      if (onStats && statsUpdateCounter % 6 === 0) {
++        const shipPos = ship.getPosition()
++        const shipUserData = ship.object.userData
++        
++        const stats: DevStats = {
++          fps: avgFps,
++          entities: { 
++            ships: 1, 
++            asteroids: 0, 
++            bullets: 0, 
++            other: 0 
++          },
++          ship: {
++            x: shipPos.x,
++            y: shipPos.y,
++            vx: shipUserData.vx || 0,
++            vy: shipUserData.vy || 0,
++            angleDeg: (ship.object.rotation.z * 180 / Math.PI) % 360,
++            pxHeight: 50 // Current ship size
++          },
++          input: {
++            thrust: inputState.thrust,
++            left: inputState.turnLeft,
++            right: inputState.turnRight,
++            fire: inputState.fire,
++            mouseX: Math.round(inputState.mouseX),
++            mouseY: Math.round(inputState.mouseY)
++          }
++        }
++        
++        onStats(stats)
++      }
++      
+       raf = requestAnimationFrame(animate)
+     }
+     raf = requestAnimationFrame(animate)
+diff --git a/reactShell/src/index.css b/reactShell/src/index.css
+index c0263f0..b8896dd 100644
+--- a/reactShell/src/index.css
++++ b/reactShell/src/index.css
+@@ -18,4 +18,72 @@ body {
+ #root {
+   width: 100vw;
+   height: 100vh;
++}
++
++.dev-panel {
++  position: fixed; 
++  right: 12px; 
++  bottom: 12px; 
++  z-index: 100000;
++  width: 360px; 
++  max-height: 60vh; 
++  overflow: hidden;
++  background: rgba(0,0,0,.85); 
++  color:#e6e6e6; 
++  border:1px solid rgba(255,255,255,.2);
++  border-radius: 8px; 
++  box-shadow: 0 4px 16px rgba(0,0,0,.5);
++  font: 12px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
++}
++
++.dev-panel h4 { 
++  margin: 8px 10px; 
++  font-size: 12px; 
++  color:#9fd3ff; 
++}
++
++.dev-panel .sec { 
++  padding: 6px 10px; 
++  border-top:1px solid rgba(255,255,255,.08); 
++}
++
++.dev-panel .row { 
++  display:flex; 
++  justify-content:space-between; 
++  gap:8px; 
++}
++
++.dev-panel .logs { 
++  height: 180px; 
++  overflow:auto; 
++  background: rgba(255,255,255,.03); 
++  padding:6px 8px; 
++  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; 
++}
++
++.dev-panel .btns { 
++  display:flex; 
++  gap:8px; 
++  margin:6px 10px 10px; 
++}
++
++.dev-panel button { 
++  background:#1f2937; 
++  color:#fff; 
++  border:1px solid rgba(255,255,255,.2); 
++  border-radius:6px; 
++  padding:4px 8px; 
++  cursor:pointer; 
++}
++
++.dev-panel button:hover { 
++  background:#111827; 
++}
++
++.dev-panel .logs .error {
++  color: #ff6b6b;
++}
++
++.dev-panel .logs .warn {
++  color: #ffd93d;
+ }
+\ No newline at end of file
+diff --git a/reactShell/src/ui/DevPanel.tsx b/reactShell/src/ui/DevPanel.tsx
+new file mode 100644
+index 0000000..a753f9d
+--- /dev/null
++++ b/reactShell/src/ui/DevPanel.tsx
+@@ -0,0 +1,131 @@
++import React, { useEffect, useState } from 'react'
++import { DebugBus, LogEntry } from '../dev/DebugBus'
++
++export type DevStats = {
++  fps: number
++  entities: { ships: number; asteroids: number; bullets: number; other: number }
++  ship?: { x: number; y: number; vx: number; vy: number; angleDeg: number; pxHeight: number }
++  input?: { thrust: boolean; left: boolean; right: boolean; fire: boolean; mouseX: number; mouseY: number }
++}
++
++interface DevPanelProps {
++  visible: boolean
++  stats: DevStats
++}
++
++export function DevPanel({ visible, stats }: DevPanelProps): JSX.Element | null {
++  const [logs, setLogs] = useState<LogEntry[]>([])
++
++  useEffect(() => {
++    if (!visible) return
++    
++    const unsubscribe = DebugBus.subscribe(setLogs)
++    return unsubscribe
++  }, [visible])
++
++  const handleClearLogs = () => {
++    DebugBus.clear()
++  }
++
++  const handleCopyLogs = async () => {
++    const logText = logs.map(entry => {
++      const time = new Date(entry.t).toLocaleTimeString()
++      return `[${time}] ${entry.level.toUpperCase()}: ${entry.msg}`
++    }).join('\n')
++    
++    try {
++      await navigator.clipboard.writeText(logText)
++      DebugBus.push('info', 'Logs copied to clipboard')
++    } catch {
++      DebugBus.push('warn', 'Failed to copy logs to clipboard')
++    }
++  }
++
++  if (!visible) return null
++
++  return (
++    <div className="dev-panel">
++      <h4>Dev Panel</h4>
++      
++      {/* FPS and Entities */}
++      <div className="sec">
++        <div className="row">
++          <span>FPS:</span>
++          <span>{stats.fps.toFixed(1)}</span>
++        </div>
++        <div className="row">
++          <span>Entities:</span>
++          <span>
++            Ships:{stats.entities.ships} 
++            Asteroids:{stats.entities.asteroids} 
++            Bullets:{stats.entities.bullets} 
++            Other:{stats.entities.other}
++          </span>
++        </div>
++      </div>
++
++      {/* Ship Stats */}
++      {stats.ship && (
++        <div className="sec">
++          <h4>Ship</h4>
++          <div className="row">
++            <span>Position:</span>
++            <span>x:{stats.ship.x.toFixed(1)} y:{stats.ship.y.toFixed(1)}</span>
++          </div>
++          <div className="row">
++            <span>Velocity:</span>
++            <span>vx:{stats.ship.vx.toFixed(2)} vy:{stats.ship.vy.toFixed(2)}</span>
++          </div>
++          <div className="row">
++            <span>Angle:</span>
++            <span>{stats.ship.angleDeg.toFixed(1)}°</span>
++          </div>
++          <div className="row">
++            <span>Size:</span>
++            <span>{stats.ship.pxHeight}px</span>
++          </div>
++        </div>
++      )}
++
++      {/* Input Stats */}
++      {stats.input && (
++        <div className="sec">
++          <h4>Input</h4>
++          <div className="row">
++            <span>Keys:</span>
++            <span>
++              {stats.input.thrust ? 'T' : '-'}
++              {stats.input.left ? 'L' : '-'}
++              {stats.input.right ? 'R' : '-'}
++              {stats.input.fire ? 'F' : '-'}
++            </span>
++          </div>
++          <div className="row">
++            <span>Mouse:</span>
++            <span>x:{stats.input.mouseX} y:{stats.input.mouseY}</span>
++          </div>
++        </div>
++      )}
++
++      {/* Logs */}
++      <div className="sec">
++        <h4>Logs ({logs.length})</h4>
++        <div className="logs">
++          {logs.map((entry, i) => {
++            const time = new Date(entry.t).toLocaleTimeString()
++            const levelClass = entry.level === 'error' ? 'error' : entry.level === 'warn' ? 'warn' : ''
++            return (
++              <div key={i} className={levelClass}>
++                [{time}] {entry.level.toUpperCase()}: {entry.msg}
++              </div>
++            )
++          })}
++        </div>
++        <div className="btns">
++          <button onClick={handleClearLogs}>Clear Logs</button>
++          <button onClick={handleCopyLogs}>Copy Logs</button>
++        </div>
++      </div>
++    </div>
++  )
++}
+\ No newline at end of file

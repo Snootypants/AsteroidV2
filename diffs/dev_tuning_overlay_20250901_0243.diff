@@ -1,0 +1,2325 @@
+diff --git a/diffs/corrections_20250901_0229.diff b/diffs/corrections_20250901_0229.diff
+new file mode 100644
+index 0000000..178e05d
+--- /dev/null
++++ b/diffs/corrections_20250901_0229.diff
+@@ -0,0 +1,13 @@
++diff --git a/reactShell/src/game/entities/Ship.ts b/reactShell/src/game/entities/Ship.ts
++index d4c4458..ee479d5 100644
++--- a/reactShell/src/game/entities/Ship.ts
+++++ b/reactShell/src/game/entities/Ship.ts
++@@ -17,7 +17,7 @@ const WORLD = {
++ }
++ 
++ // Ship visual scale
++-const SHIP_DESIRED_PX = 100 // tweak 90–110 for parity with vanilla screenshot
+++const SHIP_DESIRED_PX = 85 // tweak 90–110 for parity with vanilla screenshot
++ const ROTATION_OFFSET = -Math.PI / 2 // Ship sprite nose points "up" (+Y)
++ 
++ export class Ship {
+diff --git a/diffs/corrections_20250901_2310.diff b/diffs/corrections_20250901_2310.diff
+index b2cb234..ad9880e 100644
+--- a/diffs/corrections_20250901_2310.diff
++++ b/diffs/corrections_20250901_2310.diff
+@@ -1,192 +1,13 @@
+-diff --git a/LICENSE b/LICENSE
+-new file mode 100644
+-index 0000000..0000000
+---- /dev/null
+-+++ b/LICENSE
+-@@ -0,0 +1,26 @@
+-+PROPRIETARY SOFTWARE LICENSE
+-+
+-+Copyright (c) 2025 Snootypants. All Rights Reserved.
+-+
+-+This software and associated documentation files (the "Software") are the 
+-+proprietary and confidential property of Snootypants.
+-+
+-+NO PERMISSION IS GRANTED to use, copy, modify, merge, publish, distribute, 
+-+sublicense, sell, or create derivative works from this Software.
+-+
+-+STRICTLY PROHIBITED:
+-+- Copying or downloading this code
+-+- Using any part of this code in other projects
+-+- Sharing or distributing this code in any form
+-+- Creating derivative works based on this code
+-+- Commercial or non-commercial use without explicit written permission
+-+
+-+This repository is made public for VIEWING PURPOSES ONLY. Access to view this 
+-+repository does not grant any rights to use the Software.
+-+
+-+Any unauthorized use, reproduction, or distribution of this Software is strictly 
+-+prohibited and may result in severe civil and criminal penalties, and will be 
+-+prosecuted to the maximum extent possible under law.
+-+
+-+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT ANY WARRANTY OF ANY KIND. THE COPYRIGHT 
+-+HOLDER SHALL NOT BE LIABLE FOR ANY DAMAGES ARISING FROM VIEWING THIS SOFTWARE.
+-diff --git a/reactShell/README.md b/reactShell/README.md
+-new file mode 100644
+-index 0000000..0000000
+---- /dev/null
+-+++ b/reactShell/README.md
+-@@ -0,0 +1,52 @@
+-+# Asteroids v2 - React Shell
+-+
+-+A React/TypeScript implementation with exact parity to the vanilla HTML version.
+-+
+-+## Development
+-+
+-+### Setup
+-+```bash
+-+npm install
+-+```
+-+
+-+### Commands
+-+- `npm run dev` - Start development server (port 3000)
+-+- `npm run build` - Build for production
+-+- `npm run preview` - Preview production build
+-+
+-+## Asset Requirements
+-+
+-+Assets must be referenced exactly as in vanilla:
+-+- Use `assets/...` paths (no leading slash)
+-+- Mirror `/vanillaHTML/` structure exactly
+-+- Preserve exact filename casing (e.g., `Hanger.png` with uppercase H)
+-+
+-+Example asset references:
+-+```typescript
+-+// Correct
+-+const texture = loader.load('assets/ship/ship.png')
+-+const img = <img src="assets/start_screen.png" />
+-+
+-+// Incorrect
+-+const texture = loader.load('/assets/ship/ship.png')  // No leading slash
+-+const img = <img src="assets/hanger.png" />          // Wrong case
+-+```
+-+
+-+## Case Sensitivity
+-+
+-+For consistent behavior across platforms, configure git:
+-+```bash
+-+git config core.ignorecase false
+-+```
+-+
+-+## Parity Requirements
+-+
+-+This React shell must maintain strict parity with `/vanillaHTML/`:
+-+- Identical visual output
+-+- Identical gameplay mechanics
+-+- Identical asset loading
+-+- Identical Three.js behavior
+-+
+-+## Development Policy
+-+
+-+All changes must be committed as full unified diffs under `/diffs/` with timestamped filenames, ready for `git apply`.
+-diff --git a/reactShell/package.json b/reactShell/package.json
+-index 0000000..0000000
+---- a/reactShell/package.json
+-+++ b/reactShell/package.json
+-@@ -11,8 +11,7 @@
+-   "dependencies": {
+-     "react": "^18.2.0",
+-     "react-dom": "^18.2.0",
+--    "three": "0.158.0",
+--    "@types/three": "0.158.0"
+-+    "three": "0.158.0"
+-   },
+-   "devDependencies": {
+-     "@types/react": "^18.2.0",
+-diff --git a/reactShell/src/game/render/PostFX.ts b/reactShell/src/game/render/PostFX.ts
+-index 0000000..0000000
+---- a/reactShell/src/game/render/PostFX.ts
+-+++ b/reactShell/src/game/render/PostFX.ts
+-@@ -1,2 +1,56 @@
+--// PostFX.ts - EffectComposer chain
+--export class PostFX {}
+-+import * as THREE from 'three'
+-+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+-+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+-+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
+-+import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js'
+-+
+-+export function createComposer(
+-+  renderer: THREE.WebGLRenderer,
+-+  scene: THREE.Scene,
+-+  camera: THREE.Camera,
+-+  size: { width: number; height: number }
+-+) {
+-+  // Set renderer properties to match vanilla
+-+  renderer.setPixelRatio(window.devicePixelRatio)
+-+  renderer.outputColorSpace = THREE.SRGBColorSpace
+-+  renderer.toneMapping = THREE.ACESFilmicToneMapping
+-+  renderer.toneMappingExposure = 1.2
+-+
+-+  // Create composer
+-+  const composer = new EffectComposer(renderer)
+-+  composer.setSize(size.width, size.height)
+-+  
+-+  // Add render pass
+-+  composer.addPass(new RenderPass(scene, camera))
+-+  
+-+  // Add outline pass
+-+  const outlinePass = new OutlinePass(
+-+    new THREE.Vector2(size.width, size.height),
+-+    scene,
+-+    camera
+-+  )
+-+  composer.addPass(outlinePass)
+-+  
+-+  // Add bloom pass with exact vanilla parameters
+-+  const bloom = new UnrealBloomPass(
+-+    new THREE.Vector2(size.width, size.height),
+-+    0.9,  // strength
+-+    0.8,  // radius  
+-+    0.85  // threshold
+-+  )
+-+  bloom.threshold = 0.2
+-+  bloom.strength = 1.25
+-+  bloom.radius = 0.6
+-+  composer.addPass(bloom)
+-+
+-+  return {
+-+    composer,
+-+    resize: (width: number, height: number) => {
+-+      composer.setSize(width, height)
+-+      outlinePass.setSize(width, height)
+-+    },
+-+    render: (delta: number) => {
+-+      composer.render(delta)
+-+    }
+-+  }
+-+}
+-diff --git a/reactShell/src/main.tsx b/reactShell/src/main.tsx
+-index 0000000..0000000
+---- a/reactShell/src/main.tsx
+-+++ b/reactShell/src/main.tsx
+-@@ -4,7 +4,5 @@ import App from './App.tsx'
+- import './index.css'
++diff --git a/reactShell/src/game/entities/Ship.ts b/reactShell/src/game/entities/Ship.ts
++index d4c4458..ee479d5 100644
++--- a/reactShell/src/game/entities/Ship.ts
+++++ b/reactShell/src/game/entities/Ship.ts
++@@ -17,7 +17,7 @@ const WORLD = {
++ }
+  
+- ReactDOM.createRoot(document.getElementById('root')!).render(
+--  <React.StrictMode>
+--    <App />
+--  </React.StrictMode>,
+-+  <App />
+- )
+-diff --git a/reactShell/vite.config.ts b/reactShell/vite.config.ts
+-index 0000000..0000000
+---- a/reactShell/vite.config.ts
+-+++ b/reactShell/vite.config.ts
+-@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
++ // Ship visual scale
++-const SHIP_DESIRED_PX = 100 // tweak 90–110 for parity with vanilla screenshot
+++const SHIP_DESIRED_PX = 85 // tweak 90–110 for parity with vanilla screenshot
++ const ROTATION_OFFSET = -Math.PI / 2 // Ship sprite nose points "up" (+Y)
+  
+- // https://vitejs.dev/config/
+- export default defineConfig({
+-+  base: './',
+-   plugins: [react()],
+-   server: {
+-     port: 3000
+\ No newline at end of file
++ export class Ship {
+\ No newline at end of file
+diff --git a/diffs/ship_size_65px_20250901_0233.diff b/diffs/ship_size_65px_20250901_0233.diff
+new file mode 100644
+index 0000000..3619230
+--- /dev/null
++++ b/diffs/ship_size_65px_20250901_0233.diff
+@@ -0,0 +1,13 @@
++diff --git a/reactShell/src/game/entities/Ship.ts b/reactShell/src/game/entities/Ship.ts
++index ee479d5..dd828c6 100644
++--- a/reactShell/src/game/entities/Ship.ts
+++++ b/reactShell/src/game/entities/Ship.ts
++@@ -17,7 +17,7 @@ const WORLD = {
++ }
++ 
++ // Ship visual scale
++-const SHIP_DESIRED_PX = 85 // tweak 90–110 for parity with vanilla screenshot
+++const SHIP_DESIRED_PX = 65 // tweak 90–110 for parity with vanilla screenshot
++ const ROTATION_OFFSET = -Math.PI / 2 // Ship sprite nose points "up" (+Y)
++ 
++ export class Ship {
+diff --git a/diffs/ship_size_adjust_20250901_0216.diff b/diffs/ship_size_adjust_20250901_0216.diff
+new file mode 100644
+index 0000000..c2ba5af
+--- /dev/null
++++ b/diffs/ship_size_adjust_20250901_0216.diff
+@@ -0,0 +1,846 @@
++diff --git a/diffs/ship_scale_orientation_20250901_0209.diff b/diffs/ship_scale_orientation_20250901_0209.diff
++new file mode 100644
++index 0000000..54a9ba4
++--- /dev/null
+++++ b/diffs/ship_scale_orientation_20250901_0209.diff
++@@ -0,0 +1,799 @@
+++diff --git a/diffs/ship_entity_20250901_0200.diff b/diffs/ship_entity_20250901_0200.diff
+++new file mode 100644
+++index 0000000..8f4401b
+++--- /dev/null
++++++ b/diffs/ship_entity_20250901_0200.diff
+++@@ -0,0 +1,581 @@
++++diff --git a/diffs/startscreen_complete_20250901_0115.diff b/diffs/startscreen_complete_20250901_0115.diff
++++new file mode 100644
++++index 0000000..93adb56
++++--- /dev/null
+++++++ b/diffs/startscreen_complete_20250901_0115.diff
++++@@ -0,0 +1,184 @@
+++++diff --git a/diffs/startscreen_20250901_0109.diff b/diffs/startscreen_20250901_0109.diff
+++++new file mode 100644
+++++index 0000000..1054e3b
+++++--- /dev/null
++++++++ b/diffs/startscreen_20250901_0109.diff
+++++@@ -0,0 +1,40 @@
++++++diff --git a/reactShell/src/App.tsx b/reactShell/src/App.tsx
++++++index 06bb832..7e15bc5 100644
++++++--- a/reactShell/src/App.tsx
+++++++++ b/reactShell/src/App.tsx
++++++@@ -1,11 +1,14 @@
++++++-import { useEffect } from 'react'
+++++++import { useEffect, useState } from 'react'
++++++ import GameCanvas from './game/GameCanvas'
++++++ import Hud from './ui/Hud'
++++++ import UpgradeMenu from './ui/UpgradeMenu'
++++++ import StatusOverlay from './ui/StatusOverlay'
++++++ import PauseOverlay from './ui/PauseOverlay'
+++++++import StartScreen from './ui/StartScreen'
++++++ 
++++++ function App() {
+++++++  const [showStart, setShowStart] = useState(true)
+++++++
++++++   useEffect(() => {
++++++     // Initialize game
++++++     console.log('Asteroids React Shell initializing...')
++++++@@ -18,6 +21,7 @@ function App() {
++++++       <UpgradeMenu />
++++++       <StatusOverlay />
++++++       <PauseOverlay />
+++++++      <StartScreen visible={showStart} onDismiss={() => setShowStart(false)} />
++++++     </div>
++++++   )
++++++ }
++++++diff --git a/reactShell/src/main.tsx b/reactShell/src/main.tsx
++++++index 651a687..3ccc3d8 100644
++++++--- a/reactShell/src/main.tsx
+++++++++ b/reactShell/src/main.tsx
++++++@@ -2,6 +2,7 @@ import React from 'react'
++++++ import ReactDOM from 'react-dom/client'
++++++ import App from './App.tsx'
++++++ import './index.css'
+++++++import './styles.css'
++++++ 
++++++ ReactDOM.createRoot(document.getElementById('root')!).render(
++++++   <App />
+++++diff --git a/docs/prompts/16.md b/docs/prompts/16.md
+++++new file mode 100644
+++++index 0000000..b56c196
+++++--- /dev/null
++++++++ b/docs/prompts/16.md
+++++@@ -0,0 +1,44 @@
++++++EXECUTION MODE — show the vanilla start screen in React. Output one unified diff under `/diffs/` only. Then commit and push.
++++++
++++++Goal
++++++- Render the vanilla `start_screen.png` as a fullscreen overlay above the Three canvas.
++++++- No gameplay yet; click or press Space hides the overlay (state lives in App).
++++++
++++++Scope
++++++- `/AsteroidsV2/reactShell/src/App.tsx`
++++++- `/AsteroidsV2/reactShell/src/ui/StartScreen.tsx` (new)
++++++- `/AsteroidsV2/reactShell/src/styles.css` (append styles if needed)
++++++
++++++Requirements
++++++
++++++1) StartScreen component (new file)
++++++- Renders a fullscreen, centered image sourced from `assets/start_screen.png` (match vanilla path/casing).
++++++- Props: `visible: boolean`, `onDismiss: () => void`.
++++++- If `visible`, capture click and Space key to call `onDismiss()`.
++++++- Minimal styles: fixed, inset:0, display:flex, align/justify center, black background.
++++++
++++++2) App integration
++++++- Keep `GameCanvas` mounted behind the overlay.
++++++- Local state `showStart`, default `true`.
++++++- Render `<StartScreen visible={showStart} onDismiss={() => setShowStart(false)} />` over the canvas.
++++++- Ensure z-index so overlay is above canvas.
++++++
++++++3) CSS (styles.css)
++++++- If not already present, ensure:
++++++  ```css
++++++  html, body, #root { height: 100%; margin: 0; }
++++++  canvas { display: block; }
++++++  .overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000; }
++++++  .overlay img { max-width: 90vw; max-height: 90vh; }
++++++
++++++	•	Use the .overlay class in StartScreen.
++++++
++++++Constraints
++++++	•	Do not touch PostFX, GameLoop, or other systems.
++++++	•	Asset src must be assets/start_screen.png (no renames or moves).
++++++
++++++Deliverable
++++++	•	Print ONE timestamped unified diff under /diffs/ with the full patch (new StartScreen.tsx, edits to App.tsx, any CSS additions). No truncation or summaries.
++++++
++++++commit and push
++++++
+++++diff --git a/reactShell/src/App.tsx b/reactShell/src/App.tsx
+++++index 06bb832..7e15bc5 100644
+++++--- a/reactShell/src/App.tsx
++++++++ b/reactShell/src/App.tsx
+++++@@ -1,11 +1,14 @@
+++++-import { useEffect } from 'react'
++++++import { useEffect, useState } from 'react'
+++++ import GameCanvas from './game/GameCanvas'
+++++ import Hud from './ui/Hud'
+++++ import UpgradeMenu from './ui/UpgradeMenu'
+++++ import StatusOverlay from './ui/StatusOverlay'
+++++ import PauseOverlay from './ui/PauseOverlay'
++++++import StartScreen from './ui/StartScreen'
+++++ 
+++++ function App() {
++++++  const [showStart, setShowStart] = useState(true)
++++++
+++++   useEffect(() => {
+++++     // Initialize game
+++++     console.log('Asteroids React Shell initializing...')
+++++@@ -18,6 +21,7 @@ function App() {
+++++       <UpgradeMenu />
+++++       <StatusOverlay />
+++++       <PauseOverlay />
++++++      <StartScreen visible={showStart} onDismiss={() => setShowStart(false)} />
+++++     </div>
+++++   )
+++++ }
+++++diff --git a/reactShell/src/main.tsx b/reactShell/src/main.tsx
+++++index 651a687..3ccc3d8 100644
+++++--- a/reactShell/src/main.tsx
++++++++ b/reactShell/src/main.tsx
+++++@@ -2,6 +2,7 @@ import React from 'react'
+++++ import ReactDOM from 'react-dom/client'
+++++ import App from './App.tsx'
+++++ import './index.css'
++++++import './styles.css'
+++++ 
+++++ ReactDOM.createRoot(document.getElementById('root')!).render(
+++++   <App />
+++++diff --git a/reactShell/src/styles.css b/reactShell/src/styles.css
+++++new file mode 100644
+++++index 0000000..f9ee628
+++++--- /dev/null
++++++++ b/reactShell/src/styles.css
+++++@@ -0,0 +1,4 @@
++++++html, body, #root { height: 100%; margin: 0; }
++++++canvas { display: block; }
++++++.overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000; z-index: 1000; }
++++++.overlay img { max-width: 90vw; max-height: 90vh; }
+++++\ No newline at end of file
+++++diff --git a/reactShell/src/ui/StartScreen.tsx b/reactShell/src/ui/StartScreen.tsx
+++++new file mode 100644
+++++index 0000000..7b05a04
+++++--- /dev/null
++++++++ b/reactShell/src/ui/StartScreen.tsx
+++++@@ -0,0 +1,30 @@
++++++import { useEffect } from 'react'
++++++
++++++interface StartScreenProps {
++++++  visible: boolean
++++++  onDismiss: () => void
++++++}
++++++
++++++export default function StartScreen({ visible, onDismiss }: StartScreenProps) {
++++++  useEffect(() => {
++++++    if (!visible) return
++++++
++++++    const handleKeyDown = (event: KeyboardEvent) => {
++++++      if (event.code === 'Space') {
++++++        event.preventDefault()
++++++        onDismiss()
++++++      }
++++++    }
++++++
++++++    window.addEventListener('keydown', handleKeyDown)
++++++    return () => window.removeEventListener('keydown', handleKeyDown)
++++++  }, [visible, onDismiss])
++++++
++++++  if (!visible) return null
++++++
++++++  return (
++++++    <div className="overlay" onClick={onDismiss}>
++++++      <img src="assets/start_screen.png" alt="Start Screen" />
++++++    </div>
++++++  )
++++++}
+++++\ No newline at end of file
++++diff --git a/docs/prompts/17.md b/docs/prompts/17.md
++++new file mode 100644
++++index 0000000..448cd19
++++--- /dev/null
+++++++ b/docs/prompts/17.md
++++@@ -0,0 +1,47 @@
+++++
+++++EXECUTION MODE — port Ship entity from vanilla into React shell. Output ONE unified diff under `/diffs/` only. Then commit and push.
+++++
+++++Scope
+++++- NEW: `/AsteroidsV2/reactShell/src/game/entities/Ship.ts`
+++++- NEW: `/AsteroidsV2/reactShell/src/game/Input.ts` (if not already implemented)
+++++- UPDATE: `/AsteroidsV2/reactShell/src/game/GameCanvas.tsx`
+++++
+++++Requirements
+++++
+++++1) Input.ts
+++++- Track keyboard states for thrust (W/ArrowUp), rotate left/right (A/D, ArrowLeft/Right), fire (Space or left click).
+++++- Track mouse position in screen coords.
+++++- Export an `InputState` interface and an `Input` class with `update()` and `getState()`.
+++++
+++++2) Ship.ts
+++++- Port constants + behavior from vanilla (`main.js`).
+++++- Must support: thrust, rotation, world wrapping, spawn at origin, face mouse pointer at all times.
+++++- Visual: replicate vanilla geometry/material. If vanilla uses `ship.png`, reference from `public/assets/ship/ship.png`.
+++++- API:
+++++  ```ts
+++++  export class Ship {
+++++    object: THREE.Object3D;
+++++    constructor(scene: THREE.Scene);
+++++    setAimWorld(target: THREE.Vector2): void;
+++++    update(dt: number, input: InputState): void;
+++++    getPosition(): THREE.Vector2;
+++++  }
+++++
+++++	3.	GameCanvas.tsx
+++++
+++++	•	Instantiate Input and Ship.
+++++	•	Add ship.object to scene.
+++++	•	In RAF loop:
+++++	•	Convert mouse screen coords to world coords, call ship.setAimWorld(...).
+++++	•	Call ship.update(dt, input.getState()).
+++++	•	Keep PostFX render path unchanged.
+++++	•	Ship must be visible and respond to input once start screen is dismissed.
+++++
+++++Constraints
+++++	•	Do not implement bullets, asteroids, collisions, or HUD in this diff.
+++++	•	Strict parity with vanilla Ship controls and feel.
+++++
+++++Deliverable
+++++	•	Print ONE timestamped unified diff under /diffs/ with the new Ship.ts, Input.ts, and GameCanvas.tsx edits. No truncation, no summaries.
+++++	•	After diff, commit and push.
+++++
++++diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
++++index cec45d1..35e05ca 100644
++++--- a/reactShell/src/game/GameCanvas.tsx
+++++++ b/reactShell/src/game/GameCanvas.tsx
++++@@ -2,6 +2,14 @@
++++ import { useEffect, useRef } from 'react'
++++ import * as THREE from 'three'
++++ import { createComposer, resize, render } from './render/PostFX'
+++++import { Input } from './Input'
+++++import { Ship } from './entities/Ship'
+++++
+++++// World constants (from vanilla)
+++++const WORLD = {
+++++  width: 564,
+++++  height: 498,
+++++}
++++ 
++++ export default function GameCanvas() {
++++   const canvasRef = useRef<HTMLCanvasElement>(null)
++++@@ -12,15 +20,23 @@ export default function GameCanvas() {
++++     // Basic Three.js setup - placeholder for full game integration
++++     const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current })
++++     const scene = new THREE.Scene()
++++-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
+++++    const camera = new THREE.OrthographicCamera(
+++++      -WORLD.width/2, WORLD.width/2, 
+++++      WORLD.height/2, -WORLD.height/2, 
+++++      0.1, 1000
+++++    )
++++     
++++     renderer.setPixelRatio(window.devicePixelRatio)
++++     renderer.setSize(window.innerWidth, window.innerHeight)
++++     
++++-    // Position camera
+++++    // Position camera for 2D view
++++     camera.position.z = 5
++++     camera.lookAt(0, 0, 0)
++++     
+++++    // Initialize game systems
+++++    const input = new Input()
+++++    const ship = new Ship(scene)
+++++    
++++     // Initialize PostFX with default direct rendering (vanilla parity)
++++     createComposer(renderer, scene, camera, {
++++       width: window.innerWidth,
++++@@ -31,8 +47,6 @@ export default function GameCanvas() {
++++     const handleResize = () => {
++++       const width = window.innerWidth
++++       const height = window.innerHeight
++++-      camera.aspect = width / height
++++-      camera.updateProjectionMatrix()
++++       renderer.setPixelRatio(window.devicePixelRatio)
++++       resize(width, height)
++++     }
++++@@ -40,13 +54,43 @@ export default function GameCanvas() {
++++     window.addEventListener('resize', handleResize)
++++     handleResize()
++++ 
++++-    // Basic render loop - will be replaced by full game loop
+++++    // Screen to world coordinate conversion
+++++    const screenToWorld = (screenX: number, screenY: number): THREE.Vector2 => {
+++++      // Convert screen coords to normalized device coordinates
+++++      const rect = canvasRef.current!.getBoundingClientRect()
+++++      const x = ((screenX - rect.left) / rect.width) * 2 - 1
+++++      const y = -((screenY - rect.top) / rect.height) * 2 + 1
+++++      
+++++      // Convert to world coordinates using orthographic camera
+++++      const worldX = x * WORLD.width / 2
+++++      const worldY = y * WORLD.height / 2
+++++      
+++++      return new THREE.Vector2(worldX, worldY)
+++++    }
+++++
+++++    // Game loop
++++     let raf = 0
++++     let last = performance.now()
++++     const animate = (now: number) => {
++++       const dt = (now - last) / 1000
++++       last = now
++++       
+++++      // Update input
+++++      input.update()
+++++      const inputState = input.getState()
+++++      
+++++      // Convert mouse screen coordinates to world coordinates
+++++      const mouseWorld = screenToWorld(inputState.mouseX, inputState.mouseY)
+++++      
+++++      // Update ship
+++++      ship.setAimWorld(mouseWorld)
+++++      ship.update(dt, inputState)
+++++      
+++++      // Follow ship with camera (simple following)
+++++      const shipPos = ship.getPosition()
+++++      camera.position.x = shipPos.x
+++++      camera.position.y = shipPos.y
+++++      
++++       render(dt) // Uses direct rendering by default (vanilla parity)
++++       raf = requestAnimationFrame(animate)
++++     }
++++diff --git a/reactShell/src/game/Input.ts b/reactShell/src/game/Input.ts
++++index f82454d..91be0d6 100644
++++--- a/reactShell/src/game/Input.ts
+++++++ b/reactShell/src/game/Input.ts
++++@@ -1,2 +1,67 @@
++++ // Input.ts - Keyboard/mouse handling
++++-export class Input {}
++++\ No newline at end of file
+++++
+++++export interface InputState {
+++++  thrust: boolean
+++++  turnLeft: boolean
+++++  turnRight: boolean
+++++  fire: boolean
+++++  mouseX: number
+++++  mouseY: number
+++++}
+++++
+++++export class Input {
+++++  private keys = new Set<string>()
+++++  private mouseState = { x: 0, y: 0, leftButton: false, rightButton: false }
+++++
+++++  constructor() {
+++++    this.setupEventListeners()
+++++  }
+++++
+++++  private setupEventListeners() {
+++++    // Keyboard events
+++++    window.addEventListener('keydown', (e) => {
+++++      this.keys.add(e.key.toLowerCase())
+++++      if (e.key === ' ') e.preventDefault()
+++++    })
+++++
+++++    window.addEventListener('keyup', (e) => {
+++++      this.keys.delete(e.key.toLowerCase())
+++++    })
+++++
+++++    // Mouse events
+++++    window.addEventListener('mousemove', (e) => {
+++++      this.mouseState.x = e.clientX
+++++      this.mouseState.y = e.clientY
+++++    })
+++++
+++++    window.addEventListener('mousedown', (e) => {
+++++      if (e.button === 0) this.mouseState.leftButton = true
+++++      if (e.button === 2) this.mouseState.rightButton = true
+++++    })
+++++
+++++    window.addEventListener('mouseup', (e) => {
+++++      if (e.button === 0) this.mouseState.leftButton = false
+++++      if (e.button === 2) this.mouseState.rightButton = false
+++++    })
+++++
+++++    // Prevent context menu
+++++    window.addEventListener('contextmenu', (e) => {
+++++      e.preventDefault()
+++++    })
+++++  }
+++++
+++++  update() {
+++++    // Input updates happen via event listeners, nothing to do here
+++++  }
+++++
+++++  getState(): InputState {
+++++    return {
+++++      thrust: this.keys.has('w') || this.keys.has('arrowup') || this.mouseState.rightButton,
+++++      turnLeft: this.keys.has('a') || this.keys.has('arrowleft'),
+++++      turnRight: this.keys.has('d') || this.keys.has('arrowright'),
+++++      fire: this.keys.has(' ') || this.mouseState.leftButton,
+++++      mouseX: this.mouseState.x,
+++++      mouseY: this.mouseState.y
+++++    }
+++++  }
+++++}
++++\ No newline at end of file
++++diff --git a/reactShell/src/game/entities/Ship.ts b/reactShell/src/game/entities/Ship.ts
++++index 6dda721..28a2a02 100644
++++--- a/reactShell/src/game/entities/Ship.ts
+++++++ b/reactShell/src/game/entities/Ship.ts
++++@@ -1,2 +1,156 @@
++++ // Ship.ts - Player ship
++++-export class Ship {}
++++\ No newline at end of file
+++++import * as THREE from 'three'
+++++import type { InputState } from '../Input'
+++++
+++++// Constants from vanilla
+++++const PLAYER = {
+++++  accel: 40,
+++++  maxSpeed: 40,
+++++  friction: 0.98,
+++++  turn: 3.2,
+++++  fireRate: 0.16,
+++++}
+++++
+++++const WORLD = {
+++++  width: 564,
+++++  height: 498,
+++++}
+++++
+++++export class Ship {
+++++  object: THREE.Object3D
+++++  private velocity = new THREE.Vector2(0, 0)
+++++  private fireCooldown = 0
+++++  private minAimDistance = 20 // Minimum distance for mouse aiming
+++++
+++++  constructor(scene: THREE.Scene) {
+++++    this.object = this.createShipMesh()
+++++    this.object.userData = {
+++++      kind: 'ship',
+++++      vx: 0,
+++++      vy: 0,
+++++      rot: 0,
+++++      alive: true,
+++++      fireCooldown: 0,
+++++      radius: 1.5
+++++    }
+++++    
+++++    // Start at origin facing left (like vanilla)
+++++    this.object.position.set(0, 0, 0)
+++++    this.object.rotation.z = Math.PI // pointing left (flipped around)
+++++    
+++++    scene.add(this.object)
+++++  }
+++++
+++++  private createShipMesh(): THREE.Object3D {
+++++    // Load ship texture
+++++    const loader = new THREE.TextureLoader()
+++++    const shipTexture = loader.load('assets/ship/ship.png')
+++++    
+++++    // Create ship geometry with texture (same as vanilla)
+++++    const shipGeometry = new THREE.PlaneGeometry(6.0, 6.0)
+++++    const shipMaterial = new THREE.MeshBasicMaterial({
+++++      map: shipTexture,
+++++      transparent: true,
+++++      opacity: 1.0,
+++++      side: THREE.DoubleSide
+++++    })
+++++    
+++++    return new THREE.Mesh(shipGeometry, shipMaterial)
+++++  }
+++++
+++++  setAimWorld(target: THREE.Vector2): void {
+++++    const dx = target.x - this.object.position.x
+++++    const dy = target.y - this.object.position.y
+++++    const distance = Math.hypot(dx, dy)
+++++    
+++++    // Only update rotation if mouse is not too close to ship (vanilla behavior)
+++++    if (distance > this.minAimDistance) {
+++++      const angle = Math.atan2(dy, dx)
+++++      this.object.rotation.z = angle + Math.PI/2 // Adjust for mesh facing up by default, flipped around
+++++    }
+++++  }
+++++
+++++  update(dt: number, input: InputState): void {
+++++    const s = this.object.userData
+++++
+++++    // Handle manual turning when not using mouse aim
+++++    if (input.turnLeft && !this.isMouseAimActive(input)) {
+++++      this.object.rotation.z += PLAYER.turn * dt
+++++    }
+++++    if (input.turnRight && !this.isMouseAimActive(input)) {
+++++      this.object.rotation.z -= PLAYER.turn * dt
+++++    }
+++++
+++++    // Thrust mechanics
+++++    if (input.thrust) {
+++++      // Ship mesh faces up, rotation.z is already the direction to move
+++++      const shipDirection = this.object.rotation.z + Math.PI/2 // Convert ship rotation to movement direction
+++++      const ax = Math.cos(shipDirection) * PLAYER.accel * dt
+++++      const ay = Math.sin(shipDirection) * PLAYER.accel * dt
+++++      
+++++      s.vx += ax
+++++      s.vy += ay
+++++      this.velocity.set(s.vx, s.vy)
+++++    }
+++++
+++++    // Apply speed limits and friction
+++++    const speed = this.velocity.length()
+++++    if (speed > PLAYER.maxSpeed) {
+++++      this.velocity.normalize().multiplyScalar(PLAYER.maxSpeed)
+++++      s.vx = this.velocity.x
+++++      s.vy = this.velocity.y
+++++    }
+++++
+++++    s.vx *= PLAYER.friction
+++++    s.vy *= PLAYER.friction
+++++    this.velocity.set(s.vx, s.vy)
+++++
+++++    // Update position
+++++    this.object.position.x += s.vx * dt
+++++    this.object.position.y += s.vy * dt
+++++
+++++    // World wrapping
+++++    this.wrap()
+++++
+++++    // Fire cooldown
+++++    this.fireCooldown = Math.max(0, this.fireCooldown - dt)
+++++    s.fireCooldown = this.fireCooldown
+++++  }
+++++
+++++  private isMouseAimActive(input: InputState): boolean {
+++++    // For now, always use mouse aim (vanilla behavior)
+++++    // Later this could be toggled based on game state
+++++    return true
+++++  }
+++++
+++++  private wrap(): void {
+++++    const halfWidth = WORLD.width / 2
+++++    const halfHeight = WORLD.height / 2
+++++    
+++++    if (this.object.position.x > halfWidth) {
+++++      this.object.position.x = -halfWidth
+++++    } else if (this.object.position.x < -halfWidth) {
+++++      this.object.position.x = halfWidth
+++++    }
+++++    
+++++    if (this.object.position.y > halfHeight) {
+++++      this.object.position.y = -halfHeight
+++++    } else if (this.object.position.y < -halfHeight) {
+++++      this.object.position.y = halfHeight
+++++    }
+++++  }
+++++
+++++  getPosition(): THREE.Vector2 {
+++++    return new THREE.Vector2(this.object.position.x, this.object.position.y)
+++++  }
+++++
+++++  // Utility method for firing (will be used later)
+++++  canFire(): boolean {
+++++    return this.fireCooldown <= 0
+++++  }
+++++
+++++  // Set fire cooldown after shooting
+++++  setFireCooldown(): void {
+++++    this.fireCooldown = PLAYER.fireRate
+++++  }
+++++}
++++\ No newline at end of file
+++diff --git a/docs/prompts/18.md b/docs/prompts/18.md
+++new file mode 100644
+++index 0000000..06cf64e
+++--- /dev/null
++++++ b/docs/prompts/18.md
+++@@ -0,0 +1,73 @@
++++EXECUTION MODE — fix Ship scale and mouse-facing orientation. Output ONE unified diff under `/diffs/` only. Then commit and push.
++++
++++Goals
++++- Ship should appear ~the same on-screen size as vanilla (roughly 90–110px tall on 1080p; adjustably constant).
++++- Ship nose must point TOWARD the mouse cursor.
++++- Keep orthographic camera; make pixel→world mapping predictable.
++++
++++Scope
++++- `/AsteroidsV2/reactShell/src/game/GameCanvas.tsx`
++++- `/AsteroidsV2/reactShell/src/game/entities/Ship.ts`
++++
++++Tasks
++++
++++1) Camera: pixel-perfect orthographic mapping
++++- In `GameCanvas.tsx`, create/update the ORTHO camera so 1 world unit = 1 CSS pixel:
++++  ```ts
++++  function makeOrthoCamera(w: number, h: number) {
++++    const halfW = w / 2, halfH = h / 2;
++++    const cam = new THREE.OrthographicCamera(-halfW, halfW, halfH, -halfH, 0.1, 1000);
++++    cam.position.set(0, 0, 10);
++++    cam.lookAt(0, 0, 0);
++++    return cam;
++++  }
++++
++++	•	Use this on init and in the resize handler so the frustum tracks the canvas width/height exactly.
++++	•	Update any screen→world conversion to assume the above mapping.
++++
++++	2.	Ship orientation: face the mouse
++++
++++	•	In Ship.ts, when aiming:
++++
++++const angle = Math.atan2(target.y - pos.y, target.x - pos.x);
++++// Choose a single rotation offset based on how the sprite is drawn.
++++// If the sprite's nose points "up" (+Y), use -Math.PI/2. If it points "right" (+X), use 0.
++++const ROTATION_OFFSET = -Math.PI / 2;
++++this.object.rotation.z = angle + ROTATION_OFFSET;
++++
++++
++++	•	Verify quickly by moving the mouse around: the ship nose should track the cursor. If it’s still 90° off, switch the offset to +Math.PI/2; if 180° off, use Math.PI.
++++
++++	3.	Ship visual scale: set via desired pixel height
++++
++++	•	Add a constant in Ship.ts:
++++
++++const SHIP_DESIRED_PX = 100; // tweak 90–110 for parity with vanilla screenshot
++++
++++
++++	•	After the texture/material is ready and the this.object (Sprite or Mesh) has a natural size, set scale so its on-screen height ≈ SHIP_DESIRED_PX in world units (since 1 world unit = 1 pixel after step 1):
++++	•	If you use a THREE.Sprite:
++++
++++const imgH = texture.image?.height ?? SHIP_DESIRED_PX;
++++const scale = SHIP_DESIRED_PX / imgH;
++++this.object.scale.set(
++++  texture.image?.width ? texture.image.width * scale : SHIP_DESIRED_PX,
++++  SHIP_DESIRED_PX,
++++  1
++++);
++++
++++
++++	•	If you use a mesh (Plane/Geometry):
++++	•	Compute its current bounding box height geomH and set this.object.scale.multiplyScalar(SHIP_DESIRED_PX / geomH).
++++
++++	•	Recompute the ship scale on window resize only if your implementation depends on DPR; with the 1:1 ortho camera and DPR-aware renderer sizing, a single scale set is enough.
++++
++++	4.	Keep behavior intact
++++
++++	•	Do NOT change physics, thrust, friction, wrapping, or PostFX.
++++	•	Camera follow logic may remain, but ensure it doesn’t rescale the ship.
++++
++++Deliverable
++++	•	Print ONE timestamped unified diff under /diffs/ containing ONLY the above edits to GameCanvas.tsx and Ship.ts. Full patch, no truncation/summaries.
++++	•	After printing, commit and push.
++++
+++diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
+++index 35e05ca..20c92e7 100644
+++--- a/reactShell/src/game/GameCanvas.tsx
++++++ b/reactShell/src/game/GameCanvas.tsx
+++@@ -11,6 +11,15 @@ const WORLD = {
+++   height: 498,
+++ }
+++ 
++++// Pixel-perfect orthographic camera mapping
++++function makeOrthoCamera(w: number, h: number): THREE.OrthographicCamera {
++++  const halfW = w / 2, halfH = h / 2
++++  const cam = new THREE.OrthographicCamera(-halfW, halfW, halfH, -halfH, 0.1, 1000)
++++  cam.position.set(0, 0, 10)
++++  cam.lookAt(0, 0, 0)
++++  return cam
++++}
++++
+++ export default function GameCanvas() {
+++   const canvasRef = useRef<HTMLCanvasElement>(null)
+++ 
+++@@ -20,19 +29,11 @@ export default function GameCanvas() {
+++     // Basic Three.js setup - placeholder for full game integration
+++     const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current })
+++     const scene = new THREE.Scene()
+++-    const camera = new THREE.OrthographicCamera(
+++-      -WORLD.width/2, WORLD.width/2, 
+++-      WORLD.height/2, -WORLD.height/2, 
+++-      0.1, 1000
+++-    )
++++    const camera = makeOrthoCamera(window.innerWidth, window.innerHeight)
+++     
+++     renderer.setPixelRatio(window.devicePixelRatio)
+++     renderer.setSize(window.innerWidth, window.innerHeight)
+++     
+++-    // Position camera for 2D view
+++-    camera.position.z = 5
+++-    camera.lookAt(0, 0, 0)
+++-    
+++     // Initialize game systems
+++     const input = new Input()
+++     const ship = new Ship(scene)
+++@@ -48,22 +49,27 @@ export default function GameCanvas() {
+++       const width = window.innerWidth
+++       const height = window.innerHeight
+++       renderer.setPixelRatio(window.devicePixelRatio)
++++      
++++      // Update camera frustum to match new canvas size
++++      const halfW = width / 2, halfH = height / 2
++++      camera.left = -halfW
++++      camera.right = halfW
++++      camera.top = halfH
++++      camera.bottom = -halfH
++++      camera.updateProjectionMatrix()
++++      
+++       resize(width, height)
+++     }
+++ 
+++     window.addEventListener('resize', handleResize)
+++     handleResize()
+++ 
+++-    // Screen to world coordinate conversion
++++    // Screen to world coordinate conversion (1:1 pixel mapping)
+++     const screenToWorld = (screenX: number, screenY: number): THREE.Vector2 => {
+++-      // Convert screen coords to normalized device coordinates
+++       const rect = canvasRef.current!.getBoundingClientRect()
+++-      const x = ((screenX - rect.left) / rect.width) * 2 - 1
+++-      const y = -((screenY - rect.top) / rect.height) * 2 + 1
+++-      
+++-      // Convert to world coordinates using orthographic camera
+++-      const worldX = x * WORLD.width / 2
+++-      const worldY = y * WORLD.height / 2
++++      // Convert to world coordinates (1 world unit = 1 CSS pixel)
++++      const worldX = screenX - rect.left - rect.width / 2
++++      const worldY = -(screenY - rect.top - rect.height / 2)
+++       
+++       return new THREE.Vector2(worldX, worldY)
+++     }
+++diff --git a/reactShell/src/game/entities/Ship.ts b/reactShell/src/game/entities/Ship.ts
+++index 28a2a02..d4c4458 100644
+++--- a/reactShell/src/game/entities/Ship.ts
++++++ b/reactShell/src/game/entities/Ship.ts
+++@@ -16,6 +16,10 @@ const WORLD = {
+++   height: 498,
+++ }
+++ 
++++// Ship visual scale
++++const SHIP_DESIRED_PX = 100 // tweak 90–110 for parity with vanilla screenshot
++++const ROTATION_OFFSET = -Math.PI / 2 // Ship sprite nose points "up" (+Y)
++++
+++ export class Ship {
+++   object: THREE.Object3D
+++   private velocity = new THREE.Vector2(0, 0)
+++@@ -44,10 +48,18 @@ export class Ship {
+++   private createShipMesh(): THREE.Object3D {
+++     // Load ship texture
+++     const loader = new THREE.TextureLoader()
+++-    const shipTexture = loader.load('assets/ship/ship.png')
++++    const shipTexture = loader.load('assets/ship/ship.png', (texture) => {
++++      // Scale ship to desired pixel height once texture is loaded
++++      const imgH = texture.image?.height ?? SHIP_DESIRED_PX
++++      const imgW = texture.image?.width ?? SHIP_DESIRED_PX
++++      const scale = SHIP_DESIRED_PX / imgH
++++      
++++      // Scale the mesh to achieve desired on-screen size
++++      this.object.scale.set(imgW * scale, SHIP_DESIRED_PX, 1)
++++    })
+++     
+++-    // Create ship geometry with texture (same as vanilla)
+++-    const shipGeometry = new THREE.PlaneGeometry(6.0, 6.0)
++++    // Create ship geometry with texture (placeholder size will be scaled)
++++    const shipGeometry = new THREE.PlaneGeometry(1.0, 1.0)
+++     const shipMaterial = new THREE.MeshBasicMaterial({
+++       map: shipTexture,
+++       transparent: true,
+++@@ -59,14 +71,15 @@ export class Ship {
+++   }
+++ 
+++   setAimWorld(target: THREE.Vector2): void {
+++-    const dx = target.x - this.object.position.x
+++-    const dy = target.y - this.object.position.y
++++    const pos = this.object.position
++++    const dx = target.x - pos.x
++++    const dy = target.y - pos.y
+++     const distance = Math.hypot(dx, dy)
+++     
+++     // Only update rotation if mouse is not too close to ship (vanilla behavior)
+++     if (distance > this.minAimDistance) {
+++       const angle = Math.atan2(dy, dx)
+++-      this.object.rotation.z = angle + Math.PI/2 // Adjust for mesh facing up by default, flipped around
++++      this.object.rotation.z = angle + ROTATION_OFFSET
+++     }
+++   }
+++ 
++diff --git a/docs/prompts/19.md b/docs/prompts/19.md
++new file mode 100644
++index 0000000..d51a613
++--- /dev/null
+++++ b/docs/prompts/19.md
++@@ -0,0 +1,22 @@
+++EXECUTION MODE — adjust ship visual size to 85% of current. Output ONE unified diff under `/diffs/` only. Then commit and push.
+++
+++Scope
+++- `/AsteroidsV2/reactShell/src/game/entities/Ship.ts`
+++
+++Changes
+++- Locate the constant:
+++  ```ts
+++  const SHIP_DESIRED_PX = 100;
+++
+++	•	Change it to:
+++
+++const SHIP_DESIRED_PX = 85;
+++
+++
+++	•	This reduces the ship’s rendered height to ~85% of current, keeping aspect ratio and pixel-perfect scaling intact.
+++	•	No other logic or files should change.
+++
+++Deliverable
+++	•	Print ONE timestamped unified diff under /diffs/ with this single-line change. No truncation, no summaries.
+++	•	After diff, commit and push.
+++
++diff --git a/reactShell/src/game/entities/Ship.ts b/reactShell/src/game/entities/Ship.ts
++index d4c4458..ee479d5 100644
++--- a/reactShell/src/game/entities/Ship.ts
+++++ b/reactShell/src/game/entities/Ship.ts
++@@ -17,7 +17,7 @@ const WORLD = {
++ }
++ 
++ // Ship visual scale
++-const SHIP_DESIRED_PX = 100 // tweak 90–110 for parity with vanilla screenshot
+++const SHIP_DESIRED_PX = 85 // tweak 90–110 for parity with vanilla screenshot
++ const ROTATION_OFFSET = -Math.PI / 2 // Ship sprite nose points "up" (+Y)
++ 
++ export class Ship {
+diff --git a/diffs/ship_size_adjust_20250901_0228.diff b/diffs/ship_size_adjust_20250901_0228.diff
+new file mode 100644
+index 0000000..54a9ba4
+--- /dev/null
++++ b/diffs/ship_size_adjust_20250901_0228.diff
+@@ -0,0 +1,799 @@
++diff --git a/diffs/ship_entity_20250901_0200.diff b/diffs/ship_entity_20250901_0200.diff
++new file mode 100644
++index 0000000..8f4401b
++--- /dev/null
+++++ b/diffs/ship_entity_20250901_0200.diff
++@@ -0,0 +1,581 @@
+++diff --git a/diffs/startscreen_complete_20250901_0115.diff b/diffs/startscreen_complete_20250901_0115.diff
+++new file mode 100644
+++index 0000000..93adb56
+++--- /dev/null
++++++ b/diffs/startscreen_complete_20250901_0115.diff
+++@@ -0,0 +1,184 @@
++++diff --git a/diffs/startscreen_20250901_0109.diff b/diffs/startscreen_20250901_0109.diff
++++new file mode 100644
++++index 0000000..1054e3b
++++--- /dev/null
+++++++ b/diffs/startscreen_20250901_0109.diff
++++@@ -0,0 +1,40 @@
+++++diff --git a/reactShell/src/App.tsx b/reactShell/src/App.tsx
+++++index 06bb832..7e15bc5 100644
+++++--- a/reactShell/src/App.tsx
++++++++ b/reactShell/src/App.tsx
+++++@@ -1,11 +1,14 @@
+++++-import { useEffect } from 'react'
++++++import { useEffect, useState } from 'react'
+++++ import GameCanvas from './game/GameCanvas'
+++++ import Hud from './ui/Hud'
+++++ import UpgradeMenu from './ui/UpgradeMenu'
+++++ import StatusOverlay from './ui/StatusOverlay'
+++++ import PauseOverlay from './ui/PauseOverlay'
++++++import StartScreen from './ui/StartScreen'
+++++ 
+++++ function App() {
++++++  const [showStart, setShowStart] = useState(true)
++++++
+++++   useEffect(() => {
+++++     // Initialize game
+++++     console.log('Asteroids React Shell initializing...')
+++++@@ -18,6 +21,7 @@ function App() {
+++++       <UpgradeMenu />
+++++       <StatusOverlay />
+++++       <PauseOverlay />
++++++      <StartScreen visible={showStart} onDismiss={() => setShowStart(false)} />
+++++     </div>
+++++   )
+++++ }
+++++diff --git a/reactShell/src/main.tsx b/reactShell/src/main.tsx
+++++index 651a687..3ccc3d8 100644
+++++--- a/reactShell/src/main.tsx
++++++++ b/reactShell/src/main.tsx
+++++@@ -2,6 +2,7 @@ import React from 'react'
+++++ import ReactDOM from 'react-dom/client'
+++++ import App from './App.tsx'
+++++ import './index.css'
++++++import './styles.css'
+++++ 
+++++ ReactDOM.createRoot(document.getElementById('root')!).render(
+++++   <App />
++++diff --git a/docs/prompts/16.md b/docs/prompts/16.md
++++new file mode 100644
++++index 0000000..b56c196
++++--- /dev/null
+++++++ b/docs/prompts/16.md
++++@@ -0,0 +1,44 @@
+++++EXECUTION MODE — show the vanilla start screen in React. Output one unified diff under `/diffs/` only. Then commit and push.
+++++
+++++Goal
+++++- Render the vanilla `start_screen.png` as a fullscreen overlay above the Three canvas.
+++++- No gameplay yet; click or press Space hides the overlay (state lives in App).
+++++
+++++Scope
+++++- `/AsteroidsV2/reactShell/src/App.tsx`
+++++- `/AsteroidsV2/reactShell/src/ui/StartScreen.tsx` (new)
+++++- `/AsteroidsV2/reactShell/src/styles.css` (append styles if needed)
+++++
+++++Requirements
+++++
+++++1) StartScreen component (new file)
+++++- Renders a fullscreen, centered image sourced from `assets/start_screen.png` (match vanilla path/casing).
+++++- Props: `visible: boolean`, `onDismiss: () => void`.
+++++- If `visible`, capture click and Space key to call `onDismiss()`.
+++++- Minimal styles: fixed, inset:0, display:flex, align/justify center, black background.
+++++
+++++2) App integration
+++++- Keep `GameCanvas` mounted behind the overlay.
+++++- Local state `showStart`, default `true`.
+++++- Render `<StartScreen visible={showStart} onDismiss={() => setShowStart(false)} />` over the canvas.
+++++- Ensure z-index so overlay is above canvas.
+++++
+++++3) CSS (styles.css)
+++++- If not already present, ensure:
+++++  ```css
+++++  html, body, #root { height: 100%; margin: 0; }
+++++  canvas { display: block; }
+++++  .overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000; }
+++++  .overlay img { max-width: 90vw; max-height: 90vh; }
+++++
+++++	•	Use the .overlay class in StartScreen.
+++++
+++++Constraints
+++++	•	Do not touch PostFX, GameLoop, or other systems.
+++++	•	Asset src must be assets/start_screen.png (no renames or moves).
+++++
+++++Deliverable
+++++	•	Print ONE timestamped unified diff under /diffs/ with the full patch (new StartScreen.tsx, edits to App.tsx, any CSS additions). No truncation or summaries.
+++++
+++++commit and push
+++++
++++diff --git a/reactShell/src/App.tsx b/reactShell/src/App.tsx
++++index 06bb832..7e15bc5 100644
++++--- a/reactShell/src/App.tsx
+++++++ b/reactShell/src/App.tsx
++++@@ -1,11 +1,14 @@
++++-import { useEffect } from 'react'
+++++import { useEffect, useState } from 'react'
++++ import GameCanvas from './game/GameCanvas'
++++ import Hud from './ui/Hud'
++++ import UpgradeMenu from './ui/UpgradeMenu'
++++ import StatusOverlay from './ui/StatusOverlay'
++++ import PauseOverlay from './ui/PauseOverlay'
+++++import StartScreen from './ui/StartScreen'
++++ 
++++ function App() {
+++++  const [showStart, setShowStart] = useState(true)
+++++
++++   useEffect(() => {
++++     // Initialize game
++++     console.log('Asteroids React Shell initializing...')
++++@@ -18,6 +21,7 @@ function App() {
++++       <UpgradeMenu />
++++       <StatusOverlay />
++++       <PauseOverlay />
+++++      <StartScreen visible={showStart} onDismiss={() => setShowStart(false)} />
++++     </div>
++++   )
++++ }
++++diff --git a/reactShell/src/main.tsx b/reactShell/src/main.tsx
++++index 651a687..3ccc3d8 100644
++++--- a/reactShell/src/main.tsx
+++++++ b/reactShell/src/main.tsx
++++@@ -2,6 +2,7 @@ import React from 'react'
++++ import ReactDOM from 'react-dom/client'
++++ import App from './App.tsx'
++++ import './index.css'
+++++import './styles.css'
++++ 
++++ ReactDOM.createRoot(document.getElementById('root')!).render(
++++   <App />
++++diff --git a/reactShell/src/styles.css b/reactShell/src/styles.css
++++new file mode 100644
++++index 0000000..f9ee628
++++--- /dev/null
+++++++ b/reactShell/src/styles.css
++++@@ -0,0 +1,4 @@
+++++html, body, #root { height: 100%; margin: 0; }
+++++canvas { display: block; }
+++++.overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000; z-index: 1000; }
+++++.overlay img { max-width: 90vw; max-height: 90vh; }
++++\ No newline at end of file
++++diff --git a/reactShell/src/ui/StartScreen.tsx b/reactShell/src/ui/StartScreen.tsx
++++new file mode 100644
++++index 0000000..7b05a04
++++--- /dev/null
+++++++ b/reactShell/src/ui/StartScreen.tsx
++++@@ -0,0 +1,30 @@
+++++import { useEffect } from 'react'
+++++
+++++interface StartScreenProps {
+++++  visible: boolean
+++++  onDismiss: () => void
+++++}
+++++
+++++export default function StartScreen({ visible, onDismiss }: StartScreenProps) {
+++++  useEffect(() => {
+++++    if (!visible) return
+++++
+++++    const handleKeyDown = (event: KeyboardEvent) => {
+++++      if (event.code === 'Space') {
+++++        event.preventDefault()
+++++        onDismiss()
+++++      }
+++++    }
+++++
+++++    window.addEventListener('keydown', handleKeyDown)
+++++    return () => window.removeEventListener('keydown', handleKeyDown)
+++++  }, [visible, onDismiss])
+++++
+++++  if (!visible) return null
+++++
+++++  return (
+++++    <div className="overlay" onClick={onDismiss}>
+++++      <img src="assets/start_screen.png" alt="Start Screen" />
+++++    </div>
+++++  )
+++++}
++++\ No newline at end of file
+++diff --git a/docs/prompts/17.md b/docs/prompts/17.md
+++new file mode 100644
+++index 0000000..448cd19
+++--- /dev/null
++++++ b/docs/prompts/17.md
+++@@ -0,0 +1,47 @@
++++
++++EXECUTION MODE — port Ship entity from vanilla into React shell. Output ONE unified diff under `/diffs/` only. Then commit and push.
++++
++++Scope
++++- NEW: `/AsteroidsV2/reactShell/src/game/entities/Ship.ts`
++++- NEW: `/AsteroidsV2/reactShell/src/game/Input.ts` (if not already implemented)
++++- UPDATE: `/AsteroidsV2/reactShell/src/game/GameCanvas.tsx`
++++
++++Requirements
++++
++++1) Input.ts
++++- Track keyboard states for thrust (W/ArrowUp), rotate left/right (A/D, ArrowLeft/Right), fire (Space or left click).
++++- Track mouse position in screen coords.
++++- Export an `InputState` interface and an `Input` class with `update()` and `getState()`.
++++
++++2) Ship.ts
++++- Port constants + behavior from vanilla (`main.js`).
++++- Must support: thrust, rotation, world wrapping, spawn at origin, face mouse pointer at all times.
++++- Visual: replicate vanilla geometry/material. If vanilla uses `ship.png`, reference from `public/assets/ship/ship.png`.
++++- API:
++++  ```ts
++++  export class Ship {
++++    object: THREE.Object3D;
++++    constructor(scene: THREE.Scene);
++++    setAimWorld(target: THREE.Vector2): void;
++++    update(dt: number, input: InputState): void;
++++    getPosition(): THREE.Vector2;
++++  }
++++
++++	3.	GameCanvas.tsx
++++
++++	•	Instantiate Input and Ship.
++++	•	Add ship.object to scene.
++++	•	In RAF loop:
++++	•	Convert mouse screen coords to world coords, call ship.setAimWorld(...).
++++	•	Call ship.update(dt, input.getState()).
++++	•	Keep PostFX render path unchanged.
++++	•	Ship must be visible and respond to input once start screen is dismissed.
++++
++++Constraints
++++	•	Do not implement bullets, asteroids, collisions, or HUD in this diff.
++++	•	Strict parity with vanilla Ship controls and feel.
++++
++++Deliverable
++++	•	Print ONE timestamped unified diff under /diffs/ with the new Ship.ts, Input.ts, and GameCanvas.tsx edits. No truncation, no summaries.
++++	•	After diff, commit and push.
++++
+++diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
+++index cec45d1..35e05ca 100644
+++--- a/reactShell/src/game/GameCanvas.tsx
++++++ b/reactShell/src/game/GameCanvas.tsx
+++@@ -2,6 +2,14 @@
+++ import { useEffect, useRef } from 'react'
+++ import * as THREE from 'three'
+++ import { createComposer, resize, render } from './render/PostFX'
++++import { Input } from './Input'
++++import { Ship } from './entities/Ship'
++++
++++// World constants (from vanilla)
++++const WORLD = {
++++  width: 564,
++++  height: 498,
++++}
+++ 
+++ export default function GameCanvas() {
+++   const canvasRef = useRef<HTMLCanvasElement>(null)
+++@@ -12,15 +20,23 @@ export default function GameCanvas() {
+++     // Basic Three.js setup - placeholder for full game integration
+++     const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current })
+++     const scene = new THREE.Scene()
+++-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
++++    const camera = new THREE.OrthographicCamera(
++++      -WORLD.width/2, WORLD.width/2, 
++++      WORLD.height/2, -WORLD.height/2, 
++++      0.1, 1000
++++    )
+++     
+++     renderer.setPixelRatio(window.devicePixelRatio)
+++     renderer.setSize(window.innerWidth, window.innerHeight)
+++     
+++-    // Position camera
++++    // Position camera for 2D view
+++     camera.position.z = 5
+++     camera.lookAt(0, 0, 0)
+++     
++++    // Initialize game systems
++++    const input = new Input()
++++    const ship = new Ship(scene)
++++    
+++     // Initialize PostFX with default direct rendering (vanilla parity)
+++     createComposer(renderer, scene, camera, {
+++       width: window.innerWidth,
+++@@ -31,8 +47,6 @@ export default function GameCanvas() {
+++     const handleResize = () => {
+++       const width = window.innerWidth
+++       const height = window.innerHeight
+++-      camera.aspect = width / height
+++-      camera.updateProjectionMatrix()
+++       renderer.setPixelRatio(window.devicePixelRatio)
+++       resize(width, height)
+++     }
+++@@ -40,13 +54,43 @@ export default function GameCanvas() {
+++     window.addEventListener('resize', handleResize)
+++     handleResize()
+++ 
+++-    // Basic render loop - will be replaced by full game loop
++++    // Screen to world coordinate conversion
++++    const screenToWorld = (screenX: number, screenY: number): THREE.Vector2 => {
++++      // Convert screen coords to normalized device coordinates
++++      const rect = canvasRef.current!.getBoundingClientRect()
++++      const x = ((screenX - rect.left) / rect.width) * 2 - 1
++++      const y = -((screenY - rect.top) / rect.height) * 2 + 1
++++      
++++      // Convert to world coordinates using orthographic camera
++++      const worldX = x * WORLD.width / 2
++++      const worldY = y * WORLD.height / 2
++++      
++++      return new THREE.Vector2(worldX, worldY)
++++    }
++++
++++    // Game loop
+++     let raf = 0
+++     let last = performance.now()
+++     const animate = (now: number) => {
+++       const dt = (now - last) / 1000
+++       last = now
+++       
++++      // Update input
++++      input.update()
++++      const inputState = input.getState()
++++      
++++      // Convert mouse screen coordinates to world coordinates
++++      const mouseWorld = screenToWorld(inputState.mouseX, inputState.mouseY)
++++      
++++      // Update ship
++++      ship.setAimWorld(mouseWorld)
++++      ship.update(dt, inputState)
++++      
++++      // Follow ship with camera (simple following)
++++      const shipPos = ship.getPosition()
++++      camera.position.x = shipPos.x
++++      camera.position.y = shipPos.y
++++      
+++       render(dt) // Uses direct rendering by default (vanilla parity)
+++       raf = requestAnimationFrame(animate)
+++     }
+++diff --git a/reactShell/src/game/Input.ts b/reactShell/src/game/Input.ts
+++index f82454d..91be0d6 100644
+++--- a/reactShell/src/game/Input.ts
++++++ b/reactShell/src/game/Input.ts
+++@@ -1,2 +1,67 @@
+++ // Input.ts - Keyboard/mouse handling
+++-export class Input {}
+++\ No newline at end of file
++++
++++export interface InputState {
++++  thrust: boolean
++++  turnLeft: boolean
++++  turnRight: boolean
++++  fire: boolean
++++  mouseX: number
++++  mouseY: number
++++}
++++
++++export class Input {
++++  private keys = new Set<string>()
++++  private mouseState = { x: 0, y: 0, leftButton: false, rightButton: false }
++++
++++  constructor() {
++++    this.setupEventListeners()
++++  }
++++
++++  private setupEventListeners() {
++++    // Keyboard events
++++    window.addEventListener('keydown', (e) => {
++++      this.keys.add(e.key.toLowerCase())
++++      if (e.key === ' ') e.preventDefault()
++++    })
++++
++++    window.addEventListener('keyup', (e) => {
++++      this.keys.delete(e.key.toLowerCase())
++++    })
++++
++++    // Mouse events
++++    window.addEventListener('mousemove', (e) => {
++++      this.mouseState.x = e.clientX
++++      this.mouseState.y = e.clientY
++++    })
++++
++++    window.addEventListener('mousedown', (e) => {
++++      if (e.button === 0) this.mouseState.leftButton = true
++++      if (e.button === 2) this.mouseState.rightButton = true
++++    })
++++
++++    window.addEventListener('mouseup', (e) => {
++++      if (e.button === 0) this.mouseState.leftButton = false
++++      if (e.button === 2) this.mouseState.rightButton = false
++++    })
++++
++++    // Prevent context menu
++++    window.addEventListener('contextmenu', (e) => {
++++      e.preventDefault()
++++    })
++++  }
++++
++++  update() {
++++    // Input updates happen via event listeners, nothing to do here
++++  }
++++
++++  getState(): InputState {
++++    return {
++++      thrust: this.keys.has('w') || this.keys.has('arrowup') || this.mouseState.rightButton,
++++      turnLeft: this.keys.has('a') || this.keys.has('arrowleft'),
++++      turnRight: this.keys.has('d') || this.keys.has('arrowright'),
++++      fire: this.keys.has(' ') || this.mouseState.leftButton,
++++      mouseX: this.mouseState.x,
++++      mouseY: this.mouseState.y
++++    }
++++  }
++++}
+++\ No newline at end of file
+++diff --git a/reactShell/src/game/entities/Ship.ts b/reactShell/src/game/entities/Ship.ts
+++index 6dda721..28a2a02 100644
+++--- a/reactShell/src/game/entities/Ship.ts
++++++ b/reactShell/src/game/entities/Ship.ts
+++@@ -1,2 +1,156 @@
+++ // Ship.ts - Player ship
+++-export class Ship {}
+++\ No newline at end of file
++++import * as THREE from 'three'
++++import type { InputState } from '../Input'
++++
++++// Constants from vanilla
++++const PLAYER = {
++++  accel: 40,
++++  maxSpeed: 40,
++++  friction: 0.98,
++++  turn: 3.2,
++++  fireRate: 0.16,
++++}
++++
++++const WORLD = {
++++  width: 564,
++++  height: 498,
++++}
++++
++++export class Ship {
++++  object: THREE.Object3D
++++  private velocity = new THREE.Vector2(0, 0)
++++  private fireCooldown = 0
++++  private minAimDistance = 20 // Minimum distance for mouse aiming
++++
++++  constructor(scene: THREE.Scene) {
++++    this.object = this.createShipMesh()
++++    this.object.userData = {
++++      kind: 'ship',
++++      vx: 0,
++++      vy: 0,
++++      rot: 0,
++++      alive: true,
++++      fireCooldown: 0,
++++      radius: 1.5
++++    }
++++    
++++    // Start at origin facing left (like vanilla)
++++    this.object.position.set(0, 0, 0)
++++    this.object.rotation.z = Math.PI // pointing left (flipped around)
++++    
++++    scene.add(this.object)
++++  }
++++
++++  private createShipMesh(): THREE.Object3D {
++++    // Load ship texture
++++    const loader = new THREE.TextureLoader()
++++    const shipTexture = loader.load('assets/ship/ship.png')
++++    
++++    // Create ship geometry with texture (same as vanilla)
++++    const shipGeometry = new THREE.PlaneGeometry(6.0, 6.0)
++++    const shipMaterial = new THREE.MeshBasicMaterial({
++++      map: shipTexture,
++++      transparent: true,
++++      opacity: 1.0,
++++      side: THREE.DoubleSide
++++    })
++++    
++++    return new THREE.Mesh(shipGeometry, shipMaterial)
++++  }
++++
++++  setAimWorld(target: THREE.Vector2): void {
++++    const dx = target.x - this.object.position.x
++++    const dy = target.y - this.object.position.y
++++    const distance = Math.hypot(dx, dy)
++++    
++++    // Only update rotation if mouse is not too close to ship (vanilla behavior)
++++    if (distance > this.minAimDistance) {
++++      const angle = Math.atan2(dy, dx)
++++      this.object.rotation.z = angle + Math.PI/2 // Adjust for mesh facing up by default, flipped around
++++    }
++++  }
++++
++++  update(dt: number, input: InputState): void {
++++    const s = this.object.userData
++++
++++    // Handle manual turning when not using mouse aim
++++    if (input.turnLeft && !this.isMouseAimActive(input)) {
++++      this.object.rotation.z += PLAYER.turn * dt
++++    }
++++    if (input.turnRight && !this.isMouseAimActive(input)) {
++++      this.object.rotation.z -= PLAYER.turn * dt
++++    }
++++
++++    // Thrust mechanics
++++    if (input.thrust) {
++++      // Ship mesh faces up, rotation.z is already the direction to move
++++      const shipDirection = this.object.rotation.z + Math.PI/2 // Convert ship rotation to movement direction
++++      const ax = Math.cos(shipDirection) * PLAYER.accel * dt
++++      const ay = Math.sin(shipDirection) * PLAYER.accel * dt
++++      
++++      s.vx += ax
++++      s.vy += ay
++++      this.velocity.set(s.vx, s.vy)
++++    }
++++
++++    // Apply speed limits and friction
++++    const speed = this.velocity.length()
++++    if (speed > PLAYER.maxSpeed) {
++++      this.velocity.normalize().multiplyScalar(PLAYER.maxSpeed)
++++      s.vx = this.velocity.x
++++      s.vy = this.velocity.y
++++    }
++++
++++    s.vx *= PLAYER.friction
++++    s.vy *= PLAYER.friction
++++    this.velocity.set(s.vx, s.vy)
++++
++++    // Update position
++++    this.object.position.x += s.vx * dt
++++    this.object.position.y += s.vy * dt
++++
++++    // World wrapping
++++    this.wrap()
++++
++++    // Fire cooldown
++++    this.fireCooldown = Math.max(0, this.fireCooldown - dt)
++++    s.fireCooldown = this.fireCooldown
++++  }
++++
++++  private isMouseAimActive(input: InputState): boolean {
++++    // For now, always use mouse aim (vanilla behavior)
++++    // Later this could be toggled based on game state
++++    return true
++++  }
++++
++++  private wrap(): void {
++++    const halfWidth = WORLD.width / 2
++++    const halfHeight = WORLD.height / 2
++++    
++++    if (this.object.position.x > halfWidth) {
++++      this.object.position.x = -halfWidth
++++    } else if (this.object.position.x < -halfWidth) {
++++      this.object.position.x = halfWidth
++++    }
++++    
++++    if (this.object.position.y > halfHeight) {
++++      this.object.position.y = -halfHeight
++++    } else if (this.object.position.y < -halfHeight) {
++++      this.object.position.y = halfHeight
++++    }
++++  }
++++
++++  getPosition(): THREE.Vector2 {
++++    return new THREE.Vector2(this.object.position.x, this.object.position.y)
++++  }
++++
++++  // Utility method for firing (will be used later)
++++  canFire(): boolean {
++++    return this.fireCooldown <= 0
++++  }
++++
++++  // Set fire cooldown after shooting
++++  setFireCooldown(): void {
++++    this.fireCooldown = PLAYER.fireRate
++++  }
++++}
+++\ No newline at end of file
++diff --git a/docs/prompts/18.md b/docs/prompts/18.md
++new file mode 100644
++index 0000000..06cf64e
++--- /dev/null
+++++ b/docs/prompts/18.md
++@@ -0,0 +1,73 @@
+++EXECUTION MODE — fix Ship scale and mouse-facing orientation. Output ONE unified diff under `/diffs/` only. Then commit and push.
+++
+++Goals
+++- Ship should appear ~the same on-screen size as vanilla (roughly 90–110px tall on 1080p; adjustably constant).
+++- Ship nose must point TOWARD the mouse cursor.
+++- Keep orthographic camera; make pixel→world mapping predictable.
+++
+++Scope
+++- `/AsteroidsV2/reactShell/src/game/GameCanvas.tsx`
+++- `/AsteroidsV2/reactShell/src/game/entities/Ship.ts`
+++
+++Tasks
+++
+++1) Camera: pixel-perfect orthographic mapping
+++- In `GameCanvas.tsx`, create/update the ORTHO camera so 1 world unit = 1 CSS pixel:
+++  ```ts
+++  function makeOrthoCamera(w: number, h: number) {
+++    const halfW = w / 2, halfH = h / 2;
+++    const cam = new THREE.OrthographicCamera(-halfW, halfW, halfH, -halfH, 0.1, 1000);
+++    cam.position.set(0, 0, 10);
+++    cam.lookAt(0, 0, 0);
+++    return cam;
+++  }
+++
+++	•	Use this on init and in the resize handler so the frustum tracks the canvas width/height exactly.
+++	•	Update any screen→world conversion to assume the above mapping.
+++
+++	2.	Ship orientation: face the mouse
+++
+++	•	In Ship.ts, when aiming:
+++
+++const angle = Math.atan2(target.y - pos.y, target.x - pos.x);
+++// Choose a single rotation offset based on how the sprite is drawn.
+++// If the sprite's nose points "up" (+Y), use -Math.PI/2. If it points "right" (+X), use 0.
+++const ROTATION_OFFSET = -Math.PI / 2;
+++this.object.rotation.z = angle + ROTATION_OFFSET;
+++
+++
+++	•	Verify quickly by moving the mouse around: the ship nose should track the cursor. If it’s still 90° off, switch the offset to +Math.PI/2; if 180° off, use Math.PI.
+++
+++	3.	Ship visual scale: set via desired pixel height
+++
+++	•	Add a constant in Ship.ts:
+++
+++const SHIP_DESIRED_PX = 100; // tweak 90–110 for parity with vanilla screenshot
+++
+++
+++	•	After the texture/material is ready and the this.object (Sprite or Mesh) has a natural size, set scale so its on-screen height ≈ SHIP_DESIRED_PX in world units (since 1 world unit = 1 pixel after step 1):
+++	•	If you use a THREE.Sprite:
+++
+++const imgH = texture.image?.height ?? SHIP_DESIRED_PX;
+++const scale = SHIP_DESIRED_PX / imgH;
+++this.object.scale.set(
+++  texture.image?.width ? texture.image.width * scale : SHIP_DESIRED_PX,
+++  SHIP_DESIRED_PX,
+++  1
+++);
+++
+++
+++	•	If you use a mesh (Plane/Geometry):
+++	•	Compute its current bounding box height geomH and set this.object.scale.multiplyScalar(SHIP_DESIRED_PX / geomH).
+++
+++	•	Recompute the ship scale on window resize only if your implementation depends on DPR; with the 1:1 ortho camera and DPR-aware renderer sizing, a single scale set is enough.
+++
+++	4.	Keep behavior intact
+++
+++	•	Do NOT change physics, thrust, friction, wrapping, or PostFX.
+++	•	Camera follow logic may remain, but ensure it doesn’t rescale the ship.
+++
+++Deliverable
+++	•	Print ONE timestamped unified diff under /diffs/ containing ONLY the above edits to GameCanvas.tsx and Ship.ts. Full patch, no truncation/summaries.
+++	•	After printing, commit and push.
+++
++diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
++index 35e05ca..20c92e7 100644
++--- a/reactShell/src/game/GameCanvas.tsx
+++++ b/reactShell/src/game/GameCanvas.tsx
++@@ -11,6 +11,15 @@ const WORLD = {
++   height: 498,
++ }
++ 
+++// Pixel-perfect orthographic camera mapping
+++function makeOrthoCamera(w: number, h: number): THREE.OrthographicCamera {
+++  const halfW = w / 2, halfH = h / 2
+++  const cam = new THREE.OrthographicCamera(-halfW, halfW, halfH, -halfH, 0.1, 1000)
+++  cam.position.set(0, 0, 10)
+++  cam.lookAt(0, 0, 0)
+++  return cam
+++}
+++
++ export default function GameCanvas() {
++   const canvasRef = useRef<HTMLCanvasElement>(null)
++ 
++@@ -20,19 +29,11 @@ export default function GameCanvas() {
++     // Basic Three.js setup - placeholder for full game integration
++     const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current })
++     const scene = new THREE.Scene()
++-    const camera = new THREE.OrthographicCamera(
++-      -WORLD.width/2, WORLD.width/2, 
++-      WORLD.height/2, -WORLD.height/2, 
++-      0.1, 1000
++-    )
+++    const camera = makeOrthoCamera(window.innerWidth, window.innerHeight)
++     
++     renderer.setPixelRatio(window.devicePixelRatio)
++     renderer.setSize(window.innerWidth, window.innerHeight)
++     
++-    // Position camera for 2D view
++-    camera.position.z = 5
++-    camera.lookAt(0, 0, 0)
++-    
++     // Initialize game systems
++     const input = new Input()
++     const ship = new Ship(scene)
++@@ -48,22 +49,27 @@ export default function GameCanvas() {
++       const width = window.innerWidth
++       const height = window.innerHeight
++       renderer.setPixelRatio(window.devicePixelRatio)
+++      
+++      // Update camera frustum to match new canvas size
+++      const halfW = width / 2, halfH = height / 2
+++      camera.left = -halfW
+++      camera.right = halfW
+++      camera.top = halfH
+++      camera.bottom = -halfH
+++      camera.updateProjectionMatrix()
+++      
++       resize(width, height)
++     }
++ 
++     window.addEventListener('resize', handleResize)
++     handleResize()
++ 
++-    // Screen to world coordinate conversion
+++    // Screen to world coordinate conversion (1:1 pixel mapping)
++     const screenToWorld = (screenX: number, screenY: number): THREE.Vector2 => {
++-      // Convert screen coords to normalized device coordinates
++       const rect = canvasRef.current!.getBoundingClientRect()
++-      const x = ((screenX - rect.left) / rect.width) * 2 - 1
++-      const y = -((screenY - rect.top) / rect.height) * 2 + 1
++-      
++-      // Convert to world coordinates using orthographic camera
++-      const worldX = x * WORLD.width / 2
++-      const worldY = y * WORLD.height / 2
+++      // Convert to world coordinates (1 world unit = 1 CSS pixel)
+++      const worldX = screenX - rect.left - rect.width / 2
+++      const worldY = -(screenY - rect.top - rect.height / 2)
++       
++       return new THREE.Vector2(worldX, worldY)
++     }
++diff --git a/reactShell/src/game/entities/Ship.ts b/reactShell/src/game/entities/Ship.ts
++index 28a2a02..d4c4458 100644
++--- a/reactShell/src/game/entities/Ship.ts
+++++ b/reactShell/src/game/entities/Ship.ts
++@@ -16,6 +16,10 @@ const WORLD = {
++   height: 498,
++ }
++ 
+++// Ship visual scale
+++const SHIP_DESIRED_PX = 100 // tweak 90–110 for parity with vanilla screenshot
+++const ROTATION_OFFSET = -Math.PI / 2 // Ship sprite nose points "up" (+Y)
+++
++ export class Ship {
++   object: THREE.Object3D
++   private velocity = new THREE.Vector2(0, 0)
++@@ -44,10 +48,18 @@ export class Ship {
++   private createShipMesh(): THREE.Object3D {
++     // Load ship texture
++     const loader = new THREE.TextureLoader()
++-    const shipTexture = loader.load('assets/ship/ship.png')
+++    const shipTexture = loader.load('assets/ship/ship.png', (texture) => {
+++      // Scale ship to desired pixel height once texture is loaded
+++      const imgH = texture.image?.height ?? SHIP_DESIRED_PX
+++      const imgW = texture.image?.width ?? SHIP_DESIRED_PX
+++      const scale = SHIP_DESIRED_PX / imgH
+++      
+++      // Scale the mesh to achieve desired on-screen size
+++      this.object.scale.set(imgW * scale, SHIP_DESIRED_PX, 1)
+++    })
++     
++-    // Create ship geometry with texture (same as vanilla)
++-    const shipGeometry = new THREE.PlaneGeometry(6.0, 6.0)
+++    // Create ship geometry with texture (placeholder size will be scaled)
+++    const shipGeometry = new THREE.PlaneGeometry(1.0, 1.0)
++     const shipMaterial = new THREE.MeshBasicMaterial({
++       map: shipTexture,
++       transparent: true,
++@@ -59,14 +71,15 @@ export class Ship {
++   }
++ 
++   setAimWorld(target: THREE.Vector2): void {
++-    const dx = target.x - this.object.position.x
++-    const dy = target.y - this.object.position.y
+++    const pos = this.object.position
+++    const dx = target.x - pos.x
+++    const dy = target.y - pos.y
++     const distance = Math.hypot(dx, dy)
++     
++     // Only update rotation if mouse is not too close to ship (vanilla behavior)
++     if (distance > this.minAimDistance) {
++       const angle = Math.atan2(dy, dx)
++-      this.object.rotation.z = angle + Math.PI/2 // Adjust for mesh facing up by default, flipped around
+++      this.object.rotation.z = angle + ROTATION_OFFSET
++     }
++   }
++ 
+diff --git a/docs/prompts/21.md b/docs/prompts/21.md
+new file mode 100644
+index 0000000..e3be633
+--- /dev/null
++++ b/docs/prompts/21.md
+@@ -0,0 +1,85 @@
++EXECUTION MODE — add live Ship size tuning slider (debug only). Output ONE unified diff under `/diffs/` only. Then commit and push.
++
++Goal
++- Add a small overlay with a slider to adjust the ship’s on-screen height (in pixels) at runtime.
++- Show the current px value so I can report it back and we’ll hardcode it later.
++- Default hidden; toggle with the backtick key (`).
++
++Scope
++- UPDATE: `/AsteroidsV2/reactShell/src/game/entities/Ship.ts`
++- UPDATE: `/AsteroidsV2/reactShell/src/game/GameCanvas.tsx`
++- UPDATE: `/AsteroidsV2/reactShell/src/App.tsx`
++- NEW:    `/AsteroidsV2/reactShell/src/ui/DevTuningOverlay.tsx`
++- (If needed) UPDATE: `/AsteroidsV2/reactShell/src/styles.css` (append minimal styles)
++
++Requirements
++
++1) Ship API: add setter to apply pixel height
++- In `Ship.ts`, add a method that re-applies the existing texture/geometry scale logic using a provided pixel height:
++  ```ts
++  setPixelHeight(px: number): void
++
++	•	Reuse the current texture-based scaling path (keep aspect ratio). Do not change physics/rotation.
++	•	Remove or ignore the hardcoded SHIP_DESIRED_PX for runtime scaling; keep it only as the initial default.
++
++	2.	GameCanvas: accept live pixel size and apply to Ship
++
++	•	In GameCanvas.tsx, accept a new prop:
++
++shipPixelSize?: number
++
++
++	•	On ship creation, use this value for initial size (fallback to the existing default if undefined).
++	•	When the prop changes, call ship.setPixelHeight(newValue) exactly once (e.g., via useEffect watching the prop).
++
++	3.	DevTuningOverlay component (new)
++
++	•	File: src/ui/DevTuningOverlay.tsx
++	•	Props:
++
++visible: boolean
++value: number
++min?: number // default 40
++max?: number // default 140
++step?: number // default 1
++onChange: (v: number) => void
++
++
++	•	Renders a small fixed panel (top-left), with:
++	•	Label: “Ship size:  px”
++	•	Range input (slider)
++	•	An input[type=number] for direct entry (bound to same value)
++	•	Styles: minimal inline or class .dev-overlay (if using styles.css). Keep unobtrusive, z-index above canvas.
++
++	4.	App wiring + toggle
++
++	•	In App.tsx:
++	•	Add state: const [shipPx, setShipPx] = useState<number>(65);
++	•	Add state: const [showDev, setShowDev] = useState(false);
++	•	Key listener: toggle showDev on backtick (`) press.
++	•	Render <DevTuningOverlay visible={showDev} value={shipPx} onChange={setShipPx} />.
++	•	Pass shipPixelSize={shipPx} into <GameCanvas ... />.
++
++	5.	Styles (optional)
++
++	•	If needed, append to styles.css:
++
++.dev-overlay {
++  position: fixed; top: 8px; left: 8px; z-index: 9999;
++  background: rgba(0,0,0,0.7); color: #fff; padding: 8px 10px; border-radius: 6px;
++  font: 12px/1.3 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
++}
++.dev-overlay input[type="range"] { width: 180px; }
++.dev-overlay input[type="number"] { width: 64px; margin-left: 8px; }
++
++
++
++Constraints
++	•	Do NOT modify any gameplay logic (physics, input, PostFX).
++	•	Default behavior unchanged when overlay hidden; ship uses the current default (65 px).
++	•	All changes behind a dev UI; only added files/props/state as above.
++
++Deliverable
++	•	Print ONE timestamped unified diff under /diffs/ with the full patch (new DevTuningOverlay, App/GameCanvas updates, Ship setter, any CSS additions). No truncation, no summaries.
++	•	After diff, commit and push.
++
+diff --git a/docs/prompts/1.md b/docs/prompts/done/1.md
+similarity index 100%
+rename from docs/prompts/1.md
+rename to docs/prompts/done/1.md
+diff --git a/docs/prompts/10.md b/docs/prompts/done/10.md
+similarity index 100%
+rename from docs/prompts/10.md
+rename to docs/prompts/done/10.md
+diff --git a/docs/prompts/11.md b/docs/prompts/done/11.md
+similarity index 100%
+rename from docs/prompts/11.md
+rename to docs/prompts/done/11.md
+diff --git a/docs/prompts/12.md b/docs/prompts/done/12.md
+similarity index 100%
+rename from docs/prompts/12.md
+rename to docs/prompts/done/12.md
+diff --git a/docs/prompts/13.md b/docs/prompts/done/13.md
+similarity index 100%
+rename from docs/prompts/13.md
+rename to docs/prompts/done/13.md
+diff --git a/docs/prompts/14.md b/docs/prompts/done/14.md
+similarity index 100%
+rename from docs/prompts/14.md
+rename to docs/prompts/done/14.md
+diff --git a/docs/prompts/15.md b/docs/prompts/done/15.md
+similarity index 100%
+rename from docs/prompts/15.md
+rename to docs/prompts/done/15.md
+diff --git a/docs/prompts/16.md b/docs/prompts/done/16.md
+similarity index 100%
+rename from docs/prompts/16.md
+rename to docs/prompts/done/16.md
+diff --git a/docs/prompts/17.md b/docs/prompts/done/17.md
+similarity index 100%
+rename from docs/prompts/17.md
+rename to docs/prompts/done/17.md
+diff --git a/docs/prompts/18.md b/docs/prompts/done/18.md
+similarity index 100%
+rename from docs/prompts/18.md
+rename to docs/prompts/done/18.md
+diff --git a/docs/prompts/19.md b/docs/prompts/done/19.md
+similarity index 100%
+rename from docs/prompts/19.md
+rename to docs/prompts/done/19.md
+diff --git a/docs/prompts/2.md b/docs/prompts/done/2.md
+similarity index 100%
+rename from docs/prompts/2.md
+rename to docs/prompts/done/2.md
+diff --git a/docs/prompts/done/20.md b/docs/prompts/done/20.md
+new file mode 100644
+index 0000000..88cf9d6
+--- /dev/null
++++ b/docs/prompts/done/20.md
+@@ -0,0 +1,26 @@
++
++EXECUTION MODE — adjust ship visual size to 65px height. Output ONE unified diff under `/diffs/` only. Then commit and push.
++
++Scope
++- `/AsteroidsV2/reactShell/src/game/entities/Ship.ts`
++
++Changes
++- Find the constant:
++  ```ts
++  const SHIP_DESIRED_PX = 85;
++
++	•	Change it to:
++
++const SHIP_DESIRED_PX = 65;
++
++
++	•	This sets the ship’s rendered height to ~65 pixels on screen, preserving aspect ratio.
++
++Constraints
++	•	Do not modify any other logic or files.
++	•	Ensure scaling still happens automatically when the texture loads.
++
++Deliverable
++	•	Print ONE timestamped unified diff under /diffs/ with this single-line change. No truncation, no summaries.
++	•	After diff, commit and push.
++
+diff --git a/docs/prompts/3.md b/docs/prompts/done/3.md
+similarity index 100%
+rename from docs/prompts/3.md
+rename to docs/prompts/done/3.md
+diff --git a/docs/prompts/4.md b/docs/prompts/done/4.md
+similarity index 100%
+rename from docs/prompts/4.md
+rename to docs/prompts/done/4.md
+diff --git a/docs/prompts/5.md b/docs/prompts/done/5.md
+similarity index 100%
+rename from docs/prompts/5.md
+rename to docs/prompts/done/5.md
+diff --git a/docs/prompts/6.md b/docs/prompts/done/6.md
+similarity index 100%
+rename from docs/prompts/6.md
+rename to docs/prompts/done/6.md
+diff --git a/docs/prompts/7.md b/docs/prompts/done/7.md
+similarity index 100%
+rename from docs/prompts/7.md
+rename to docs/prompts/done/7.md
+diff --git a/docs/prompts/8.md b/docs/prompts/done/8.md
+similarity index 100%
+rename from docs/prompts/8.md
+rename to docs/prompts/done/8.md
+diff --git a/docs/prompts/9.md b/docs/prompts/done/9.md
+similarity index 100%
+rename from docs/prompts/9.md
+rename to docs/prompts/done/9.md
+diff --git a/reactShell/public/assets/ship/ship.png b/reactShell/public/assets/ship/ship.png
+index 3020c73..4c713f2 100644
+Binary files a/reactShell/public/assets/ship/ship.png and b/reactShell/public/assets/ship/ship.png differ
+diff --git a/reactShell/public/assets/ship/ship1.png b/reactShell/public/assets/ship/ship1.png
+new file mode 100644
+index 0000000..3020c73
+Binary files /dev/null and b/reactShell/public/assets/ship/ship1.png differ
+diff --git a/reactShell/src/App.tsx b/reactShell/src/App.tsx
+index 7e15bc5..fa7b3fa 100644
+--- a/reactShell/src/App.tsx
++++ b/reactShell/src/App.tsx
+@@ -5,23 +5,41 @@ import UpgradeMenu from './ui/UpgradeMenu'
+ import StatusOverlay from './ui/StatusOverlay'
+ import PauseOverlay from './ui/PauseOverlay'
+ import StartScreen from './ui/StartScreen'
++import DevTuningOverlay from './ui/DevTuningOverlay'
+ 
+ function App() {
+   const [showStart, setShowStart] = useState(true)
++  const [shipPx, setShipPx] = useState<number>(65)
++  const [showDev, setShowDev] = useState(false)
+ 
+   useEffect(() => {
+     // Initialize game
+     console.log('Asteroids React Shell initializing...')
++    
++    // Backtick key listener for dev overlay toggle
++    const handleKeyDown = (event: KeyboardEvent) => {
++      if (event.key === '`') {
++        setShowDev(prev => !prev)
++      }
++    }
++    
++    window.addEventListener('keydown', handleKeyDown)
++    return () => window.removeEventListener('keydown', handleKeyDown)
+   }, [])
+ 
+   return (
+     <div className="app">
+-      <GameCanvas />
++      <GameCanvas shipPixelSize={shipPx} />
+       <Hud />
+       <UpgradeMenu />
+       <StatusOverlay />
+       <PauseOverlay />
+       <StartScreen visible={showStart} onDismiss={() => setShowStart(false)} />
++      <DevTuningOverlay 
++        visible={showDev} 
++        value={shipPx} 
++        onChange={setShipPx} 
++      />
+     </div>
+   )
+ }
+diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
+index 20c92e7..1d2b032 100644
+--- a/reactShell/src/game/GameCanvas.tsx
++++ b/reactShell/src/game/GameCanvas.tsx
+@@ -20,8 +20,13 @@ function makeOrthoCamera(w: number, h: number): THREE.OrthographicCamera {
+   return cam
+ }
+ 
+-export default function GameCanvas() {
++interface GameCanvasProps {
++  shipPixelSize?: number
++}
++
++export default function GameCanvas({ shipPixelSize }: GameCanvasProps) {
+   const canvasRef = useRef<HTMLCanvasElement>(null)
++  const shipRef = useRef<Ship | null>(null)
+ 
+   useEffect(() => {
+     if (!canvasRef.current) return
+@@ -37,6 +42,13 @@ export default function GameCanvas() {
+     // Initialize game systems
+     const input = new Input()
+     const ship = new Ship(scene)
++    shipRef.current = ship
++    
++    // Apply initial ship pixel size if provided
++    if (shipPixelSize) {
++      // Wait for texture to load before applying scale
++      setTimeout(() => ship.setPixelHeight(shipPixelSize), 100)
++    }
+     
+     // Initialize PostFX with default direct rendering (vanilla parity)
+     createComposer(renderer, scene, camera, {
+@@ -108,5 +120,12 @@ export default function GameCanvas() {
+     }
+   }, [])
+ 
++  // Apply ship pixel size changes
++  useEffect(() => {
++    if (shipRef.current && shipPixelSize) {
++      shipRef.current.setPixelHeight(shipPixelSize)
++    }
++  }, [shipPixelSize])
++
+   return <canvas ref={canvasRef} id="game-canvas" />
+ }
+\ No newline at end of file
+diff --git a/reactShell/src/game/entities/Ship.ts b/reactShell/src/game/entities/Ship.ts
+index dd828c6..c12c35c 100644
+--- a/reactShell/src/game/entities/Ship.ts
++++ b/reactShell/src/game/entities/Ship.ts
+@@ -166,4 +166,19 @@ export class Ship {
+   setFireCooldown(): void {
+     this.fireCooldown = PLAYER.fireRate
+   }
++
++  // Set ship pixel height for runtime tuning
++  setPixelHeight(px: number): void {
++    // Reapply texture scaling using the same logic as createShipMesh
++    const material = (this.object as THREE.Mesh).material as THREE.MeshBasicMaterial
++    if (material.map && material.map.image) {
++      const texture = material.map
++      const imgH = texture.image.height
++      const imgW = texture.image.width
++      const scale = px / imgH
++      
++      // Scale the mesh to achieve desired on-screen size
++      this.object.scale.set(imgW * scale, px, 1)
++    }
++  }
+ }
+\ No newline at end of file
+diff --git a/reactShell/src/index.css b/reactShell/src/index.css
+index c0263f0..2a2b270 100644
+--- a/reactShell/src/index.css
++++ b/reactShell/src/index.css
+@@ -18,4 +18,25 @@ body {
+ #root {
+   width: 100vw;
+   height: 100vh;
++}
++
++.dev-overlay {
++  position: fixed; 
++  top: 8px; 
++  left: 8px; 
++  z-index: 9999;
++  background: rgba(0,0,0,0.7); 
++  color: #fff; 
++  padding: 8px 10px; 
++  border-radius: 6px;
++  font: 12px/1.3 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
++}
++
++.dev-overlay input[type="range"] { 
++  width: 180px; 
++}
++
++.dev-overlay input[type="number"] { 
++  width: 64px; 
++  margin-left: 8px; 
+ }
+\ No newline at end of file
+diff --git a/reactShell/src/ui/DevTuningOverlay.tsx b/reactShell/src/ui/DevTuningOverlay.tsx
+new file mode 100644
+index 0000000..4c24aa4
+--- /dev/null
++++ b/reactShell/src/ui/DevTuningOverlay.tsx
+@@ -0,0 +1,57 @@
++import React from 'react'
++
++interface DevTuningOverlayProps {
++  visible: boolean
++  value: number
++  min?: number
++  max?: number
++  step?: number
++  onChange: (v: number) => void
++}
++
++export default function DevTuningOverlay({
++  visible,
++  value,
++  min = 40,
++  max = 140,
++  step = 1,
++  onChange
++}: DevTuningOverlayProps) {
++  if (!visible) return null
++
++  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
++    onChange(Number(e.target.value))
++  }
++
++  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
++    const newValue = Number(e.target.value)
++    if (!isNaN(newValue) && newValue >= min && newValue <= max) {
++      onChange(newValue)
++    }
++  }
++
++  return (
++    <div className="dev-overlay">
++      <label>
++        Ship size: {value} px
++        <br />
++        <input
++          type="range"
++          min={min}
++          max={max}
++          step={step}
++          value={value}
++          onChange={handleSliderChange}
++        />
++        <input
++          type="number"
++          min={min}
++          max={max}
++          step={step}
++          value={value}
++          onChange={handleNumberChange}
++        />
++      </label>
++    </div>
++  )
++}
+\ No newline at end of file

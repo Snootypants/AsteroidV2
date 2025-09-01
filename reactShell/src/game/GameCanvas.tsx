@@ -141,7 +141,7 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
           entities: { 
             ships: 1, 
             asteroids: 0, 
-            bullets: bulletManager.getActiveBulletCount(), 
+            bullets: bulletManager.getActiveCount(), 
             other: 0 
           },
           ship: {
