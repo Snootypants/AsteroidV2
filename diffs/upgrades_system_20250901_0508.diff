@@ -1,0 +1,722 @@
+diff --git a/docs/prompts/7.md b/docs/prompts/7.md
+new file mode 100644
+index 0000000..7c5251f
+--- /dev/null
++++ b/docs/prompts/7.md
+@@ -0,0 +1,81 @@
++insane efficiency. keep the loop rolling.
++
++here’s Block 10 ready so you can paste it the moment Block 9 lands:
++
++EXECUTION MODE — Implement Upgrades system + 3-choice picker UI. Output ONE unified diff under `/diffs/`. Then commit and push.
++
++Scope
++- NEW:    /AsteroidsV2/reactShell/src/game/systems/Upgrades.ts
++- NEW:    /AsteroidsV2/reactShell/src/ui/UpgradeMenu.tsx
++- UPDATE: /AsteroidsV2/reactShell/src/game/GameState.ts  (mods shape, upgradeHistory, apply logic)
++- UPDATE: /AsteroidsV2/reactShell/src/game/GameCanvas.tsx (phase transitions)
++- UPDATE: /AsteroidsV2/reactShell/src/styles.css (upgrade menu styles)
++
++Requirements
++
++1) Mods + Upgrades (game logic)
++- Define Mods in GameState: 
++
++{ fireRateMul:number, engineMul:number, spread:number, pierce:number, ricochet:number,
++shieldCharges:number, bulletBounce:number, bulletLifeMul:number, bulletSpeedMul:number,
++magnetRadius:number, drone:boolean }
++
++Defaults = identity (1 or 0).
++- Implement Upgrade definitions (16 baseline as per plan) with rarity tiers and numeric effects that match vanilla (e.g., Rapid Fire → fireRateMul *= 1.30; Engine Boost → engineMul *= 1.20; Shield Charge → shieldCharges += 1; Ricochet → bulletBounce += 1; Piercing → pierce += 1; Spread Shot → spread += 2; etc.).
++- `Upgrades.ts`:
++```ts
++export type Upgrade = { id:string; name:string; tier:'common'|'rare'|'epic'|'legendary';
++                        apply:(mods:Mods)=>void; describe:(mods:Mods)=>string; };
++export function getUpgradeChoices(wave:number, taken:Set<string>): Upgrade[];
++export function applyUpgrade(u:Upgrade, state:GameState): void;
++
++	•	Weighted random by tier; exclude already-taken upgrades when appropriate.
++	•	Record selection in upgradeHistory.
++
++	2.	Picker UI (UpgradeMenu.tsx)
++
++	•	3 cards centered overlay; keyboard shortcuts 1/2/3; click to select.
++	•	Show name, tier badge, and short describe() text.
++	•	On select: apply upgrade, close menu, transition back to playing.
++
++	3.	Phase transitions (GameCanvas/App integration)
++
++	•	On wave clear → set gamePhase='upgrade' and prepare 3 choices via getUpgradeChoices.
++	•	After selection → apply upgrade, push to upgradeHistory, gamePhase='playing', spawn next wave per existing logic.
++	•	Ensure invulnerability timing on wave start remains intact.
++
++	4.	HUD integration
++
++	•	HUD should automatically reflect mods via existing selectors (e.g., shieldCharges, possibly show last upgrade in the bottom-left list already wired).
++	•	No extra HUD features required in this block.
++
++	5.	Styling (append minimal)
++
++.upgrade-overlay{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:7000; background:rgba(0,0,0,.35); }
++.upgrade-grid{ display:grid; grid-template-columns:repeat(3, 280px); gap:16px; }
++.upgrade-card{ pointer-events:auto; background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.18); border-radius:12px; padding:16px; cursor:pointer; transition:transform .12s; }
++.upgrade-card:hover{ transform:translateY(-2px); }
++.tier-common{ border-color:#9aa4b2; }
++.tier-rare{ border-color:#4ea9ff; }
++.tier-epic{ border-color:#b889ff; }
++.tier-legendary{ border-color:#ffcc66; }
++.upgrade-name{ font-weight:700; margin-bottom:6px; }
++.upgrade-desc{ opacity:.9; font-size:14px; }
++
++Constraints
++	•	Do NOT change established combat constants.
++	•	No new dependencies.
++	•	Asset paths/casing unchanged.
++	•	Keep update frequency sane; no per-frame React re-render storms.
++
++Acceptance
++	•	Clearing a wave opens the 3-choice overlay.
++	•	1/2/3 keys or click selects and applies the upgrade; returns to gameplay.
++	•	Effects are visible immediately (e.g., Rapid Fire increases fire rate; Shield Charge increments shield count; Spread adds side bullets; Pierce/Ricochet modify bullet behavior if those are already supported hooks; if hooks not present yet, wire no-op now but store mods so later blocks use them).
++	•	upgradeHistory shows last 8 in HUD (already wired).
++	•	No regressions to waves, collisions, hunters, or shields.
++
++Deliverable
++	•	ONE timestamped unified diff under /diffs/ with all new/updated files.
++	•	Commit message: “Add Upgrades system and 3-choice picker UI; wire wave-clear → upgrade → resume”.
++
+diff --git a/reactShell/src/App.tsx b/reactShell/src/App.tsx
+index deacace..d9a7ba7 100644
+--- a/reactShell/src/App.tsx
++++ b/reactShell/src/App.tsx
+@@ -1,4 +1,4 @@
+-import { useEffect, useState } from 'react'
++import { useEffect, useState, useRef } from 'react'
+ import GameCanvas, { HudData, MiniSnapshot } from './game/GameCanvas'
+ import Hud from './ui/Hud'
+ import UpgradeMenu from './ui/UpgradeMenu'
+@@ -7,6 +7,8 @@ import PauseOverlay from './ui/PauseOverlay'
+ import StartScreen from './ui/StartScreen'
+ import Minimap from './ui/Minimap'
+ import { DevPanel, DevStats } from './ui/DevPanel'
++import { Upgrade, getUpgradeChoices, applyUpgrade } from './game/systems/Upgrades'
++import { GameState } from './game/GameState'
+ 
+ function App() {
+   const [showStart, setShowStart] = useState(true)
+@@ -24,6 +26,9 @@ function App() {
+     gamePhase: 'playing'
+   })
+   const [miniSnapshot, setMiniSnapshot] = useState<MiniSnapshot | null>(null)
++  const [upgradeChoices, setUpgradeChoices] = useState<Upgrade[]>([])
++  const [resumeSignal, setResumeSignal] = useState<boolean>(false)
++  const gameStateRef = useRef<GameState | null>(null)
+ 
+   useEffect(() => {
+     // Initialize game
+@@ -37,9 +42,39 @@ function App() {
+     return () => window.removeEventListener('keydown', onKey)
+   }, [])
+ 
++  // Handle game state ready
++  const handleGameStateReady = (gameState: GameState) => {
++    gameStateRef.current = gameState
++  }
++
++  // Handle upgrade phase
++  const handleUpgradePhase = (wave: number, takenUpgrades: Set<string>) => {
++    if (gameStateRef.current) {
++      const choices = getUpgradeChoices(wave, takenUpgrades)
++      setUpgradeChoices(choices)
++    }
++  }
++
++  // Handle upgrade selection
++  const handleUpgradeSelect = (upgrade: Upgrade) => {
++    if (gameStateRef.current) {
++      applyUpgrade(upgrade, gameStateRef.current)
++      setUpgradeChoices([])
++      // Signal GameCanvas to resume
++      setResumeSignal(prev => !prev) // Toggle to trigger useEffect
++    }
++  }
++
+   return (
+     <div className="app">
+-      <GameCanvas onStats={setStats} onHudData={setHudData} onMiniSnapshot={setMiniSnapshot} />
++      <GameCanvas 
++        onStats={setStats} 
++        onHudData={setHudData} 
++        onMiniSnapshot={setMiniSnapshot}
++        onGameStateReady={handleGameStateReady}
++        onUpgradePhase={handleUpgradePhase}
++        resumeGame={resumeSignal}
++      />
+       <Hud 
+         score={hudData.score}
+         wave={hudData.wave}
+@@ -52,7 +87,13 @@ function App() {
+         data={miniSnapshot}
+         visible={hudData.gamePhase === 'playing' || hudData.gamePhase === 'wave-complete'}
+       />
+-      <UpgradeMenu />
++      {hudData.gamePhase === 'upgrade' && upgradeChoices.length > 0 && (
++        <UpgradeMenu 
++          choices={upgradeChoices}
++          currentMods={gameStateRef.current?.getMods() || {}}
++          onSelect={handleUpgradeSelect}
++        />
++      )}
+       <StatusOverlay />
+       <PauseOverlay />
+       <StartScreen visible={showStart} onDismiss={() => setShowStart(false)} />
+diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
+index e658e57..2c502d4 100644
+--- a/reactShell/src/game/GameCanvas.tsx
++++ b/reactShell/src/game/GameCanvas.tsx
+@@ -53,9 +53,12 @@ interface GameCanvasProps {
+   onStats?: (stats: DevStats) => void
+   onHudData?: (hudData: HudData) => void
+   onMiniSnapshot?: (snapshot: MiniSnapshot) => void
++  onGameStateReady?: (gameState: any) => void
++  onUpgradePhase?: (wave: number, takenUpgrades: Set<string>) => void
++  resumeGame?: boolean // Signal to resume from upgrade phase
+ }
+ 
+-export default function GameCanvas({ onStats, onHudData, onMiniSnapshot }: GameCanvasProps) {
++export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameStateReady, onUpgradePhase, resumeGame }: GameCanvasProps) {
+   const canvasRef = useRef<HTMLCanvasElement>(null)
+   const fpsHistoryRef = useRef<number[]>([])
+   const shipRef = useRef<Ship | null>(null)
+@@ -106,6 +109,11 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot }: GameC
+     // Initialize wave 1
+     spawning.initializeWave(gameState.getWave())
+     
++    // Notify parent that game state is ready
++    if (onGameStateReady) {
++      onGameStateReady(gameState)
++    }
++    
+     // Dev panel greeting
+     DebugBus.push('info', 'DevPanel ready')
+     
+@@ -214,10 +222,11 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot }: GameC
+       
+       // Handle wave transitions
+       if (gameState.getGamePhase() === 'wave-complete') {
+-        // Start next wave automatically
+-        gameState.nextWave()
+-        ship.resetForWave()
+-        spawning.initializeWave(gameState.getWave())
++        // Move to upgrade phase and notify parent to show upgrade choices
++        gameState.setGamePhase('upgrade')
++        if (onUpgradePhase) {
++          onUpgradePhase(gameState.getWave(), gameState.getTakenUpgrades())
++        }
+       }
+       
+       // Follow ship with camera (simple following)
+@@ -333,5 +342,21 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot }: GameC
+     }
+   }, [])
+ 
++  // Handle resume from upgrade phase
++  useEffect(() => {
++    if (resumeGame && gameStateRef.current && spawningRef.current && shipRef.current) {
++      const gameState = gameStateRef.current
++      const spawning = spawningRef.current 
++      const ship = shipRef.current
++      
++      if (gameState.getGamePhase() === 'upgrade') {
++        // Move to next wave
++        gameState.nextWave()
++        ship.resetForWave()
++        spawning.initializeWave(gameState.getWave())
++      }
++    }
++  }, [resumeGame])
++
+   return <canvas ref={canvasRef} id="game-canvas" />
+ }
+\ No newline at end of file
+diff --git a/reactShell/src/game/GameState.ts b/reactShell/src/game/GameState.ts
+index d3b8327..22804ff 100644
+--- a/reactShell/src/game/GameState.ts
++++ b/reactShell/src/game/GameState.ts
+@@ -19,8 +19,17 @@ interface UpgradeHistoryItem {
+ 
+ // Mods system for tracking upgrades
+ interface Mods {
++  fireRateMul: number
++  engineMul: number
++  spread: number
++  pierce: number
++  ricochet: number
+   shieldCharges: number
+-  // Future mods can be added here
++  bulletBounce: number
++  bulletLifeMul: number
++  bulletSpeedMul: number
++  magnetRadius: number
++  drone: boolean
+ }
+ 
+ export class GameState {
+@@ -40,8 +49,19 @@ export class GameState {
+     adamantium: 0
+   }
+   private upgradeHistory: UpgradeHistoryItem[] = []
++  private takenUpgrades: Set<string> = new Set() // Track taken upgrades for selection logic
+   private mods: Mods = {
+-    shieldCharges: 3  // Start with 3 shield charges for testing
++    fireRateMul: 1.0,
++    engineMul: 1.0,
++    spread: 0,
++    pierce: 0,
++    ricochet: 0,
++    shieldCharges: 3,  // Start with 3 shield charges for testing
++    bulletBounce: 0,
++    bulletLifeMul: 1.0,
++    bulletSpeedMul: 1.0,
++    magnetRadius: 0,
++    drone: false
+   }
+ 
+   constructor() {
+@@ -152,8 +172,19 @@ export class GameState {
+       adamantium: 0
+     }
+     this.upgradeHistory = []
++    this.takenUpgrades = new Set()
+     this.mods = {
+-      shieldCharges: 3  // Start with 3 shield charges for testing
++      fireRateMul: 1.0,
++      engineMul: 1.0,
++      spread: 0,
++      pierce: 0,
++      ricochet: 0,
++      shieldCharges: 3,  // Start with 3 shield charges for testing
++      bulletBounce: 0,
++      bulletLifeMul: 1.0,
++      bulletSpeedMul: 1.0,
++      magnetRadius: 0,
++      drone: false
+     }
+   }
+ 
+@@ -182,6 +213,29 @@ export class GameState {
+     return this.mods.shieldCharges > 0
+   }
+ 
++  // Mods management
++  getMods(): Mods {
++    return this.mods
++  }
++
++  setMods(mods: Mods): void {
++    this.mods = mods
++  }
++
++  // Upgrade history management
++  addToUpgradeHistory(item: UpgradeHistoryItem): void {
++    this.upgradeHistory.push(item)
++  }
++
++  // Taken upgrades tracking
++  getTakenUpgrades(): Set<string> {
++    return this.takenUpgrades
++  }
++
++  addTakenUpgrade(upgradeId: string): void {
++    this.takenUpgrades.add(upgradeId)
++  }
++
+   // Get full state snapshot for debugging
+   getState() {
+     return {
+diff --git a/reactShell/src/game/systems/Upgrades.ts b/reactShell/src/game/systems/Upgrades.ts
+index 441018b..e1fa847 100644
+--- a/reactShell/src/game/systems/Upgrades.ts
++++ b/reactShell/src/game/systems/Upgrades.ts
+@@ -1,2 +1,278 @@
+-// Upgrades.ts - Upgrade application logic
+-export class Upgrades {}
+\ No newline at end of file
++// Upgrades.ts - Upgrade system with tier-based selection and mod effects
++
++import { GameState } from '../GameState'
++
++// Complete mods interface matching the requirements
++export interface Mods {
++  fireRateMul: number
++  engineMul: number
++  spread: number
++  pierce: number
++  ricochet: number
++  shieldCharges: number
++  bulletBounce: number
++  bulletLifeMul: number
++  bulletSpeedMul: number
++  magnetRadius: number
++  drone: boolean
++}
++
++// Default mods (identity values)
++export const defaultMods: Mods = {
++  fireRateMul: 1.0,
++  engineMul: 1.0,
++  spread: 0,
++  pierce: 0,
++  ricochet: 0,
++  shieldCharges: 3,
++  bulletBounce: 0,
++  bulletLifeMul: 1.0,
++  bulletSpeedMul: 1.0,
++  magnetRadius: 0,
++  drone: false
++}
++
++// Upgrade definition
++export type UpgradeTier = 'common' | 'rare' | 'epic' | 'legendary'
++
++export interface Upgrade {
++  id: string
++  name: string
++  tier: UpgradeTier
++  apply: (mods: Mods) => void
++  describe: (mods: Mods) => string
++  stackable?: boolean // If false, can only be taken once
++}
++
++// Tier weights for selection (higher = more likely)
++const TIER_WEIGHTS = {
++  common: 60,
++  rare: 30,
++  epic: 8,
++  legendary: 2
++}
++
++// 16 baseline upgrades matching vanilla behavior
++export const UPGRADES: Upgrade[] = [
++  // Common tier (basic improvements)
++  {
++    id: 'rapid_fire',
++    name: 'Rapid Fire',
++    tier: 'common',
++    apply: (mods) => { mods.fireRateMul *= 1.30 },
++    describe: (mods) => `+30% fire rate (current: ${(mods.fireRateMul * 100).toFixed(0)}%)`
++  },
++  {
++    id: 'engine_boost',
++    name: 'Engine Boost',
++    tier: 'common', 
++    apply: (mods) => { mods.engineMul *= 1.20 },
++    describe: (mods) => `+20% thrust (current: ${(mods.engineMul * 100).toFixed(0)}%)`
++  },
++  {
++    id: 'shield_charge',
++    name: 'Shield Charge',
++    tier: 'common',
++    apply: (mods) => { mods.shieldCharges += 1 },
++    describe: (mods) => `+1 shield charge (total: ${mods.shieldCharges + 1})`
++  },
++  {
++    id: 'bullet_speed',
++    name: 'Velocity Boost',
++    tier: 'common',
++    apply: (mods) => { mods.bulletSpeedMul *= 1.25 },
++    describe: (mods) => `+25% bullet speed (current: ${(mods.bulletSpeedMul * 100).toFixed(0)}%)`
++  },
++  {
++    id: 'bullet_range',
++    name: 'Extended Range',
++    tier: 'common',
++    apply: (mods) => { mods.bulletLifeMul *= 1.40 },
++    describe: (mods) => `+40% bullet range (current: ${(mods.bulletLifeMul * 100).toFixed(0)}%)`
++  },
++
++  // Rare tier (tactical upgrades)
++  {
++    id: 'spread_shot',
++    name: 'Spread Shot',
++    tier: 'rare',
++    apply: (mods) => { mods.spread += 2 },
++    describe: (mods) => `+2 side bullets (total: ${mods.spread + 2} extra)`
++  },
++  {
++    id: 'piercing',
++    name: 'Piercing Rounds',
++    tier: 'rare',
++    apply: (mods) => { mods.pierce += 1 },
++    describe: (mods) => `Bullets pierce +1 target (total: ${mods.pierce + 1})`
++  },
++  {
++    id: 'ricochet',
++    name: 'Ricochet',
++    tier: 'rare',
++    apply: (mods) => { mods.ricochet += 1 },
++    describe: (mods) => `Bullets ricochet +1 time (total: ${mods.ricochet + 1})`
++  },
++  {
++    id: 'bullet_bounce',
++    name: 'Bouncing Bullets',
++    tier: 'rare',
++    apply: (mods) => { mods.bulletBounce += 1 },
++    describe: (mods) => `Bullets bounce off edges +1 time (total: ${mods.bulletBounce + 1})`
++  },
++  {
++    id: 'magnet_field',
++    name: 'Magnetic Field',
++    tier: 'rare',
++    apply: (mods) => { mods.magnetRadius += 50 },
++    describe: (mods) => `+50 salvage pickup radius (total: ${mods.magnetRadius + 50})`
++  },
++
++  // Epic tier (powerful combinations)
++  {
++    id: 'multi_fire',
++    name: 'Multi-Fire',
++    tier: 'epic',
++    apply: (mods) => { 
++      mods.fireRateMul *= 1.50
++      mods.spread += 1 
++    },
++    describe: (mods) => `+50% fire rate + 1 spread bullet`
++  },
++  {
++    id: 'hyper_engine',
++    name: 'Hyper Engine',
++    tier: 'epic',
++    apply: (mods) => { 
++      mods.engineMul *= 1.60
++      mods.bulletSpeedMul *= 1.20
++    },
++    describe: (mods) => `+60% thrust + 20% bullet speed`
++  },
++  {
++    id: 'armor_plating',
++    name: 'Armor Plating', 
++    tier: 'epic',
++    apply: (mods) => { mods.shieldCharges += 2 },
++    describe: (mods) => `+2 shield charges (total: ${mods.shieldCharges + 2})`
++  },
++  {
++    id: 'plasma_rounds',
++    name: 'Plasma Rounds',
++    tier: 'epic',
++    apply: (mods) => {
++      mods.pierce += 2
++      mods.bulletSpeedMul *= 1.30
++    },
++    describe: (mods) => `Pierce +2 targets + 30% bullet speed`
++  },
++
++  // Legendary tier (game-changing)
++  {
++    id: 'combat_drone',
++    name: 'Combat Drone',
++    tier: 'legendary',
++    stackable: false,
++    apply: (mods) => { mods.drone = true },
++    describe: (mods) => `Deploy autonomous combat drone`
++  },
++  {
++    id: 'omni_burst',
++    name: 'Omni Burst',
++    tier: 'legendary',
++    apply: (mods) => {
++      mods.fireRateMul *= 2.0
++      mods.spread += 4
++      mods.pierce += 1
++    },
++    describe: (mods) => `Double fire rate + 4 spread + 1 pierce`
++  }
++]
++
++// Get weighted random upgrade choices for wave
++export function getUpgradeChoices(wave: number, taken: Set<string>): Upgrade[] {
++  // Filter out non-stackable upgrades that were already taken
++  const availableUpgrades = UPGRADES.filter(upgrade => {
++    if (upgrade.stackable === false && taken.has(upgrade.id)) {
++      return false
++    }
++    return true
++  })
++
++  if (availableUpgrades.length === 0) {
++    // Fallback if all non-stackable upgrades taken - return stackable ones
++    return UPGRADES.filter(u => u.stackable !== false).slice(0, 3)
++  }
++
++  // Calculate tier probabilities based on wave (higher waves = better tiers)
++  const baseWeights = { ...TIER_WEIGHTS }
++  
++  // Boost rare/epic/legendary chances on higher waves
++  if (wave >= 5) {
++    baseWeights.rare *= 1.5
++    baseWeights.epic *= 2.0
++    baseWeights.legendary *= 1.5
++  }
++  if (wave >= 10) {
++    baseWeights.epic *= 2.0
++    baseWeights.legendary *= 2.0
++  }
++  if (wave >= 15) {
++    baseWeights.legendary *= 3.0
++  }
++
++  // Build weighted pool
++  const weightedPool: Upgrade[] = []
++  for (const upgrade of availableUpgrades) {
++    const weight = baseWeights[upgrade.tier]
++    for (let i = 0; i < weight; i++) {
++      weightedPool.push(upgrade)
++    }
++  }
++
++  // Select 3 unique upgrades
++  const choices: Upgrade[] = []
++  const selectedIds = new Set<string>()
++  
++  for (let attempts = 0; attempts < 100 && choices.length < 3; attempts++) {
++    const randomUpgrade = weightedPool[Math.floor(Math.random() * weightedPool.length)]
++    if (!selectedIds.has(randomUpgrade.id)) {
++      choices.push(randomUpgrade)
++      selectedIds.add(randomUpgrade.id)
++    }
++  }
++
++  // Fallback: if we couldn't get 3 unique, fill with first available
++  while (choices.length < 3 && choices.length < availableUpgrades.length) {
++    for (const upgrade of availableUpgrades) {
++      if (!selectedIds.has(upgrade.id)) {
++        choices.push(upgrade)
++        selectedIds.add(upgrade.id)
++        break
++      }
++    }
++  }
++
++  return choices
++}
++
++// Apply upgrade to game state
++export function applyUpgrade(upgrade: Upgrade, gameState: GameState): void {
++  // Get current mods and apply upgrade
++  const currentMods = gameState.getMods()
++  upgrade.apply(currentMods)
++  
++  // Update mods in game state
++  gameState.setMods(currentMods)
++  
++  // Track taken upgrade (for non-stackable upgrades)
++  if (upgrade.stackable === false) {
++    gameState.addTakenUpgrade(upgrade.id)
++  }
++  
++  // Add to upgrade history
++  gameState.addToUpgradeHistory({
++    name: upgrade.name,
++    tier: upgrade.tier
++  })
++}
+\ No newline at end of file
+diff --git a/reactShell/src/styles.css b/reactShell/src/styles.css
+index 0667e44..53cbe26 100644
+--- a/reactShell/src/styles.css
++++ b/reactShell/src/styles.css
+@@ -21,4 +21,22 @@ canvas { display: block; }
+ /* Minimap Styles */
+ .minimap-wrap { position: fixed; right: 12px; bottom: 12px; z-index: 5000; pointer-events: none; }
+ .minimap-panel { background: rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.18); border-radius:8px; padding:8px; }
+-.minimap-canvas { display:block; width:280px; height:187px; image-rendering: pixelated; }
+\ No newline at end of file
++.minimap-canvas { display:block; width:280px; height:187px; image-rendering: pixelated; }
++
++/* Upgrade Menu Styles */
++.upgrade-overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 7000; background: rgba(0,0,0,.35); }
++.upgrade-grid { display: grid; grid-template-columns: repeat(3, 280px); gap: 16px; }
++.upgrade-card { pointer-events: auto; background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.18); border-radius: 12px; padding: 16px; cursor: pointer; transition: transform .12s; position: relative; }
++.upgrade-card:hover { transform: translateY(-2px); }
++.tier-common { border-color: #9aa4b2; }
++.tier-rare { border-color: #4ea9ff; }
++.tier-epic { border-color: #b889ff; }
++.tier-legendary { border-color: #ffcc66; }
++.upgrade-name { font-weight: 700; margin-bottom: 6px; color: #e6e6e6; font-size: 16px; }
++.upgrade-desc { opacity: .9; font-size: 14px; color: #e6e6e6; margin-bottom: 8px; }
++.tier-badge { position: absolute; top: 8px; right: 8px; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
++.tier-badge.tier-common { background: #9aa4b2; color: #000; }
++.tier-badge.tier-rare { background: #4ea9ff; color: #000; }
++.tier-badge.tier-epic { background: #b889ff; color: #000; }
++.tier-badge.tier-legendary { background: #ffcc66; color: #000; }
++.upgrade-hotkey { font-size: 12px; opacity: .7; color: #e6e6e6; }
+\ No newline at end of file
+diff --git a/reactShell/src/ui/UpgradeMenu.tsx b/reactShell/src/ui/UpgradeMenu.tsx
+index 1962b69..3e00818 100644
+--- a/reactShell/src/ui/UpgradeMenu.tsx
++++ b/reactShell/src/ui/UpgradeMenu.tsx
+@@ -1,4 +1,60 @@
+-// UpgradeMenu.tsx - Between-wave upgrade picker
+-export default function UpgradeMenu() {
+-  return <div className="upgrade-menu" />
++// UpgradeMenu.tsx - Between-wave upgrade picker with 3-choice UI
++import { useEffect, useCallback } from 'react'
++import { Upgrade } from '../game/systems/Upgrades'
++
++interface UpgradeMenuProps {
++  choices: Upgrade[]
++  currentMods: any // Mods interface from Upgrades.ts
++  onSelect: (upgrade: Upgrade) => void
++}
++
++export default function UpgradeMenu({ choices, currentMods, onSelect }: UpgradeMenuProps) {
++  // Handle keyboard selection (1, 2, 3)
++  const handleKeyPress = useCallback((event: KeyboardEvent) => {
++    const key = event.key
++    if (key === '1' && choices[0]) {
++      onSelect(choices[0])
++    } else if (key === '2' && choices[1]) {
++      onSelect(choices[1])
++    } else if (key === '3' && choices[2]) {
++      onSelect(choices[2])
++    }
++  }, [choices, onSelect])
++
++  // Set up keyboard listener
++  useEffect(() => {
++    window.addEventListener('keydown', handleKeyPress)
++    return () => {
++      window.removeEventListener('keydown', handleKeyPress)
++    }
++  }, [handleKeyPress])
++
++  if (!choices || choices.length === 0) {
++    return null
++  }
++
++  return (
++    <div className="upgrade-overlay">
++      <div className="upgrade-grid">
++        {choices.map((upgrade, index) => (
++          <div
++            key={upgrade.id}
++            className={`upgrade-card tier-${upgrade.tier}`}
++            onClick={() => onSelect(upgrade)}
++          >
++            <div className="upgrade-name">{upgrade.name}</div>
++            <div className={`tier-badge tier-${upgrade.tier}`}>
++              {upgrade.tier.toUpperCase()}
++            </div>
++            <div className="upgrade-desc">
++              {upgrade.describe(currentMods)}
++            </div>
++            <div className="upgrade-hotkey">
++              Press {index + 1}
++            </div>
++          </div>
++        ))}
++      </div>
++    </div>
++  )
+ }
+\ No newline at end of file

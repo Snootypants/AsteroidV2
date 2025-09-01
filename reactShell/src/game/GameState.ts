@@ -19,8 +19,17 @@ interface UpgradeHistoryItem {
 
 // Mods system for tracking upgrades
 interface Mods {
+  fireRateMul: number
+  engineMul: number
+  spread: number
+  pierce: number
+  ricochet: number
   shieldCharges: number
-  // Future mods can be added here
+  bulletBounce: number
+  bulletLifeMul: number
+  bulletSpeedMul: number
+  magnetRadius: number
+  drone: boolean
 }
 
 export class GameState {
@@ -40,8 +49,19 @@ export class GameState {
     adamantium: 0
   }
   private upgradeHistory: UpgradeHistoryItem[] = []
+  private takenUpgrades: Set<string> = new Set() // Track taken upgrades for selection logic
   private mods: Mods = {
-    shieldCharges: 3  // Start with 3 shield charges for testing
+    fireRateMul: 1.0,
+    engineMul: 1.0,
+    spread: 0,
+    pierce: 0,
+    ricochet: 0,
+    shieldCharges: 3,  // Start with 3 shield charges for testing
+    bulletBounce: 0,
+    bulletLifeMul: 1.0,
+    bulletSpeedMul: 1.0,
+    magnetRadius: 0,
+    drone: false
   }
 
   constructor() {
@@ -152,8 +172,19 @@ export class GameState {
       adamantium: 0
     }
     this.upgradeHistory = []
+    this.takenUpgrades = new Set()
     this.mods = {
-      shieldCharges: 3  // Start with 3 shield charges for testing
+      fireRateMul: 1.0,
+      engineMul: 1.0,
+      spread: 0,
+      pierce: 0,
+      ricochet: 0,
+      shieldCharges: 3,  // Start with 3 shield charges for testing
+      bulletBounce: 0,
+      bulletLifeMul: 1.0,
+      bulletSpeedMul: 1.0,
+      magnetRadius: 0,
+      drone: false
     }
   }
 
@@ -180,6 +211,29 @@ export class GameState {
 
   hasShields(): boolean {
     return this.mods.shieldCharges > 0
+  }
+
+  // Mods management
+  getMods(): Mods {
+    return this.mods
+  }
+
+  setMods(mods: Mods): void {
+    this.mods = mods
+  }
+
+  // Upgrade history management
+  addToUpgradeHistory(item: UpgradeHistoryItem): void {
+    this.upgradeHistory.push(item)
+  }
+
+  // Taken upgrades tracking
+  getTakenUpgrades(): Set<string> {
+    return this.takenUpgrades
+  }
+
+  addTakenUpgrade(upgradeId: string): void {
+    this.takenUpgrades.add(upgradeId)
   }
 
   // Get full state snapshot for debugging

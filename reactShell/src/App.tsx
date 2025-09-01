@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import GameCanvas, { HudData, MiniSnapshot } from './game/GameCanvas'
 import Hud from './ui/Hud'
 import UpgradeMenu from './ui/UpgradeMenu'
@@ -7,6 +7,8 @@ import PauseOverlay from './ui/PauseOverlay'
 import StartScreen from './ui/StartScreen'
 import Minimap from './ui/Minimap'
 import { DevPanel, DevStats } from './ui/DevPanel'
+import { Upgrade, getUpgradeChoices, applyUpgrade } from './game/systems/Upgrades'
+import { GameState } from './game/GameState'
 
 function App() {
   const [showStart, setShowStart] = useState(true)
@@ -24,6 +26,9 @@ function App() {
     gamePhase: 'playing'
   })
   const [miniSnapshot, setMiniSnapshot] = useState<MiniSnapshot | null>(null)
+  const [upgradeChoices, setUpgradeChoices] = useState<Upgrade[]>([])
+  const [resumeSignal, setResumeSignal] = useState<boolean>(false)
+  const gameStateRef = useRef<GameState | null>(null)
 
   useEffect(() => {
     // Initialize game
@@ -37,9 +42,39 @@ function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  // Handle game state ready
+  const handleGameStateReady = (gameState: GameState) => {
+    gameStateRef.current = gameState
+  }
+
+  // Handle upgrade phase
+  const handleUpgradePhase = (wave: number, takenUpgrades: Set<string>) => {
+    if (gameStateRef.current) {
+      const choices = getUpgradeChoices(wave, takenUpgrades)
+      setUpgradeChoices(choices)
+    }
+  }
+
+  // Handle upgrade selection
+  const handleUpgradeSelect = (upgrade: Upgrade) => {
+    if (gameStateRef.current) {
+      applyUpgrade(upgrade, gameStateRef.current)
+      setUpgradeChoices([])
+      // Signal GameCanvas to resume
+      setResumeSignal(prev => !prev) // Toggle to trigger useEffect
+    }
+  }
+
   return (
     <div className="app">
-      <GameCanvas onStats={setStats} onHudData={setHudData} onMiniSnapshot={setMiniSnapshot} />
+      <GameCanvas 
+        onStats={setStats} 
+        onHudData={setHudData} 
+        onMiniSnapshot={setMiniSnapshot}
+        onGameStateReady={handleGameStateReady}
+        onUpgradePhase={handleUpgradePhase}
+        resumeGame={resumeSignal}
+      />
       <Hud 
         score={hudData.score}
         wave={hudData.wave}
@@ -52,7 +87,13 @@ function App() {
         data={miniSnapshot}
         visible={hudData.gamePhase === 'playing' || hudData.gamePhase === 'wave-complete'}
       />
-      <UpgradeMenu />
+      {hudData.gamePhase === 'upgrade' && upgradeChoices.length > 0 && (
+        <UpgradeMenu 
+          choices={upgradeChoices}
+          currentMods={gameStateRef.current?.getMods() || {}}
+          onSelect={handleUpgradeSelect}
+        />
+      )}
       <StatusOverlay />
       <PauseOverlay />
       <StartScreen visible={showStart} onDismiss={() => setShowStart(false)} />

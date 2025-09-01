@@ -53,9 +53,12 @@ interface GameCanvasProps {
   onStats?: (stats: DevStats) => void
   onHudData?: (hudData: HudData) => void
   onMiniSnapshot?: (snapshot: MiniSnapshot) => void
+  onGameStateReady?: (gameState: any) => void
+  onUpgradePhase?: (wave: number, takenUpgrades: Set<string>) => void
+  resumeGame?: boolean // Signal to resume from upgrade phase
 }
 
-export default function GameCanvas({ onStats, onHudData, onMiniSnapshot }: GameCanvasProps) {
+export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameStateReady, onUpgradePhase, resumeGame }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fpsHistoryRef = useRef<number[]>([])
   const shipRef = useRef<Ship | null>(null)
@@ -105,6 +108,11 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot }: GameC
     
     // Initialize wave 1
     spawning.initializeWave(gameState.getWave())
+    
+    // Notify parent that game state is ready
+    if (onGameStateReady) {
+      onGameStateReady(gameState)
+    }
     
     // Dev panel greeting
     DebugBus.push('info', 'DevPanel ready')
@@ -214,10 +222,11 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot }: GameC
       
       // Handle wave transitions
       if (gameState.getGamePhase() === 'wave-complete') {
-        // Start next wave automatically
-        gameState.nextWave()
-        ship.resetForWave()
-        spawning.initializeWave(gameState.getWave())
+        // Move to upgrade phase and notify parent to show upgrade choices
+        gameState.setGamePhase('upgrade')
+        if (onUpgradePhase) {
+          onUpgradePhase(gameState.getWave(), gameState.getTakenUpgrades())
+        }
       }
       
       // Follow ship with camera (simple following)
@@ -332,6 +341,22 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot }: GameC
       }
     }
   }, [])
+
+  // Handle resume from upgrade phase
+  useEffect(() => {
+    if (resumeGame && gameStateRef.current && spawningRef.current && shipRef.current) {
+      const gameState = gameStateRef.current
+      const spawning = spawningRef.current 
+      const ship = shipRef.current
+      
+      if (gameState.getGamePhase() === 'upgrade') {
+        // Move to next wave
+        gameState.nextWave()
+        ship.resetForWave()
+        spawning.initializeWave(gameState.getWave())
+      }
+    }
+  }, [resumeGame])
 
   return <canvas ref={canvasRef} id="game-canvas" />
 }
