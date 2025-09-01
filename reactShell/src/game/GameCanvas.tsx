@@ -6,6 +6,9 @@ import { Input } from './Input'
 import { Ship } from './entities/Ship'
 import { BulletManager } from './systems/BulletManager'
 import { Spawning } from './systems/Spawning'
+import { CollisionManager } from './systems/Collision'
+import { ParticleManager } from './entities/Particles'
+import { GameState } from './GameState'
 import { DevStats } from '../ui/DevPanel'
 import { DebugBus } from '../dev/DebugBus'
 
@@ -35,6 +38,9 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
   const inputRef = useRef<Input | null>(null)
   const bulletManagerRef = useRef<BulletManager | null>(null)
   const spawningRef = useRef<Spawning | null>(null)
+  const collisionManagerRef = useRef<CollisionManager | null>(null)
+  const particleManagerRef = useRef<ParticleManager | null>(null)
+  const gameStateRef = useRef<GameState | null>(null)
 
   useEffect(() => {
     if (!canvasRef.current) return
@@ -49,14 +55,20 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
     
     // Initialize game systems
     const input = new Input()
+    const gameState = new GameState()
     const bulletManager = new BulletManager(scene)
     const ship = new Ship(scene, bulletManager)
     const spawning = new Spawning(scene)
+    const particleManager = new ParticleManager(scene)
+    const collisionManager = new CollisionManager(bulletManager, spawning, ship, gameState, scene)
     
     shipRef.current = ship
     inputRef.current = input
     bulletManagerRef.current = bulletManager
     spawningRef.current = spawning
+    collisionManagerRef.current = collisionManager
+    particleManagerRef.current = particleManager
+    gameStateRef.current = gameState
     
     // Initialize level with asteroids (5-8 for testing)
     spawning.initializeLevel()
@@ -133,6 +145,21 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
       // Update asteroids
       spawning.update(dt)
       
+      // Update particles
+      particleManager.update(dt)
+      
+      // Update collision detection and handle events
+      const collisionEvents = collisionManager.update(dt)
+      
+      // Handle collision events (create particle effects)
+      for (const event of collisionEvents) {
+        if (event.type === 'bullet-asteroid' && event.asteroidSize) {
+          particleManager.asteroidBurst(event.position, event.asteroidSize)
+        } else if (event.type === 'ship-asteroid') {
+          particleManager.shipBurst(event.position)
+        }
+      }
+      
       // Follow ship with camera (simple following)
       const shipPos = ship.getPosition()
       camera.position.x = shipPos.x
@@ -152,8 +179,9 @@ export default function GameCanvas({ onStats }: GameCanvasProps) {
             ships: 1, 
             asteroids: spawning.getAsteroidCount(), 
             bullets: bulletManager.getActiveCount(), 
-            other: 0 
+            other: particleManager.getActiveCount() 
           },
+          score: gameState.getScore(),
           ship: {
             x: shipPos.x,
             y: shipPos.y,

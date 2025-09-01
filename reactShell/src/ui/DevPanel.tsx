@@ -4,6 +4,7 @@ import { DebugBus, LogEntry } from '../dev/DebugBus'
 export type DevStats = {
   fps: number
   entities: { ships: number; asteroids: number; bullets: number; other: number }
+  score?: number
   ship?: { x: number; y: number; vx: number; vy: number; angleDeg: number; pxHeight: number }
   input?: { thrust: boolean; left: boolean; right: boolean; fire: boolean; mouseX: number; mouseY: number }
 }
@@ -59,9 +60,15 @@ export function DevPanel({ visible, stats }: DevPanelProps): JSX.Element | null 
             Ships:{stats.entities.ships} 
             Asteroids:{stats.entities.asteroids} 
             Bullets:{stats.entities.bullets} 
-            Other:{stats.entities.other}
+            Particles:{stats.entities.other}
           </span>
         </div>
+        {stats.score !== undefined && (
+          <div className="row">
+            <span>Score:</span>
+            <span>{stats.score}</span>
+          </div>
+        )}
       </div>
 
       {/* Ship Stats */}
