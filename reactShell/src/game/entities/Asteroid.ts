@@ -19,10 +19,10 @@ export type OreType = 'iron' | 'gold' | 'platinum' | 'adamantium'
 export type AsteroidSize = 'large' | 'medium' | 'small'
 
 const ORE_COLORS: Record<OreType, number> = {
-  iron: 0x808080,      // Gray
-  gold: 0xFFD700,      // Gold/Yellow
-  platinum: 0xC0C0C0,  // Silver
-  adamantium: 0x9400D3 // Purple
+  iron: 0x9AA1A8,      // Updated iron color
+  gold: 0xE3B341,      // Updated gold color
+  platinum: 0xB9D3EE,  // Updated platinum color
+  adamantium: 0x7FFFD4 // Updated adamantium color (aqua)
 }
 
 // Ore type probability function (lines 819-825)
@@ -35,7 +35,7 @@ export function chooseOreType(): OreType {
 }
 
 export class Asteroid {
-  object: THREE.Mesh
+  object: THREE.Object3D
   private velocity = new THREE.Vector2(0, 0)
   private size: AsteroidSize
   private oreType: OreType
@@ -72,15 +72,31 @@ export class Asteroid {
     scene.add(this.object)
   }
 
-  private createAsteroidMesh(): THREE.Mesh {
+  private createAsteroidMesh(): THREE.Object3D {
     const radius = ASTEROIDS[this.size].r
-    const geometry = new THREE.SphereGeometry(radius, 8, 6) // Low poly for retro feel
+    const group = new THREE.Group()
+    
+    // Create main disk (slightly larger disk behind for outline effect)
+    const outlineGeometry = new THREE.CircleGeometry(radius * 1.1, 16)
+    const outlineMaterial = new THREE.MeshBasicMaterial({ 
+      color: 0x333333, // Dark outline color
+      transparent: true,
+      opacity: 0.8
+    })
+    const outlineMesh = new THREE.Mesh(outlineGeometry, outlineMaterial)
+    outlineMesh.position.z = -0.01 // Place behind main disk
+    group.add(outlineMesh)
+    
+    // Create main asteroid disk
+    const geometry = new THREE.CircleGeometry(radius, 16)
     const material = new THREE.MeshBasicMaterial({ 
       color: ORE_COLORS[this.oreType],
-      wireframe: false 
+      transparent: false
     })
+    const mainMesh = new THREE.Mesh(geometry, material)
+    group.add(mainMesh)
     
-    return new THREE.Mesh(geometry, material)
+    return group
   }
 
   update(dt: number): void {
@@ -155,12 +171,18 @@ export class Asteroid {
   destroy(scene: THREE.Scene): void {
     this.object.userData.alive = false
     scene.remove(this.object)
-    this.object.geometry.dispose()
-    if (Array.isArray(this.object.material)) {
-      this.object.material.forEach((m: any) => m.dispose())
-    } else {
-      (this.object.material as any).dispose()
-    }
+    
+    // Dispose of group children (outline and main disk)
+    this.object.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.geometry.dispose()
+        if (Array.isArray(child.material)) {
+          child.material.forEach((m: any) => m.dispose())
+        } else {
+          (child.material as any).dispose()
+        }
+      }
+    })
   }
 
   // Getters

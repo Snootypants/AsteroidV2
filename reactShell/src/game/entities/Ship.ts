@@ -68,6 +68,12 @@ export class Ship {
     // Load ship texture
     const loader = new THREE.TextureLoader()
     const shipTexture = loader.load('assets/ship/ship.png', (texture) => {
+      // Configure texture for proper alpha handling
+      texture.colorSpace = THREE.SRGBColorSpace
+      texture.magFilter = THREE.NearestFilter
+      texture.minFilter = THREE.NearestFilter
+      texture.generateMipmaps = false
+      
       // Scale ship to desired pixel height once texture is loaded
       const imgH = texture.image?.height ?? SHIP_DESIRED_PX
       const imgW = texture.image?.width ?? SHIP_DESIRED_PX
@@ -82,7 +88,8 @@ export class Ship {
     const shipMaterial = new THREE.MeshBasicMaterial({
       map: shipTexture,
       transparent: true,
-      opacity: 1.0,
+      depthWrite: false,
+      alphaTest: 0.5,
       side: THREE.DoubleSide
     })
     

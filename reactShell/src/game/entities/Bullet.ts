@@ -22,13 +22,17 @@ export class Bullet {
   public isEnemy = false
 
   constructor() {
-    // Create small white sphere for bullet visual
-    const geometry = new THREE.SphereGeometry(BULLET.r, 8, 6)
-    const material = new THREE.MeshBasicMaterial({ color: 0xffffff })
+    // Create brighter, more visible bullet visual
+    // Use slightly larger visual size (2-3px equivalent) while keeping collision radius unchanged
+    const visualRadius = 1.0 // Larger visual size for better visibility
+    const geometry = new THREE.SphereGeometry(visualRadius, 8, 6)
+    const material = new THREE.MeshBasicMaterial({ 
+      color: 0xE6E6E6 // Brighter than pure white for better visibility on dark backgrounds
+    })
     this.mesh = new THREE.Mesh(geometry, material)
     this.mesh.userData = {
       kind: 'bullet',
-      radius: BULLET.r
+      radius: BULLET.r // Keep original collision radius
     }
   }
 
