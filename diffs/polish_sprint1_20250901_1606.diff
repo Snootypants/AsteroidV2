@@ -1,0 +1,142 @@
+diff --git a/reactShell/src/game/entities/Asteroid.ts b/reactShell/src/game/entities/Asteroid.ts
+index 3757b58..cc6a209 100644
+--- a/reactShell/src/game/entities/Asteroid.ts
++++ b/reactShell/src/game/entities/Asteroid.ts
+@@ -19,10 +19,10 @@ export type OreType = 'iron' | 'gold' | 'platinum' | 'adamantium'
+ export type AsteroidSize = 'large' | 'medium' | 'small'
+ 
+ const ORE_COLORS: Record<OreType, number> = {
+-  iron: 0x808080,      // Gray
+-  gold: 0xFFD700,      // Gold/Yellow
+-  platinum: 0xC0C0C0,  // Silver
+-  adamantium: 0x9400D3 // Purple
++  iron: 0x9AA1A8,      // Updated iron color
++  gold: 0xE3B341,      // Updated gold color
++  platinum: 0xB9D3EE,  // Updated platinum color
++  adamantium: 0x7FFFD4 // Updated adamantium color (aqua)
+ }
+ 
+ // Ore type probability function (lines 819-825)
+@@ -35,7 +35,7 @@ export function chooseOreType(): OreType {
+ }
+ 
+ export class Asteroid {
+-  object: THREE.Mesh
++  object: THREE.Object3D
+   private velocity = new THREE.Vector2(0, 0)
+   private size: AsteroidSize
+   private oreType: OreType
+@@ -72,15 +72,31 @@ export class Asteroid {
+     scene.add(this.object)
+   }
+ 
+-  private createAsteroidMesh(): THREE.Mesh {
++  private createAsteroidMesh(): THREE.Object3D {
+     const radius = ASTEROIDS[this.size].r
+-    const geometry = new THREE.SphereGeometry(radius, 8, 6) // Low poly for retro feel
++    const group = new THREE.Group()
++    
++    // Create main disk (slightly larger disk behind for outline effect)
++    const outlineGeometry = new THREE.CircleGeometry(radius * 1.1, 16)
++    const outlineMaterial = new THREE.MeshBasicMaterial({ 
++      color: 0x333333, // Dark outline color
++      transparent: true,
++      opacity: 0.8
++    })
++    const outlineMesh = new THREE.Mesh(outlineGeometry, outlineMaterial)
++    outlineMesh.position.z = -0.01 // Place behind main disk
++    group.add(outlineMesh)
++    
++    // Create main asteroid disk
++    const geometry = new THREE.CircleGeometry(radius, 16)
+     const material = new THREE.MeshBasicMaterial({ 
+       color: ORE_COLORS[this.oreType],
+-      wireframe: false 
++      transparent: false
+     })
++    const mainMesh = new THREE.Mesh(geometry, material)
++    group.add(mainMesh)
+     
+-    return new THREE.Mesh(geometry, material)
++    return group
+   }
+ 
+   update(dt: number): void {
+@@ -155,12 +171,18 @@ export class Asteroid {
+   destroy(scene: THREE.Scene): void {
+     this.object.userData.alive = false
+     scene.remove(this.object)
+-    this.object.geometry.dispose()
+-    if (Array.isArray(this.object.material)) {
+-      this.object.material.forEach((m: any) => m.dispose())
+-    } else {
+-      (this.object.material as any).dispose()
+-    }
++    
++    // Dispose of group children (outline and main disk)
++    this.object.traverse((child) => {
++      if (child instanceof THREE.Mesh) {
++        child.geometry.dispose()
++        if (Array.isArray(child.material)) {
++          child.material.forEach((m: any) => m.dispose())
++        } else {
++          (child.material as any).dispose()
++        }
++      }
++    })
+   }
+ 
+   // Getters
+diff --git a/reactShell/src/game/entities/Bullet.ts b/reactShell/src/game/entities/Bullet.ts
+index 55b3546..85cce11 100644
+--- a/reactShell/src/game/entities/Bullet.ts
++++ b/reactShell/src/game/entities/Bullet.ts
+@@ -22,13 +22,17 @@ export class Bullet {
+   public isEnemy = false
+ 
+   constructor() {
+-    // Create small white sphere for bullet visual
+-    const geometry = new THREE.SphereGeometry(BULLET.r, 8, 6)
+-    const material = new THREE.MeshBasicMaterial({ color: 0xffffff })
++    // Create brighter, more visible bullet visual
++    // Use slightly larger visual size (2-3px equivalent) while keeping collision radius unchanged
++    const visualRadius = 1.0 // Larger visual size for better visibility
++    const geometry = new THREE.SphereGeometry(visualRadius, 8, 6)
++    const material = new THREE.MeshBasicMaterial({ 
++      color: 0xE6E6E6 // Brighter than pure white for better visibility on dark backgrounds
++    })
+     this.mesh = new THREE.Mesh(geometry, material)
+     this.mesh.userData = {
+       kind: 'bullet',
+-      radius: BULLET.r
++      radius: BULLET.r // Keep original collision radius
+     }
+   }
+ 
+diff --git a/reactShell/src/game/entities/Ship.ts b/reactShell/src/game/entities/Ship.ts
+index de479e9..7ccf23e 100644
+--- a/reactShell/src/game/entities/Ship.ts
++++ b/reactShell/src/game/entities/Ship.ts
+@@ -68,6 +68,12 @@ export class Ship {
+     // Load ship texture
+     const loader = new THREE.TextureLoader()
+     const shipTexture = loader.load('assets/ship/ship.png', (texture) => {
++      // Configure texture for proper alpha handling
++      texture.colorSpace = THREE.SRGBColorSpace
++      texture.magFilter = THREE.NearestFilter
++      texture.minFilter = THREE.NearestFilter
++      texture.generateMipmaps = false
++      
+       // Scale ship to desired pixel height once texture is loaded
+       const imgH = texture.image?.height ?? SHIP_DESIRED_PX
+       const imgW = texture.image?.width ?? SHIP_DESIRED_PX
+@@ -82,7 +88,8 @@ export class Ship {
+     const shipMaterial = new THREE.MeshBasicMaterial({
+       map: shipTexture,
+       transparent: true,
+-      opacity: 1.0,
++      depthWrite: false,
++      alphaTest: 0.5,
+       side: THREE.DoubleSide
+     })
+     

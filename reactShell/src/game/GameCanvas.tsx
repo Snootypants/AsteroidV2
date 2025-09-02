@@ -14,7 +14,8 @@ import { GameState, selectScore, selectWave, selectCombo, selectCurrency, select
 import { createEnemyBullets } from './systems/EnemyBullets'
 import { DevStats } from '../ui/DevPanel'
 import { DebugBus } from '../dev/DebugBus'
-import { VISIBLE_HEIGHT, getVisibleWidth, pxToWorld, worldToPx } from '../utils/units'
+import { WORLD_BOUNDS, configureWorld } from './utils/units'
+import { createStarfield } from './systems/Starfield'
 
 // HUD data type for passing game state to UI
 export interface HudData {
@@ -43,11 +44,8 @@ const WORLD = {
 }
 
 // World-unit based orthographic camera (vanilla parity)
-function makeOrthoCamera(aspect: number): THREE.OrthographicCamera {
-  const visibleWidth = getVisibleWidth(aspect)
-  const halfW = visibleWidth / 2
-  const halfH = VISIBLE_HEIGHT / 2
-  const cam = new THREE.OrthographicCamera(-halfW, halfW, halfH, -halfH, 0.1, 1000)
+function makeOrthoCamera(): THREE.OrthographicCamera {
+  const cam = new THREE.OrthographicCamera(WORLD_BOUNDS.minX, WORLD_BOUNDS.maxX, WORLD_BOUNDS.maxY, WORLD_BOUNDS.minY, 0.1, 1000)
   cam.position.set(0, 0, 10)
   cam.lookAt(0, 0, 0)
   return cam
@@ -75,6 +73,7 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
   const pickupManagerRef = useRef<PickupManager | null>(null)
   const gameStateRef = useRef<GameState | null>(null)
   const enemyBulletsRef = useRef<any>(null)
+  const starfieldRef = useRef<any>(null)
 
   useEffect(() => {
     if (!canvasRef.current) return
@@ -82,10 +81,17 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
     // Basic Three.js setup - placeholder for full game integration
     const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current })
     const scene = new THREE.Scene()
-    const camera = makeOrthoCamera(window.innerWidth / window.innerHeight)
+    
+    // Configure world bounds and camera
+    configureWorld()
+    const camera = makeOrthoCamera()
     
     renderer.setPixelRatio(window.devicePixelRatio)
     renderer.setSize(window.innerWidth, window.innerHeight)
+    
+    // Initialize starfield first
+    const starfield = createStarfield(scene)
+    starfieldRef.current = starfield
     
     // Initialize game systems
     const input = new Input()
@@ -135,17 +141,14 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
     const handleResize = () => {
       const width = window.innerWidth
       const height = window.innerHeight
-      const aspect = width / height
       renderer.setPixelRatio(window.devicePixelRatio)
       
-      // Update camera to maintain world-unit scale
-      const visibleWidth = getVisibleWidth(aspect)
-      const halfW = visibleWidth / 2
-      const halfH = VISIBLE_HEIGHT / 2
-      camera.left = -halfW
-      camera.right = halfW
-      camera.top = halfH
-      camera.bottom = -halfH
+      // Configure world and update camera
+      configureWorld()
+      camera.left = WORLD_BOUNDS.minX
+      camera.right = WORLD_BOUNDS.maxX
+      camera.top = WORLD_BOUNDS.maxY
+      camera.bottom = WORLD_BOUNDS.minY
       camera.updateProjectionMatrix()
       
       resize(width, height)
@@ -157,15 +160,13 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
     // Screen to world coordinate conversion (world-unit based)
     const screenToWorld = (screenX: number, screenY: number): THREE.Vector2 => {
       const rect = canvasRef.current!.getBoundingClientRect()
-      const aspect = rect.width / rect.height
-      const visibleWidth = getVisibleWidth(aspect)
       
       // Convert screen pixels to world coordinates
       const normalizedX = (screenX - rect.left - rect.width / 2) / (rect.width / 2)
       const normalizedY = -((screenY - rect.top - rect.height / 2) / (rect.height / 2))
       
-      const worldX = normalizedX * (visibleWidth / 2)
-      const worldY = normalizedY * (VISIBLE_HEIGHT / 2)
+      const worldX = normalizedX * (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX) / 2
+      const worldY = normalizedY * (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY) / 2
       
       return new THREE.Vector2(worldX, worldY)
     }
@@ -185,6 +186,11 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
         fpsHistoryRef.current.shift()
       }
       const avgFps = fpsHistoryRef.current.reduce((a, b) => a + b, 0) / fpsHistoryRef.current.length
+      
+      // Update starfield
+      if (starfieldRef.current) {
+        starfieldRef.current.update(dt)
+      }
       
       // Update input
       input.update()

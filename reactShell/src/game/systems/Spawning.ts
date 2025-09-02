@@ -2,11 +2,7 @@
 import * as THREE from 'three'
 import { Asteroid, chooseOreType, type AsteroidSize, type OreType } from '../entities/Asteroid'
 import { EnemyHunter } from '../entities/EnemyHunter'
-
-const WORLD = {
-  width: 750,
-  height: 498,
-}
+import { WORLD_BOUNDS } from '../utils/units'
 
 // Wave spawning constants (from vanilla)
 const SPAWN_BUFFER = 20 // Units outside world bounds to spawn asteroids
@@ -29,27 +25,27 @@ export class Spawning {
     const edge = Math.floor(Math.random() * 4) // 0=top, 1=right, 2=bottom, 3=left
     let x: number, y: number
     
-    const halfWidth = WORLD.width / 2   // ±375
-    const halfHeight = WORLD.height / 2 // ±249
+    const halfWidth = (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX) / 2   // ±375
+    const halfHeight = (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY) / 2 // ±249
     const margin = SPAWN_BUFFER // Spawn 20 units outside world bounds
     
     switch (edge) {
       case 0: // Top
-        x = (Math.random() - 0.5) * WORLD.width
+        x = (Math.random() - 0.5) * (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX)
         y = halfHeight + margin
         break
       case 1: // Right
         x = halfWidth + margin
-        y = (Math.random() - 0.5) * WORLD.height
+        y = (Math.random() - 0.5) * (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY)
         break
       case 2: // Bottom
-        x = (Math.random() - 0.5) * WORLD.width
+        x = (Math.random() - 0.5) * (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX)
         y = -halfHeight - margin
         break
       case 3: // Left
       default:
         x = -halfWidth - margin
-        y = (Math.random() - 0.5) * WORLD.height
+        y = (Math.random() - 0.5) * (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY)
         break
     }
     
@@ -194,27 +190,27 @@ export class Spawning {
       const edge = Math.floor(Math.random() * 4) // 0=top, 1=right, 2=bottom, 3=left
       let x: number, y: number
       
-      const halfWidth = WORLD.width / 2   // ±375
-      const halfHeight = WORLD.height / 2 // ±249
+      const halfWidth = (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX) / 2   // ±375
+      const halfHeight = (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY) / 2 // ±249
       const margin = SPAWN_BUFFER // 20 units outside world bounds
       
       switch (edge) {
         case 0: // Top
-          x = (Math.random() - 0.5) * WORLD.width
+          x = (Math.random() - 0.5) * (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX)
           y = halfHeight + margin
           break
         case 1: // Right
           x = halfWidth + margin
-          y = (Math.random() - 0.5) * WORLD.height
+          y = (Math.random() - 0.5) * (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY)
           break
         case 2: // Bottom
-          x = (Math.random() - 0.5) * WORLD.width
+          x = (Math.random() - 0.5) * (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX)
           y = -halfHeight - margin
           break
         case 3: // Left
         default:
           x = -halfWidth - margin
-          y = (Math.random() - 0.5) * WORLD.height
+          y = (Math.random() - 0.5) * (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY)
           break
       }
       

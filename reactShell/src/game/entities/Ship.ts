@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import type { InputState } from '../Input'
 import type { BulletManager } from '../systems/BulletManager'
 import type { GameState } from '../GameState'
-import { pxToWorld, WORLD_BOUNDS } from '../utils/units'
+import { WORLD_BOUNDS } from '../utils/units'
 
 // Constants from vanilla
 const PLAYER = {
@@ -71,16 +71,10 @@ export class Ship {
       texture.minFilter = THREE.NearestFilter
       texture.generateMipmaps = false
       
-      // Scale ship to world units based on target pixel height
-      const imgH = texture.image?.height ?? SHIP_DESIRED_PX
-      const imgW = texture.image?.width ?? SHIP_DESIRED_PX
-      const aspectRatio = imgW / imgH
-      
-      // Convert target pixel height to world units (using window height as reference)
-      const targetWorldHeight = pxToWorld(SHIP_DESIRED_PX, window.innerHeight)
-      
-      // Scale the mesh to achieve desired world size
-      this.object.scale.set(targetWorldHeight * aspectRatio, targetWorldHeight, 1)
+      // Scale ship from radius
+      const r = this.object.userData.radius ?? 1.5
+      this.object.userData.radius = r
+      this.object.scale.set(2 * r, 2 * r, 1)
     })
     
     // Create ship geometry with texture (placeholder size will be scaled)
@@ -233,18 +227,10 @@ export class Ship {
 
   // Set ship pixel height for runtime tuning (converts to world units)
   setPixelHeight(px: number, viewportHeight: number): void {
-    const targetWorldHeight = pxToWorld(px, viewportHeight)
-    
-    const material = (this.object as THREE.Mesh).material as THREE.MeshBasicMaterial
-    if (material.map && material.map.image) {
-      const texture = material.map
-      const imgH = texture.image.height
-      const imgW = texture.image.width
-      const aspectRatio = imgW / imgH
-      
-      // Scale to target world height, maintaining aspect ratio
-      this.object.scale.set(targetWorldHeight * aspectRatio, targetWorldHeight, 1)
-    }
+    // Scale ship from radius
+    const r = this.object.userData.radius ?? 1.5
+    this.object.userData.radius = r
+    this.object.scale.set(2 * r, 2 * r, 1)
   }
 
   // Reset ship for new wave

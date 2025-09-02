@@ -1,6 +1,6 @@
 // Bullet.ts - Projectile system
 import * as THREE from 'three'
-import { pxToWorld, WORLD_BOUNDS } from '../utils/units'
+import { WORLD_BOUNDS } from '../utils/units'
 
 // Constants from vanilla
 const BULLET = { 
@@ -21,17 +21,17 @@ export class Bullet {
   public isEnemy = false
 
   constructor() {
-    // Create brighter, more visible bullet visual with world-unit scaling
-    // Convert target pixel size to world units (using window height as reference)
-    const visualRadius = pxToWorld(DEFAULT_BULLET_PX, window.innerHeight)
-    const geometry = new THREE.SphereGeometry(visualRadius, 8, 6)
+    // Create bullet visual with fixed radius scaling
+    const radius = 0.28
+    const geometry = new THREE.SphereGeometry(1, 8, 6)
     const material = new THREE.MeshBasicMaterial({ 
       color: 0xE6E6E6, // Brighter than pure white for better visibility
     })
     this.mesh = new THREE.Mesh(geometry, material)
+    this.mesh.scale.set(2 * radius, 2 * radius, 2 * radius)
     this.mesh.userData = {
       kind: 'bullet',
-      radius: BULLET.r // Keep original collision radius
+      radius: radius
     }
   }
 
