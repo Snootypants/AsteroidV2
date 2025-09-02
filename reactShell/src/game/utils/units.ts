@@ -1,0 +1,15 @@
+// reactShell/src/game/utils/units.ts
+// World units and bounds used by entities. Values match current wrap behavior.
+export const WORLD_BOUNDS = {
+  minX: -375,
+  maxX: 375,
+  minY: -249,
+  maxY: 249,
+} as const;
+
+export type WorldBounds = typeof WORLD_BOUNDS;
+
+/** Convert screen pixels to world units. Identity for now; adjust if a scale is introduced. */
+export function pxToWorld(px: number): number {
+  return px;
+}
