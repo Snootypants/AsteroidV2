@@ -1,0 +1,4010 @@
+diff --git a/diffs/add_units_module_20250902_1054.diff b/diffs/add_units_module_20250902_1054.diff
+new file mode 100644
+index 0000000..98acfe0
+--- /dev/null
++++ b/diffs/add_units_module_20250902_1054.diff
+@@ -0,0 +1,22 @@
++diff --git a/reactShell/src/game/utils/units.ts b/reactShell/src/game/utils/units.ts
++new file mode 100644
++index 0000000..607c501
++--- /dev/null
+++++ b/reactShell/src/game/utils/units.ts
++@@ -0,0 +1,15 @@
+++// reactShell/src/game/utils/units.ts
+++// World units and bounds used by entities. Values match current wrap behavior.
+++export const WORLD_BOUNDS = {
+++  minX: -375,
+++  maxX: 375,
+++  minY: -249,
+++  maxY: 249,
+++} as const;
+++
+++export type WorldBounds = typeof WORLD_BOUNDS;
+++
+++/** Convert screen pixels to world units. Identity for now; adjust if a scale is introduced. */
+++export function pxToWorld(px: number): number {
+++  return px;
+++}
++\ No newline at end of file
+\ No newline at end of file
+diff --git a/diffs/fix_runtime_blockers_20250901_0525.diff b/diffs/fix_runtime_blockers_20250901_0525.diff
+new file mode 100644
+index 0000000..094f018
+--- /dev/null
++++ b/diffs/fix_runtime_blockers_20250901_0525.diff
+@@ -0,0 +1,179 @@
++diff --git a/reactShell/package-lock.json b/reactShell/package-lock.json
++index ff7b7cf..7492f65 100644
++--- a/reactShell/package-lock.json
+++++ b/reactShell/package-lock.json
++@@ -15,6 +15,7 @@
++       "devDependencies": {
++         "@types/react": "^18.2.0",
++         "@types/react-dom": "^18.2.0",
+++        "@types/three": "^0.179.0",
++         "@typescript-eslint/eslint-plugin": "^6.0.0",
++         "@typescript-eslint/parser": "^6.0.0",
++         "@vitejs/plugin-react": "^4.0.0",
++@@ -341,6 +342,13 @@
++         "node": ">=6.9.0"
++       }
++     },
+++    "node_modules/@dimforge/rapier3d-compat": {
+++      "version": "0.12.0",
+++      "resolved": "https://registry.npmjs.org/@dimforge/rapier3d-compat/-/rapier3d-compat-0.12.0.tgz",
+++      "integrity": "sha512-uekIGetywIgopfD97oDL5PfeezkFpNhwlzlaEYNOA0N6ghdsOvh/HYjSMek5Q2O1PYvRSDFcqFVJl4r4ZBwOow==",
+++      "dev": true,
+++      "license": "Apache-2.0"
+++    },
++     "node_modules/@esbuild/aix-ppc64": {
++       "version": "0.21.5",
++       "resolved": "https://registry.npmjs.org/@esbuild/aix-ppc64/-/aix-ppc64-0.21.5.tgz",
++@@ -1259,6 +1267,13 @@
++         "win32"
++       ]
++     },
+++    "node_modules/@tweenjs/tween.js": {
+++      "version": "23.1.3",
+++      "resolved": "https://registry.npmjs.org/@tweenjs/tween.js/-/tween.js-23.1.3.tgz",
+++      "integrity": "sha512-vJmvvwFxYuGnF2axRtPYocag6Clbb5YS7kLL+SO/TeVFzHqDIWrNKYtcsPMibjDx9O+bu+psAy9NKfWklassUA==",
+++      "dev": true,
+++      "license": "MIT"
+++    },
++     "node_modules/@types/babel__core": {
++       "version": "7.20.5",
++       "resolved": "https://registry.npmjs.org/@types/babel__core/-/babel__core-7.20.5.tgz",
++@@ -1353,6 +1368,36 @@
++       "dev": true,
++       "license": "MIT"
++     },
+++    "node_modules/@types/stats.js": {
+++      "version": "0.17.4",
+++      "resolved": "https://registry.npmjs.org/@types/stats.js/-/stats.js-0.17.4.tgz",
+++      "integrity": "sha512-jIBvWWShCvlBqBNIZt0KAshWpvSjhkwkEu4ZUcASoAvhmrgAUI2t1dXrjSL4xXVLB4FznPrIsX3nKXFl/Dt4vA==",
+++      "dev": true,
+++      "license": "MIT"
+++    },
+++    "node_modules/@types/three": {
+++      "version": "0.179.0",
+++      "resolved": "https://registry.npmjs.org/@types/three/-/three-0.179.0.tgz",
+++      "integrity": "sha512-VgbFG2Pgsm84BqdegZzr7w2aKbQxmgzIu4Dy7/75ygiD/0P68LKmp5ie08KMPNqGTQwIge8s6D1guZf1RnZE0A==",
+++      "dev": true,
+++      "license": "MIT",
+++      "dependencies": {
+++        "@dimforge/rapier3d-compat": "~0.12.0",
+++        "@tweenjs/tween.js": "~23.1.3",
+++        "@types/stats.js": "*",
+++        "@types/webxr": "*",
+++        "@webgpu/types": "*",
+++        "fflate": "~0.8.2",
+++        "meshoptimizer": "~0.22.0"
+++      }
+++    },
+++    "node_modules/@types/webxr": {
+++      "version": "0.5.23",
+++      "resolved": "https://registry.npmjs.org/@types/webxr/-/webxr-0.5.23.tgz",
+++      "integrity": "sha512-GPe4AsfOSpqWd3xA/0gwoKod13ChcfV67trvxaW2krUbgb9gxQjnCx8zGshzMl8LSHZlNH5gQ8LNScsDuc7nGQ==",
+++      "dev": true,
+++      "license": "MIT"
+++    },
++     "node_modules/@typescript-eslint/eslint-plugin": {
++       "version": "6.21.0",
++       "resolved": "https://registry.npmjs.org/@typescript-eslint/eslint-plugin/-/eslint-plugin-6.21.0.tgz",
++@@ -1579,6 +1624,13 @@
++         "vite": "^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0"
++       }
++     },
+++    "node_modules/@webgpu/types": {
+++      "version": "0.1.64",
+++      "resolved": "https://registry.npmjs.org/@webgpu/types/-/types-0.1.64.tgz",
+++      "integrity": "sha512-84kRIAGV46LJTlJZWxShiOrNL30A+9KokD7RB3dRCIqODFjodS5tCD5yyiZ8kIReGVZSDfA3XkkwyyOIF6K62A==",
+++      "dev": true,
+++      "license": "BSD-3-Clause"
+++    },
++     "node_modules/acorn": {
++       "version": "8.15.0",
++       "resolved": "https://registry.npmjs.org/acorn/-/acorn-8.15.0.tgz",
++@@ -2208,6 +2260,13 @@
++         "reusify": "^1.0.4"
++       }
++     },
+++    "node_modules/fflate": {
+++      "version": "0.8.2",
+++      "resolved": "https://registry.npmjs.org/fflate/-/fflate-0.8.2.tgz",
+++      "integrity": "sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==",
+++      "dev": true,
+++      "license": "MIT"
+++    },
++     "node_modules/file-entry-cache": {
++       "version": "6.0.1",
++       "resolved": "https://registry.npmjs.org/file-entry-cache/-/file-entry-cache-6.0.1.tgz",
++@@ -2669,6 +2728,13 @@
++         "node": ">= 8"
++       }
++     },
+++    "node_modules/meshoptimizer": {
+++      "version": "0.22.0",
+++      "resolved": "https://registry.npmjs.org/meshoptimizer/-/meshoptimizer-0.22.0.tgz",
+++      "integrity": "sha512-IebiK79sqIy+E4EgOr+CAw+Ke8hAspXKzBd0JdgEmPHiAwmvEj2S4h1rfvo+o/BnfEYd/jAOg5IeeIjzlzSnDg==",
+++      "dev": true,
+++      "license": "MIT"
+++    },
++     "node_modules/micromatch": {
++       "version": "4.0.8",
++       "resolved": "https://registry.npmjs.org/micromatch/-/micromatch-4.0.8.tgz",
++diff --git a/reactShell/package.json b/reactShell/package.json
++index c1f6421..91e9b44 100644
++--- a/reactShell/package.json
+++++ b/reactShell/package.json
++@@ -16,6 +16,7 @@
++   "devDependencies": {
++     "@types/react": "^18.2.0",
++     "@types/react-dom": "^18.2.0",
+++    "@types/three": "^0.179.0",
++     "@typescript-eslint/eslint-plugin": "^6.0.0",
++     "@typescript-eslint/parser": "^6.0.0",
++     "@vitejs/plugin-react": "^4.0.0",
++@@ -25,4 +26,4 @@
++     "typescript": "^5.0.0",
++     "vite": "^5.0.0"
++   }
++-}
++\ No newline at end of file
+++}
++diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
++index 7c8c7b7..227e1e7 100644
++--- a/reactShell/src/game/GameCanvas.tsx
+++++ b/reactShell/src/game/GameCanvas.tsx
++@@ -211,8 +211,10 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
++       particleManager.update(dt)
++       debrisManagerRef.current!.update(dt)
++       
++-      // Update pickups (magnetic collection and timeout)
+++      // Get ship position once for all operations that need it
++       const shipPos = ship.getPosition()
+++      
+++      // Update pickups (magnetic collection and timeout)
++       const mods = gameState.getMods()
++       const magnetRadius = 3 + mods.magnetRadius // Base radius + upgrade scaling
++       pickupManagerRef.current!.update(dt, shipPos, magnetRadius)
++@@ -241,7 +243,6 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
++       }
++       
++       // Follow ship with camera (simple following)
++-      const shipPos = ship.getPosition()
++       camera.position.x = shipPos.x
++       camera.position.y = shipPos.y
++       
++@@ -250,7 +251,6 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
++       // Update dev stats (throttled to ~10 Hz to avoid re-render spam)
++       statsUpdateCounter++
++       if ((onStats || onHudData || onMiniSnapshot) && statsUpdateCounter % 6 === 0) {
++-        const shipPos = ship.getPosition()
++         const shipUserData = ship.object.userData
++         
++         // Dev stats
++@@ -308,7 +308,7 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
++           const asteroids = spawning.getAsteroids().map(asteroid => ({
++             x: asteroid.object.position.x,
++             y: asteroid.object.position.y,
++-            r: asteroid.userData?.radius || 10
+++            r: asteroid.object.userData?.radius || 10
++           }))
++           
++           const hunters = spawning.getHunters().map(hunter => ({
+diff --git a/diffs/pickups_20250901_0518.diff b/diffs/pickups_20250901_0518.diff
+new file mode 100644
+index 0000000..973552e
+--- /dev/null
++++ b/diffs/pickups_20250901_0518.diff
+@@ -0,0 +1,565 @@
++diff --git a/docs/prompts/8.md b/docs/prompts/8.md
++new file mode 100644
++index 0000000..45649c9
++--- /dev/null
+++++ b/docs/prompts/8.md
++@@ -0,0 +1,21 @@
+++> APPROVAL: Block 10 (Upgrades System & Picker UI) is complete and validated against acceptance criteria.  
+++Proceed with Block 11: Currency Pickups & Magnetism.  
+++
+++Use the execution prompt already defined in the plan for Block 11.  
+++Implementation details to cover:  
+++- NEW Pickup.ts entity with floating animation, TTL, and collection radius  
+++- Spawn currency drops when asteroids are destroyed, based on ore type drop rates (gold=27%, platinum=60%, adamantium=40%)  
+++- Magnetism: ship attracts pickups within radius (base + upgrade scaling)  
+++- Auto-collect after 10s if not picked up  
+++- Update GameState.currency on collection  
+++- Integrate pickup rendering into GameCanvas update loop  
+++
+++Acceptance criteria:  
+++- ✅ Destroying a gold asteroid has ~27% chance to drop gold pickup  
+++- ✅ Platinum and adamantium pickups spawn at correct probabilities  
+++- ✅ Pickups float slightly, auto-collect after 10s  
+++- ✅ Ship auto-collects pickups within magnet radius  
+++- ✅ Currency totals update live in HUD panel  
+++- ✅ No performance regressions  
+++
+++Output: Single unified diff under `/diffs/pickups_[timestamp].diff` and commit the changes.  
++\ No newline at end of file
++diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
++index 2c502d4..7c8c7b7 100644
++--- a/reactShell/src/game/GameCanvas.tsx
+++++ b/reactShell/src/game/GameCanvas.tsx
++@@ -9,6 +9,7 @@ import { Spawning } from './systems/Spawning'
++ import { CollisionManager } from './systems/Collision'
++ import { ParticleManager } from './entities/Particles'
++ import { DebrisManager } from './entities/Debris'
+++import { PickupManager } from './systems/PickupManager'
++ import { GameState, selectScore, selectWave, selectCombo, selectCurrency, selectUpgrades } from './GameState'
++ import { createEnemyBullets } from './systems/EnemyBullets'
++ import { DevStats } from '../ui/DevPanel'
++@@ -68,6 +69,7 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
++   const collisionManagerRef = useRef<CollisionManager | null>(null)
++   const particleManagerRef = useRef<ParticleManager | null>(null)
++   const debrisManagerRef = useRef<DebrisManager | null>(null)
+++  const pickupManagerRef = useRef<PickupManager | null>(null)
++   const gameStateRef = useRef<GameState | null>(null)
++   const enemyBulletsRef = useRef<any>(null)
++ 
++@@ -90,11 +92,13 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
++     const spawning = new Spawning(scene)
++     const particleManager = new ParticleManager(scene)
++     const debrisManager = new DebrisManager(scene)
+++    const pickupManager = new PickupManager(scene, gameState)
++     const enemyBullets = createEnemyBullets(scene)
++     const collisionManager = new CollisionManager(bulletManager, spawning, ship, gameState, scene, particleManager, debrisManager)
++     
++-    // Connect enemy bullets to collision manager
+++    // Connect enemy bullets and pickup manager to collision manager
++     collisionManager.setEnemyBullets(enemyBullets)
+++    collisionManager.setPickupManager(pickupManager)
++     
++     shipRef.current = ship
++     inputRef.current = input
++@@ -103,6 +107,7 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
++     collisionManagerRef.current = collisionManager
++     particleManagerRef.current = particleManager
++     debrisManagerRef.current = debrisManager
+++    pickupManagerRef.current = pickupManager
++     gameStateRef.current = gameState
++     enemyBulletsRef.current = enemyBullets
++     
++@@ -206,6 +211,12 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
++       particleManager.update(dt)
++       debrisManagerRef.current!.update(dt)
++       
+++      // Update pickups (magnetic collection and timeout)
+++      const shipPos = ship.getPosition()
+++      const mods = gameState.getMods()
+++      const magnetRadius = 3 + mods.magnetRadius // Base radius + upgrade scaling
+++      pickupManagerRef.current!.update(dt, shipPos, magnetRadius)
+++      
++       // Update collision detection (effects now handled internally)
++       collisionManager.update(dt)
++       
++@@ -252,6 +263,7 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
++               bullets: bulletManager.getActiveCount(), 
++               particles: particleManager.getActiveCount(),
++               debris: debrisManagerRef.current!.getActiveCount(),
+++              pickups: pickupManagerRef.current!.getActiveCount(),
++               other: spawning.getHunterCount() + enemyBullets.getActiveCount() 
++             },
++             score: gameState.getScore(),
++diff --git a/reactShell/src/game/GameState.ts b/reactShell/src/game/GameState.ts
++index 22804ff..0b09d30 100644
++--- a/reactShell/src/game/GameState.ts
+++++ b/reactShell/src/game/GameState.ts
++@@ -236,6 +236,23 @@ export class GameState {
++     this.takenUpgrades.add(upgradeId)
++   }
++ 
+++  // Currency management
+++  getCurrency() {
+++    return this.currency
+++  }
+++
+++  addCurrency(type: 'salvage' | 'gold' | 'platinum' | 'adamantium', amount: number): void {
+++    this.currency[type] += amount
+++  }
+++
+++  spendCurrency(type: 'salvage' | 'gold' | 'platinum' | 'adamantium', amount: number): boolean {
+++    if (this.currency[type] >= amount) {
+++      this.currency[type] -= amount
+++      return true
+++    }
+++    return false
+++  }
+++
++   // Get full state snapshot for debugging
++   getState() {
++     return {
++diff --git a/reactShell/src/game/entities/Pickup.ts b/reactShell/src/game/entities/Pickup.ts
++new file mode 100644
++index 0000000..6fb8d50
++--- /dev/null
+++++ b/reactShell/src/game/entities/Pickup.ts
++@@ -0,0 +1,172 @@
+++// Pickup.ts - Currency pickup entities
+++import * as THREE from 'three'
+++
+++export type CurrencyType = 'salvage' | 'gold' | 'platinum' | 'adamantium'
+++
+++// Currency pickup colors and properties
+++const CURRENCY_COLORS: Record<CurrencyType, number> = {
+++  salvage: 0x808080,    // Gray
+++  gold: 0xFFD700,       // Yellow/Gold
+++  platinum: 0xC0C0C0,   // Silver
+++  adamantium: 0x9400D3  // Purple
+++}
+++
+++// Pickup constants
+++const PICKUP_CONFIG = {
+++  size: 1.2,           // Base pickup size
+++  floatHeight: 8,      // Height of floating animation
+++  floatSpeed: 2.5,     // Speed of floating animation
+++  ttl: 10.0,           // Auto-collect timeout in seconds
+++  magneticSpeed: 120,  // Speed when attracted to ship
+++  collectionRadius: 2  // Direct collection radius
+++}
+++
+++export class Pickup {
+++  object: THREE.Mesh
+++  private currencyType: CurrencyType
+++  private amount: number
+++  private lifetime: number = 0
+++  private floatOffset: number
+++  private isBeingAttracted: boolean = false
+++  private velocity = new THREE.Vector2(0, 0)
+++
+++  constructor(scene: THREE.Scene, currencyType: CurrencyType, amount: number, x: number, y: number) {
+++    this.currencyType = currencyType
+++    this.amount = amount
+++    this.floatOffset = Math.random() * Math.PI * 2 // Random float phase
+++    
+++    this.object = this.createPickupMesh()
+++    this.object.position.set(x, y, 0)
+++    
+++    // Store metadata
+++    this.object.userData = {
+++      kind: 'pickup',
+++      currencyType: this.currencyType,
+++      amount: this.amount,
+++      alive: true
+++    }
+++    
+++    scene.add(this.object)
+++  }
+++
+++  private createPickupMesh(): THREE.Mesh {
+++    // Create a small cube with slightly rounded edges for visual appeal
+++    const geometry = new THREE.BoxGeometry(PICKUP_CONFIG.size, PICKUP_CONFIG.size, PICKUP_CONFIG.size)
+++    const material = new THREE.MeshBasicMaterial({ 
+++      color: CURRENCY_COLORS[this.currencyType],
+++      transparent: true,
+++      opacity: 0.9
+++    })
+++    
+++    return new THREE.Mesh(geometry, material)
+++  }
+++
+++  update(dt: number, shipPosition?: THREE.Vector2, magnetRadius: number = 0): boolean {
+++    if (!this.object.userData.alive) return false
+++    
+++    this.lifetime += dt
+++    
+++    // Auto-collect timeout
+++    if (this.lifetime >= PICKUP_CONFIG.ttl) {
+++      this.object.userData.alive = false
+++      return false
+++    }
+++    
+++    // Check for magnetic attraction
+++    if (shipPosition && magnetRadius > 0) {
+++      const pickupPos = new THREE.Vector2(this.object.position.x, this.object.position.y)
+++      const distanceToShip = pickupPos.distanceTo(shipPosition)
+++      
+++      if (distanceToShip <= magnetRadius) {
+++        this.isBeingAttracted = true
+++        
+++        // Move towards ship
+++        const direction = shipPosition.clone().sub(pickupPos).normalize()
+++        this.velocity = direction.multiplyScalar(PICKUP_CONFIG.magneticSpeed)
+++        
+++        // Update position based on magnetic attraction
+++        this.object.position.x += this.velocity.x * dt
+++        this.object.position.y += this.velocity.y * dt
+++      } else {
+++        this.isBeingAttracted = false
+++        this.velocity.set(0, 0)
+++      }
+++    }
+++    
+++    // Floating animation (only when not being attracted)
+++    if (!this.isBeingAttracted) {
+++      const floatY = Math.sin(this.lifetime * PICKUP_CONFIG.floatSpeed + this.floatOffset) * 0.5
+++      this.object.position.y += floatY * dt * PICKUP_CONFIG.floatHeight
+++    }
+++    
+++    // Gentle rotation for visual appeal
+++    this.object.rotation.y += dt * 2
+++    this.object.rotation.x += dt * 1.5
+++    
+++    // Fade effect as TTL approaches
+++    const fadeStart = PICKUP_CONFIG.ttl * 0.7 // Start fading at 70% of TTL
+++    if (this.lifetime >= fadeStart) {
+++      const fadeProgress = (this.lifetime - fadeStart) / (PICKUP_CONFIG.ttl - fadeStart)
+++      const opacity = 0.9 * (1 - fadeProgress)
+++      ;(this.object.material as THREE.MeshBasicMaterial).opacity = Math.max(opacity, 0.1)
+++    }
+++    
+++    return true // Still alive
+++  }
+++
+++  // Check if pickup can be collected by ship
+++  canCollect(shipPosition: THREE.Vector2): boolean {
+++    if (!this.object.userData.alive) return false
+++    
+++    const pickupPos = new THREE.Vector2(this.object.position.x, this.object.position.y)
+++    const distance = pickupPos.distanceTo(shipPosition)
+++    
+++    return distance <= PICKUP_CONFIG.collectionRadius
+++  }
+++
+++  // Collect the pickup
+++  collect(): { type: CurrencyType, amount: number } {
+++    this.object.userData.alive = false
+++    return {
+++      type: this.currencyType,
+++      amount: this.amount
+++    }
+++  }
+++
+++  // Cleanup
+++  destroy(scene: THREE.Scene): void {
+++    this.object.userData.alive = false
+++    scene.remove(this.object)
+++    this.object.geometry.dispose()
+++    if (Array.isArray(this.object.material)) {
+++      this.object.material.forEach((m: any) => m.dispose())
+++    } else {
+++      (this.object.material as any).dispose()
+++    }
+++  }
+++
+++  // Getters
+++  getPosition(): THREE.Vector2 {
+++    return new THREE.Vector2(this.object.position.x, this.object.position.y)
+++  }
+++
+++  getCurrencyType(): CurrencyType {
+++    return this.currencyType
+++  }
+++
+++  getAmount(): number {
+++    return this.amount
+++  }
+++
+++  isAlive(): boolean {
+++    return this.object.userData.alive
+++  }
+++
+++  getLifetime(): number {
+++    return this.lifetime
+++  }
+++
+++  getTTL(): number {
+++    return PICKUP_CONFIG.ttl
+++  }
+++}
++\ No newline at end of file
++diff --git a/reactShell/src/game/systems/Collision.ts b/reactShell/src/game/systems/Collision.ts
++index 4e60bc1..35ac2fa 100644
++--- a/reactShell/src/game/systems/Collision.ts
+++++ b/reactShell/src/game/systems/Collision.ts
++@@ -8,6 +8,7 @@ import type { Spawning } from './Spawning'
++ import type { GameState } from '../GameState'
++ import type { ParticleManager } from '../entities/Particles'
++ import type { DebrisManager } from '../entities/Debris'
+++import type { PickupManager } from './PickupManager'
++ 
++ export interface CollisionEvent {
++   type: 'bullet-asteroid' | 'ship-asteroid' | 'enemy-bullet-ship'
++@@ -24,6 +25,7 @@ export class CollisionManager {
++   private scene: THREE.Scene
++   private particleManager: ParticleManager
++   private debrisManager: DebrisManager
+++  private pickupManager: PickupManager | null = null
++   private enemyBullets: any // EnemyBullets system will be injected
++   
++   constructor(
++@@ -42,6 +44,7 @@ export class CollisionManager {
++     this.scene = scene
++     this.particleManager = particleManager
++     this.debrisManager = debrisManager
+++    this.pickupManager = null
++     this.enemyBullets = null
++   }
++ 
++@@ -50,6 +53,11 @@ export class CollisionManager {
++     this.enemyBullets = enemyBullets
++   }
++ 
+++  // Set pickup manager (will be called from GameCanvas)
+++  setPickupManager(pickupManager: PickupManager): void {
+++    this.pickupManager = pickupManager
+++  }
+++
++   // Main collision detection method
++   update(dt: number): void {
++     const events: CollisionEvent[] = []
++@@ -165,6 +173,7 @@ export class CollisionManager {
++     const position = asteroid.getPosition()
++     const size = asteroid.getSize()
++     const score = asteroid.getScore()
+++    const oreType = asteroid.getOreType()
++     
++     // Destroy bullet
++     bullet.expire()
++@@ -175,6 +184,11 @@ export class CollisionManager {
++     // Add score
++     this.gameState.addScore(score)
++     
+++    // Spawn pickups based on ore type (if pickup manager is available)
+++    if (this.pickupManager) {
+++      this.pickupManager.spawnPickupsForAsteroid(position, oreType)
+++    }
+++    
++     // Split asteroid if applicable
++     const newAsteroids = this.spawning.splitAsteroid(asteroid)
++     
++diff --git a/reactShell/src/game/systems/PickupManager.ts b/reactShell/src/game/systems/PickupManager.ts
++new file mode 100644
++index 0000000..6c36f95
++--- /dev/null
+++++ b/reactShell/src/game/systems/PickupManager.ts
++@@ -0,0 +1,178 @@
+++// PickupManager.ts - Pickup system with object pooling
+++import * as THREE from 'three'
+++import { Pickup, type CurrencyType } from '../entities/Pickup'
+++import type { GameState } from '../GameState'
+++
+++// Drop rates from vanilla analysis
+++const DROP_RATES = {
+++  gold: 0.27,        // 27% chance for gold ore asteroids
+++  platinum: 0.60,    // 60% chance for platinum ore asteroids  
+++  adamantium: 0.40,  // 40% chance for adamantium ore asteroids
+++  salvage: 1.00      // 100% chance for all asteroids
+++}
+++
+++// Currency amounts per pickup
+++const CURRENCY_AMOUNTS = {
+++  salvage: 1,     // Base currency
+++  gold: 3,        // More valuable
+++  platinum: 8,    // Much more valuable
+++  adamantium: 20  // Most valuable
+++}
+++
+++export class PickupManager {
+++  private scene: THREE.Scene
+++  private gameState: GameState
+++  private activePickups: Pickup[] = []
+++  private pickupPool: Pickup[] = [] // Object pool for performance
+++  private maxPoolSize: number = 50
+++
+++  constructor(scene: THREE.Scene, gameState: GameState) {
+++    this.scene = scene
+++    this.gameState = gameState
+++  }
+++
+++  // Spawn pickup at asteroid destruction location
+++  spawnPickup(position: THREE.Vector2, currencyType: CurrencyType, amount?: number): Pickup | null {
+++    // Use default amount if not specified
+++    const finalAmount = amount || CURRENCY_AMOUNTS[currencyType]
+++    
+++    // Try to get pickup from pool
+++    let pickup = this.pickupPool.pop()
+++    
+++    if (pickup) {
+++      // Reuse pooled pickup
+++      pickup.destroy(this.scene) // Clean up old state
+++      pickup = new Pickup(this.scene, currencyType, finalAmount, position.x, position.y)
+++    } else {
+++      // Create new pickup
+++      pickup = new Pickup(this.scene, currencyType, finalAmount, position.x, position.y)
+++    }
+++    
+++    this.activePickups.push(pickup)
+++    return pickup
+++  }
+++
+++  // Spawn pickups based on asteroid ore type (handles drop rate logic)
+++  spawnPickupsForAsteroid(position: THREE.Vector2, oreType: 'iron' | 'gold' | 'platinum' | 'adamantium'): void {
+++    // Always spawn salvage
+++    this.spawnPickup(position, 'salvage')
+++    
+++    // Apply ore-specific drop rates for premium currencies
+++    let premiumCurrency: CurrencyType | null = null
+++    let dropRate = 0
+++    
+++    switch (oreType) {
+++      case 'gold':
+++        premiumCurrency = 'gold'
+++        dropRate = DROP_RATES.gold
+++        break
+++      case 'platinum':
+++        premiumCurrency = 'platinum'
+++        dropRate = DROP_RATES.platinum
+++        break
+++      case 'adamantium':
+++        premiumCurrency = 'adamantium'
+++        dropRate = DROP_RATES.adamantium
+++        break
+++      case 'iron':
+++      default:
+++        // Iron ore only drops salvage
+++        break
+++    }
+++    
+++    // Roll for premium currency drop
+++    if (premiumCurrency && Math.random() < dropRate) {
+++      // Add slight position offset to avoid overlap
+++      const offsetPosition = position.clone().add(new THREE.Vector2(
+++        (Math.random() - 0.5) * 4,
+++        (Math.random() - 0.5) * 4
+++      ))
+++      this.spawnPickup(offsetPosition, premiumCurrency)
+++    }
+++  }
+++
+++  // Update all pickups
+++  update(dt: number, shipPosition: THREE.Vector2, magnetRadius: number): void {
+++    // Update all active pickups
+++    for (let i = this.activePickups.length - 1; i >= 0; i--) {
+++      const pickup = this.activePickups[i]
+++      
+++      // Update pickup (returns false if expired)
+++      const stillAlive = pickup.update(dt, shipPosition, magnetRadius)
+++      
+++      if (!stillAlive || !pickup.isAlive()) {
+++        // Remove from active list
+++        this.activePickups.splice(i, 1)
+++        
+++        // Return to pool if pool isn't full
+++        if (this.pickupPool.length < this.maxPoolSize) {
+++          this.pickupPool.push(pickup)
+++        } else {
+++          // Pool is full, destroy completely
+++          pickup.destroy(this.scene)
+++        }
+++        continue
+++      }
+++      
+++      // Check for collection
+++      if (pickup.canCollect(shipPosition)) {
+++        const collected = pickup.collect()
+++        this.addCurrencyToGameState(collected.type, collected.amount)
+++        
+++        // Remove from active list
+++        this.activePickups.splice(i, 1)
+++        
+++        // Return to pool
+++        if (this.pickupPool.length < this.maxPoolSize) {
+++          this.pickupPool.push(pickup)
+++        } else {
+++          pickup.destroy(this.scene)
+++        }
+++      }
+++    }
+++  }
+++
+++  // Add collected currency to game state
+++  private addCurrencyToGameState(currencyType: CurrencyType, amount: number): void {
+++    this.gameState.addCurrency(currencyType, amount)
+++  }
+++
+++  // Get all active pickups
+++  getActivePickups(): Pickup[] {
+++    return this.activePickups.filter(pickup => pickup.isAlive())
+++  }
+++
+++  // Get active pickup count
+++  getActiveCount(): number {
+++    return this.getActivePickups().length
+++  }
+++
+++  // Get total pickup count including pooled
+++  getTotalCount(): number {
+++    return this.activePickups.length + this.pickupPool.length
+++  }
+++
+++  // Clear all pickups (for level transitions)
+++  clearAll(): void {
+++    // Destroy all active pickups
+++    for (const pickup of this.activePickups) {
+++      pickup.destroy(this.scene)
+++    }
+++    this.activePickups = []
+++    
+++    // Destroy all pooled pickups
+++    for (const pickup of this.pickupPool) {
+++      pickup.destroy(this.scene)
+++    }
+++    this.pickupPool = []
+++  }
+++
+++  // Debug info
+++  getDebugInfo() {
+++    return {
+++      active: this.activePickups.length,
+++      pooled: this.pickupPool.length,
+++      total: this.getTotalCount()
+++    }
+++  }
+++}
++\ No newline at end of file
++diff --git a/reactShell/src/ui/DevPanel.tsx b/reactShell/src/ui/DevPanel.tsx
++index 8c2b909..080f1c0 100644
++--- a/reactShell/src/ui/DevPanel.tsx
+++++ b/reactShell/src/ui/DevPanel.tsx
++@@ -3,7 +3,7 @@ import { DebugBus, LogEntry } from '../dev/DebugBus'
++ 
++ export type DevStats = {
++   fps: number
++-  entities: { ships: number; asteroids: number; bullets: number; particles?: number; debris?: number; other: number }
+++  entities: { ships: number; asteroids: number; bullets: number; particles?: number; debris?: number; pickups?: number; other: number }
++   score?: number
++   wave?: number
++   ship?: { x: number; y: number; vx: number; vy: number; angleDeg: number; pxHeight: number }
++@@ -63,6 +63,7 @@ export function DevPanel({ visible, stats }: DevPanelProps): JSX.Element | null
++             Bullets:{stats.entities.bullets}
++             {stats.entities.particles !== undefined && ` Particles:${stats.entities.particles}`}
++             {stats.entities.debris !== undefined && ` Debris:${stats.entities.debris}`}
+++            {stats.entities.pickups !== undefined && ` Pickups:${stats.entities.pickups}`}
++             {stats.entities.other > 0 && ` Other:${stats.entities.other}`}
++           </span>
++         </div>
+diff --git a/diffs/polish_sprint1_20250901_1606.diff b/diffs/polish_sprint1_20250901_1606.diff
+new file mode 100644
+index 0000000..c9f6f62
+--- /dev/null
++++ b/diffs/polish_sprint1_20250901_1606.diff
+@@ -0,0 +1,142 @@
++diff --git a/reactShell/src/game/entities/Asteroid.ts b/reactShell/src/game/entities/Asteroid.ts
++index 3757b58..cc6a209 100644
++--- a/reactShell/src/game/entities/Asteroid.ts
+++++ b/reactShell/src/game/entities/Asteroid.ts
++@@ -19,10 +19,10 @@ export type OreType = 'iron' | 'gold' | 'platinum' | 'adamantium'
++ export type AsteroidSize = 'large' | 'medium' | 'small'
++ 
++ const ORE_COLORS: Record<OreType, number> = {
++-  iron: 0x808080,      // Gray
++-  gold: 0xFFD700,      // Gold/Yellow
++-  platinum: 0xC0C0C0,  // Silver
++-  adamantium: 0x9400D3 // Purple
+++  iron: 0x9AA1A8,      // Updated iron color
+++  gold: 0xE3B341,      // Updated gold color
+++  platinum: 0xB9D3EE,  // Updated platinum color
+++  adamantium: 0x7FFFD4 // Updated adamantium color (aqua)
++ }
++ 
++ // Ore type probability function (lines 819-825)
++@@ -35,7 +35,7 @@ export function chooseOreType(): OreType {
++ }
++ 
++ export class Asteroid {
++-  object: THREE.Mesh
+++  object: THREE.Object3D
++   private velocity = new THREE.Vector2(0, 0)
++   private size: AsteroidSize
++   private oreType: OreType
++@@ -72,15 +72,31 @@ export class Asteroid {
++     scene.add(this.object)
++   }
++ 
++-  private createAsteroidMesh(): THREE.Mesh {
+++  private createAsteroidMesh(): THREE.Object3D {
++     const radius = ASTEROIDS[this.size].r
++-    const geometry = new THREE.SphereGeometry(radius, 8, 6) // Low poly for retro feel
+++    const group = new THREE.Group()
+++    
+++    // Create main disk (slightly larger disk behind for outline effect)
+++    const outlineGeometry = new THREE.CircleGeometry(radius * 1.1, 16)
+++    const outlineMaterial = new THREE.MeshBasicMaterial({ 
+++      color: 0x333333, // Dark outline color
+++      transparent: true,
+++      opacity: 0.8
+++    })
+++    const outlineMesh = new THREE.Mesh(outlineGeometry, outlineMaterial)
+++    outlineMesh.position.z = -0.01 // Place behind main disk
+++    group.add(outlineMesh)
+++    
+++    // Create main asteroid disk
+++    const geometry = new THREE.CircleGeometry(radius, 16)
++     const material = new THREE.MeshBasicMaterial({ 
++       color: ORE_COLORS[this.oreType],
++-      wireframe: false 
+++      transparent: false
++     })
+++    const mainMesh = new THREE.Mesh(geometry, material)
+++    group.add(mainMesh)
++     
++-    return new THREE.Mesh(geometry, material)
+++    return group
++   }
++ 
++   update(dt: number): void {
++@@ -155,12 +171,18 @@ export class Asteroid {
++   destroy(scene: THREE.Scene): void {
++     this.object.userData.alive = false
++     scene.remove(this.object)
++-    this.object.geometry.dispose()
++-    if (Array.isArray(this.object.material)) {
++-      this.object.material.forEach((m: any) => m.dispose())
++-    } else {
++-      (this.object.material as any).dispose()
++-    }
+++    
+++    // Dispose of group children (outline and main disk)
+++    this.object.traverse((child) => {
+++      if (child instanceof THREE.Mesh) {
+++        child.geometry.dispose()
+++        if (Array.isArray(child.material)) {
+++          child.material.forEach((m: any) => m.dispose())
+++        } else {
+++          (child.material as any).dispose()
+++        }
+++      }
+++    })
++   }
++ 
++   // Getters
++diff --git a/reactShell/src/game/entities/Bullet.ts b/reactShell/src/game/entities/Bullet.ts
++index 55b3546..85cce11 100644
++--- a/reactShell/src/game/entities/Bullet.ts
+++++ b/reactShell/src/game/entities/Bullet.ts
++@@ -22,13 +22,17 @@ export class Bullet {
++   public isEnemy = false
++ 
++   constructor() {
++-    // Create small white sphere for bullet visual
++-    const geometry = new THREE.SphereGeometry(BULLET.r, 8, 6)
++-    const material = new THREE.MeshBasicMaterial({ color: 0xffffff })
+++    // Create brighter, more visible bullet visual
+++    // Use slightly larger visual size (2-3px equivalent) while keeping collision radius unchanged
+++    const visualRadius = 1.0 // Larger visual size for better visibility
+++    const geometry = new THREE.SphereGeometry(visualRadius, 8, 6)
+++    const material = new THREE.MeshBasicMaterial({ 
+++      color: 0xE6E6E6 // Brighter than pure white for better visibility on dark backgrounds
+++    })
++     this.mesh = new THREE.Mesh(geometry, material)
++     this.mesh.userData = {
++       kind: 'bullet',
++-      radius: BULLET.r
+++      radius: BULLET.r // Keep original collision radius
++     }
++   }
++ 
++diff --git a/reactShell/src/game/entities/Ship.ts b/reactShell/src/game/entities/Ship.ts
++index de479e9..7ccf23e 100644
++--- a/reactShell/src/game/entities/Ship.ts
+++++ b/reactShell/src/game/entities/Ship.ts
++@@ -68,6 +68,12 @@ export class Ship {
++     // Load ship texture
++     const loader = new THREE.TextureLoader()
++     const shipTexture = loader.load('assets/ship/ship.png', (texture) => {
+++      // Configure texture for proper alpha handling
+++      texture.colorSpace = THREE.SRGBColorSpace
+++      texture.magFilter = THREE.NearestFilter
+++      texture.minFilter = THREE.NearestFilter
+++      texture.generateMipmaps = false
+++      
++       // Scale ship to desired pixel height once texture is loaded
++       const imgH = texture.image?.height ?? SHIP_DESIRED_PX
++       const imgW = texture.image?.width ?? SHIP_DESIRED_PX
++@@ -82,7 +88,8 @@ export class Ship {
++     const shipMaterial = new THREE.MeshBasicMaterial({
++       map: shipTexture,
++       transparent: true,
++-      opacity: 1.0,
+++      depthWrite: false,
+++      alphaTest: 0.5,
++       side: THREE.DoubleSide
++     })
++     
+diff --git a/diffs/visual_parity_fix_20250901_1651.diff b/diffs/visual_parity_fix_20250901_1651.diff
+new file mode 100644
+index 0000000..9ab7b1f
+--- /dev/null
++++ b/diffs/visual_parity_fix_20250901_1651.diff
+@@ -0,0 +1,382 @@
++diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
++index 227e1e7..302854b 100644
++--- a/reactShell/src/game/GameCanvas.tsx
+++++ b/reactShell/src/game/GameCanvas.tsx
++@@ -14,6 +14,7 @@ import { GameState, selectScore, selectWave, selectCombo, selectCurrency, select
++ import { createEnemyBullets } from './systems/EnemyBullets'
++ import { DevStats } from '../ui/DevPanel'
++ import { DebugBus } from '../dev/DebugBus'
+++import { VISIBLE_HEIGHT, getVisibleWidth, pxToWorld, worldToPx } from '../utils/units'
++ 
++ // HUD data type for passing game state to UI
++ export interface HudData {
++@@ -41,9 +42,11 @@ const WORLD = {
++   height: 498,
++ }
++ 
++-// Pixel-perfect orthographic camera mapping
++-function makeOrthoCamera(w: number, h: number): THREE.OrthographicCamera {
++-  const halfW = w / 2, halfH = h / 2
+++// World-unit based orthographic camera (vanilla parity)
+++function makeOrthoCamera(aspect: number): THREE.OrthographicCamera {
+++  const visibleWidth = getVisibleWidth(aspect)
+++  const halfW = visibleWidth / 2
+++  const halfH = VISIBLE_HEIGHT / 2
++   const cam = new THREE.OrthographicCamera(-halfW, halfW, halfH, -halfH, 0.1, 1000)
++   cam.position.set(0, 0, 10)
++   cam.lookAt(0, 0, 0)
++@@ -79,7 +82,7 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
++     // Basic Three.js setup - placeholder for full game integration
++     const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current })
++     const scene = new THREE.Scene()
++-    const camera = makeOrthoCamera(window.innerWidth, window.innerHeight)
+++    const camera = makeOrthoCamera(window.innerWidth / window.innerHeight)
++     
++     renderer.setPixelRatio(window.devicePixelRatio)
++     renderer.setSize(window.innerWidth, window.innerHeight)
++@@ -132,10 +135,13 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
++     const handleResize = () => {
++       const width = window.innerWidth
++       const height = window.innerHeight
+++      const aspect = width / height
++       renderer.setPixelRatio(window.devicePixelRatio)
++       
++-      // Update camera frustum to match new canvas size
++-      const halfW = width / 2, halfH = height / 2
+++      // Update camera to maintain world-unit scale
+++      const visibleWidth = getVisibleWidth(aspect)
+++      const halfW = visibleWidth / 2
+++      const halfH = VISIBLE_HEIGHT / 2
++       camera.left = -halfW
++       camera.right = halfW
++       camera.top = halfH
++@@ -148,12 +154,18 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
++     window.addEventListener('resize', handleResize)
++     handleResize()
++ 
++-    // Screen to world coordinate conversion (1:1 pixel mapping)
+++    // Screen to world coordinate conversion (world-unit based)
++     const screenToWorld = (screenX: number, screenY: number): THREE.Vector2 => {
++       const rect = canvasRef.current!.getBoundingClientRect()
++-      // Convert to world coordinates (1 world unit = 1 CSS pixel)
++-      const worldX = screenX - rect.left - rect.width / 2
++-      const worldY = -(screenY - rect.top - rect.height / 2)
+++      const aspect = rect.width / rect.height
+++      const visibleWidth = getVisibleWidth(aspect)
+++      
+++      // Convert screen pixels to world coordinates
+++      const normalizedX = (screenX - rect.left - rect.width / 2) / (rect.width / 2)
+++      const normalizedY = -((screenY - rect.top - rect.height / 2) / (rect.height / 2))
+++      
+++      const worldX = normalizedX * (visibleWidth / 2)
+++      const worldY = normalizedY * (VISIBLE_HEIGHT / 2)
++       
++       return new THREE.Vector2(worldX, worldY)
++     }
++diff --git a/reactShell/src/game/GameState.ts b/reactShell/src/game/GameState.ts
++index 0b09d30..af212b1 100644
++--- a/reactShell/src/game/GameState.ts
+++++ b/reactShell/src/game/GameState.ts
++@@ -56,7 +56,7 @@ export class GameState {
++     spread: 0,
++     pierce: 0,
++     ricochet: 0,
++-    shieldCharges: 3,  // Start with 3 shield charges for testing
+++    shieldCharges: 0,  // Start with no shields (acquired through upgrades)
++     bulletBounce: 0,
++     bulletLifeMul: 1.0,
++     bulletSpeedMul: 1.0,
++@@ -179,7 +179,7 @@ export class GameState {
++       spread: 0,
++       pierce: 0,
++       ricochet: 0,
++-      shieldCharges: 3,  // Start with 3 shield charges for testing
+++      shieldCharges: 0,  // Start with no shields (acquired through upgrades)
++       bulletBounce: 0,
++       bulletLifeMul: 1.0,
++       bulletSpeedMul: 1.0,
++diff --git a/reactShell/src/game/entities/Asteroid.ts b/reactShell/src/game/entities/Asteroid.ts
++index cc6a209..014500d 100644
++--- a/reactShell/src/game/entities/Asteroid.ts
+++++ b/reactShell/src/game/entities/Asteroid.ts
++@@ -1,5 +1,6 @@
++ // Asteroid.ts - Asteroid variants
++ import * as THREE from 'three'
+++import { WORLD_BOUNDS } from '../utils/units'
++ 
++ // Constants from vanilla (lines 28-33)
++ const ASTEROIDS = {
++@@ -9,10 +10,6 @@ const ASTEROIDS = {
++   baseSpeed: 8,
++ }
++ 
++-const WORLD = {
++-  width: 750,
++-  height: 498,
++-}
++ 
++ // Ore types with colors and probabilities (from lines 819-825)
++ export type OreType = 'iron' | 'gold' | 'platinum' | 'adamantium'
++@@ -87,10 +84,12 @@ export class Asteroid {
++     outlineMesh.position.z = -0.01 // Place behind main disk
++     group.add(outlineMesh)
++     
++-    // Create main asteroid disk
+++    // Create main asteroid disk with enhanced brightness
++     const geometry = new THREE.CircleGeometry(radius, 16)
+++    const baseColor = ORE_COLORS[this.oreType]
++     const material = new THREE.MeshBasicMaterial({ 
++-      color: ORE_COLORS[this.oreType],
+++      // Enhanced brightness instead of emissive (not supported by MeshBasicMaterial)
+++      color: new THREE.Color(baseColor).multiplyScalar(1.2), // Brighter color
++       transparent: false
++     })
++     const mainMesh = new THREE.Mesh(geometry, material)
++@@ -106,20 +105,17 @@ export class Asteroid {
++     this.object.position.x += this.velocity.x * dt
++     this.object.position.y += this.velocity.y * dt
++     
++-    // World wrapping at ±375×±249
++-    const halfWidth = WORLD.width / 2  // ±375
++-    const halfHeight = WORLD.height / 2 // ±249
++-    
++-    if (this.object.position.x > halfWidth) {
++-      this.object.position.x = -halfWidth
++-    } else if (this.object.position.x < -halfWidth) {
++-      this.object.position.x = halfWidth
+++    // World wrapping at world bounds
+++    if (this.object.position.x > WORLD_BOUNDS.x) {
+++      this.object.position.x = -WORLD_BOUNDS.x
+++    } else if (this.object.position.x < -WORLD_BOUNDS.x) {
+++      this.object.position.x = WORLD_BOUNDS.x
++     }
++     
++-    if (this.object.position.y > halfHeight) {
++-      this.object.position.y = -halfHeight
++-    } else if (this.object.position.y < -halfHeight) {
++-      this.object.position.y = halfHeight
+++    if (this.object.position.y > WORLD_BOUNDS.y) {
+++      this.object.position.y = -WORLD_BOUNDS.y
+++    } else if (this.object.position.y < -WORLD_BOUNDS.y) {
+++      this.object.position.y = WORLD_BOUNDS.y
++     }
++     
++     // Rotation
++diff --git a/reactShell/src/game/entities/Bullet.ts b/reactShell/src/game/entities/Bullet.ts
++index 85cce11..434cda8 100644
++--- a/reactShell/src/game/entities/Bullet.ts
+++++ b/reactShell/src/game/entities/Bullet.ts
++@@ -1,5 +1,6 @@
++ // Bullet.ts - Projectile system
++ import * as THREE from 'three'
+++import { pxToWorld, WORLD_BOUNDS } from '../utils/units'
++ 
++ // Constants from vanilla
++ const BULLET = { 
++@@ -8,10 +9,8 @@ const BULLET = {
++   r: 0.2 
++ }
++ 
++-const WORLD = {
++-  width: 750,
++-  height: 498,
++-}
+++// Default bullet visual size in pixels
+++const DEFAULT_BULLET_PX = 3
++ 
++ export class Bullet {
++   mesh: THREE.Mesh
++@@ -22,12 +21,12 @@ export class Bullet {
++   public isEnemy = false
++ 
++   constructor() {
++-    // Create brighter, more visible bullet visual
++-    // Use slightly larger visual size (2-3px equivalent) while keeping collision radius unchanged
++-    const visualRadius = 1.0 // Larger visual size for better visibility
+++    // Create brighter, more visible bullet visual with world-unit scaling
+++    // Convert target pixel size to world units (using window height as reference)
+++    const visualRadius = pxToWorld(DEFAULT_BULLET_PX, window.innerHeight)
++     const geometry = new THREE.SphereGeometry(visualRadius, 8, 6)
++     const material = new THREE.MeshBasicMaterial({ 
++-      color: 0xE6E6E6 // Brighter than pure white for better visibility on dark backgrounds
+++      color: 0xE6E6E6, // Brighter than pure white for better visibility
++     })
++     this.mesh = new THREE.Mesh(geometry, material)
++     this.mesh.userData = {
++@@ -64,19 +63,16 @@ export class Bullet {
++   }
++ 
++   private wrap(): void {
++-    const halfWidth = WORLD.width / 2  // ±375
++-    const halfHeight = WORLD.height / 2 // ±249
++-    
++-    if (this.mesh.position.x > halfWidth) {
++-      this.mesh.position.x = -halfWidth
++-    } else if (this.mesh.position.x < -halfWidth) {
++-      this.mesh.position.x = halfWidth
+++    if (this.mesh.position.x > WORLD_BOUNDS.x) {
+++      this.mesh.position.x = -WORLD_BOUNDS.x
+++    } else if (this.mesh.position.x < -WORLD_BOUNDS.x) {
+++      this.mesh.position.x = WORLD_BOUNDS.x
++     }
++     
++-    if (this.mesh.position.y > halfHeight) {
++-      this.mesh.position.y = -halfHeight
++-    } else if (this.mesh.position.y < -halfHeight) {
++-      this.mesh.position.y = halfHeight
+++    if (this.mesh.position.y > WORLD_BOUNDS.y) {
+++      this.mesh.position.y = -WORLD_BOUNDS.y
+++    } else if (this.mesh.position.y < -WORLD_BOUNDS.y) {
+++      this.mesh.position.y = WORLD_BOUNDS.y
++     }
++   }
++ 
++diff --git a/reactShell/src/game/entities/Ship.ts b/reactShell/src/game/entities/Ship.ts
++index 7ccf23e..ca7b017 100644
++--- a/reactShell/src/game/entities/Ship.ts
+++++ b/reactShell/src/game/entities/Ship.ts
++@@ -3,6 +3,7 @@ import * as THREE from 'three'
++ import type { InputState } from '../Input'
++ import type { BulletManager } from '../systems/BulletManager'
++ import type { GameState } from '../GameState'
+++import { pxToWorld, WORLD_BOUNDS } from '../utils/units'
++ 
++ // Constants from vanilla
++ const PLAYER = {
++@@ -18,13 +19,9 @@ const INVULN_WAVE = 3.0   // At wave start
++ const INVULN_SPAWN = 2.0  // After respawn
++ const INVULN_HIT = 1.0    // After taking damage
++ 
++-const WORLD = {
++-  width: 750,
++-  height: 498,
++-}
++ 
++ // Ship visual scale
++-const SHIP_DESIRED_PX = 50 // tweak 90–110 for parity with vanilla screenshot
+++const SHIP_DESIRED_PX = 50 // Target 50px height on screen
++ const ROTATION_OFFSET = -Math.PI / 2 // Ship sprite nose points "up" (+Y)
++ 
++ export class Ship {
++@@ -74,13 +71,16 @@ export class Ship {
++       texture.minFilter = THREE.NearestFilter
++       texture.generateMipmaps = false
++       
++-      // Scale ship to desired pixel height once texture is loaded
+++      // Scale ship to world units based on target pixel height
++       const imgH = texture.image?.height ?? SHIP_DESIRED_PX
++       const imgW = texture.image?.width ?? SHIP_DESIRED_PX
++-      const scale = SHIP_DESIRED_PX / imgH
+++      const aspectRatio = imgW / imgH
+++      
+++      // Convert target pixel height to world units (using window height as reference)
+++      const targetWorldHeight = pxToWorld(SHIP_DESIRED_PX, window.innerHeight)
++       
++-      // Scale the mesh to achieve desired on-screen size
++-      this.object.scale.set(imgW * scale, SHIP_DESIRED_PX, 1)
+++      // Scale the mesh to achieve desired world size
+++      this.object.scale.set(targetWorldHeight * aspectRatio, targetWorldHeight, 1)
++     })
++     
++     // Create ship geometry with texture (placeholder size will be scaled)
++@@ -97,8 +97,9 @@ export class Ship {
++   }
++ 
++   private createShieldVisual(): void {
++-    // Create transparent sphere around ship for shield visual
++-    const shieldGeometry = new THREE.SphereGeometry(35, 16, 12) // Slightly larger than ship
+++    // Create transparent sphere around ship for shield visual (world units)
+++    const shieldRadius = 3.5 // World units, roughly ship size + buffer
+++    const shieldGeometry = new THREE.SphereGeometry(shieldRadius, 16, 12)
++     const shieldMaterial = new THREE.MeshBasicMaterial({
++       color: 0x00ffff,
++       transparent: true,
++@@ -203,19 +204,16 @@ export class Ship {
++   }
++ 
++   private wrap(): void {
++-    const halfWidth = WORLD.width / 2
++-    const halfHeight = WORLD.height / 2
++-    
++-    if (this.object.position.x > halfWidth) {
++-      this.object.position.x = -halfWidth
++-    } else if (this.object.position.x < -halfWidth) {
++-      this.object.position.x = halfWidth
+++    if (this.object.position.x > WORLD_BOUNDS.x) {
+++      this.object.position.x = -WORLD_BOUNDS.x
+++    } else if (this.object.position.x < -WORLD_BOUNDS.x) {
+++      this.object.position.x = WORLD_BOUNDS.x
++     }
++     
++-    if (this.object.position.y > halfHeight) {
++-      this.object.position.y = -halfHeight
++-    } else if (this.object.position.y < -halfHeight) {
++-      this.object.position.y = halfHeight
+++    if (this.object.position.y > WORLD_BOUNDS.y) {
+++      this.object.position.y = -WORLD_BOUNDS.y
+++    } else if (this.object.position.y < -WORLD_BOUNDS.y) {
+++      this.object.position.y = WORLD_BOUNDS.y
++     }
++   }
++ 
++@@ -233,18 +231,19 @@ export class Ship {
++     this.fireCooldown = PLAYER.fireRate
++   }
++ 
++-  // Set ship pixel height for runtime tuning
++-  setPixelHeight(px: number): void {
++-    // Reapply texture scaling using the same logic as createShipMesh
+++  // Set ship pixel height for runtime tuning (converts to world units)
+++  setPixelHeight(px: number, viewportHeight: number): void {
+++    const targetWorldHeight = pxToWorld(px, viewportHeight)
+++    
++     const material = (this.object as THREE.Mesh).material as THREE.MeshBasicMaterial
++     if (material.map && material.map.image) {
++       const texture = material.map
++       const imgH = texture.image.height
++       const imgW = texture.image.width
++-      const scale = px / imgH
+++      const aspectRatio = imgW / imgH
++       
++-      // Scale the mesh to achieve desired on-screen size
++-      this.object.scale.set(imgW * scale, px, 1)
+++      // Scale to target world height, maintaining aspect ratio
+++      this.object.scale.set(targetWorldHeight * aspectRatio, targetWorldHeight, 1)
++     }
++   }
++ 
++diff --git a/reactShell/src/utils/units.ts b/reactShell/src/utils/units.ts
++new file mode 100644
++index 0000000..50176b8
++--- /dev/null
+++++ b/reactShell/src/utils/units.ts
++@@ -0,0 +1,28 @@
+++// units.ts - World unit to pixel conversion utilities
+++
+++// Vanilla world constants
+++export const WORLD_WIDTH = 750
+++export const WORLD_HEIGHT = 498
+++export const VISIBLE_HEIGHT = 99.6 // Visible world units vertically (1/5 of world height)
+++
+++// Conversion utilities for maintaining visual parity
+++export function pxToWorld(px: number, viewportHeight: number): number {
+++  // Convert desired pixel size to world units based on current viewport
+++  return (px * VISIBLE_HEIGHT) / viewportHeight
+++}
+++
+++export function worldToPx(units: number, viewportHeight: number): number {
+++  // Convert world units to pixel size based on current viewport
+++  return (units * viewportHeight) / VISIBLE_HEIGHT
+++}
+++
+++// Helper to get visible width based on aspect ratio
+++export function getVisibleWidth(aspectRatio: number): number {
+++  return VISIBLE_HEIGHT * aspectRatio
+++}
+++
+++// World wrapping boundaries
+++export const WORLD_BOUNDS = {
+++  x: WORLD_WIDTH / 2,  // ±375
+++  y: WORLD_HEIGHT / 2, // ±249
+++}
++\ No newline at end of file
+diff --git a/docs/prompts/1.md b/docs/prompts/1.md
+index 2aba980..3d2e899 100644
+--- a/docs/prompts/1.md
++++ b/docs/prompts/1.md
+@@ -1,93 +1,31 @@
+-PLANNING MODE — FULL BUILD PLAN FOR ASTEROIDS (vanilla → React/Three), as a **standalone folder ready to drop into the monorepo later**. 
+-Do NOT write code. Produce a complete, numbered plan that Sonnet will execute step-by-step.
++EXECUTION MODE — Create missing units module to fix imports. Output ONE unified diff under `/diffs/` only. Then commit and push.
+ 
+-Current status (facts)
+-- Repo/folder: /AsteroidsV2/reactShell (standalone package now; not in monorepo yet)
+-- Tooling: Vite + React 18 + TypeScript, Three.js 0.158.0
+-- Camera: orthographic; 1 world unit = 1 CSS pixel
+-- Render: default = direct renderer; EffectComposer (bloom/outline/vignette) available but off by default
+-- Start screen overlay implemented (assets/start_screen.png)
+-- Ship ported; mouse-aim, WASD/arrow thrust/turn, wrapping; sprite locked to 50px height
+-- Input live; assets under /public/assets/... (case-exact)
+-- Goal: exact parity with /AsteroidsV2/vanillaHTML/src/main.js as a drop-in package directory; **no monorepo work yet** (that comes after parity).
++Scope
++- NEW: /AsteroidsV2/reactShell/src/game/utils/units.ts
+ 
+-Deliverables (structure your output exactly like this)
++Exact file contents
++```ts
++// reactShell/src/game/utils/units.ts
++// World units and bounds used by entities. Values match current wrap behavior.
++export const WORLD_BOUNDS = {
++  minX: -375,
++  maxX: 375,
++  minY: -249,
++  maxY: 249,
++} as const;
+ 
+-1) One-page Roadmap
+-   - Phases that reach parity in the smallest safe increments Sonnet can ship (each step touches ~1–4 files, ends in a single diff+commit).
++export type WorldBounds = typeof WORLD_BOUNDS;
+ 
+-2) Feature Checklist with Acceptance Criteria
+-   - Bullets (cadence, TTL, speed, velocity inheritance, muzzle offset)
+-   - Collisions (bullet↔asteroid, ship↔asteroid, hunter↔ship; circle-circle)
+-   - Asteroids (L/M/S sizes, HP, spawn counts, split counts/velocities, ore types & yields)
+-   - Wave system (wave 1 start, progression/clear rules)
+-   - Enemy hunters (spawn wave ≥3, strafing, fire timing, boss1–boss10 sprites)
+-   - Particles & debris (density, lifetime)
+-   - HUD (score, wave, combo; currency if vanilla), Minimap
+-   - Upgrades (exact list/effects from vanilla; gating)
+-   - Pause/Restart, Status overlay/debug toggle, Audio (path parity)
+-   - Start/GameOver behavior, Hangar/shop if present in vanilla
++/** Convert screen pixels to world units. Identity for now; adjust if a scale is introduced. */
++export function pxToWorld(px: number): number {
++  return px;
++}
+ 
+-3) Constants Map (compact table)
+-   - Constant | Value | Vanilla line(s) | Target file/const name
+-   - Include: movement, radii, bullet speed/TTL/cooldown, asteroid sizes/HP/splits, hunter timings, scoring, invuln windows, etc.
++Constraints
++	•	Do not modify any existing entity imports (../utils/units). They will resolve once this file exists.
+ 
+-4) Module/File Breakdown (under src/)
+-   - game/entities/*  (Ship, Bullet, Asteroid, EnemyHunter, Particles, Debris)
+-   - game/systems/*   (Bullets, Collision, Spawning/Waves, Physics, Upgrades, Minimap)
+-   - game/render/*    (Scene, PostFX, Materials)
+-   - game/GameState.ts (shape & selectors), game/GameLoop.ts (update order)
+-   - ui/* (Hud, UpgradeMenu, PauseOverlay, GameOverScreen, Hangar)
+-   - For each file: public API (classes/functions, signatures) and what state it owns.
++Deliverable
++	•	Print ONE timestamped unified diff under /diffs/ with the new file. No truncation.
++	•	Then commit and push with message:
++feat(units): add utils/units.ts exporting WORLD_BOUNDS and pxToWorld to resolve entity imports
+ 
+-5) Numbered Execution Blocks (1..N)
+-   For EACH block provide:
+-   - Scope: exact file paths to create/update
+-   - API contracts to implement (signatures)
+-   - Done checks: concrete browser tests (e.g., “hold Space: bullets spawn at nose every X ms, TTL ≈ Y ms, wrap at edges”)
+-   - Risks & mitigations (1–3 bullets)
+-   - **The exact Sonnet EXECUTION MODE prompt** for that single step (include constraints, one unified diff under /diffs/, then commit/push)
+-
+-   Suggested sequence (tune if needed):
+-   1) Bullets (spawn, TTL, velocity inheritance; no collisions)
+-   2) Collision system (bullet↔asteroid, ship↔asteroid; circle-circle)
+-   3) Asteroids (L/M/S with split logic + ore)
+-   4) Spawning/Waves controller
+-   5) HUD (score/wave/combo), basic Minimap
+-   6) Hunters (AI, fire timing, sprites)
+-   7) Particles & Debris
+-   8) Upgrades system + upgrade picker UI
+-   9) Pause/Restart + Status overlay
+-   10) Audio wiring (path parity) + SFX triggers
+-   11) Polish/Parity audit (numeric constants, speeds, timers, wrapping)
+-
+-6) Verification Plan
+-   - Side-by-side comparisons with vanilla
+-   - Numeric audits (constants diffed against vanilla lines)
+-   - Asset path/casing validation
+-   - Dev vs prod build parity
+-
+-7) **Drop-in Readiness for Monorepo (planning only, no code yet)**
+-   - Folder stays self-contained under `reactShell/` with:
+-     - package.json (name/scripts ready), vite.config base:'./', public/assets preserved
+-     - No cross-repo assumptions; env-free by default
+-   - What to expose when moved (e.g., `export default <App/>`, `npm run build` emits `/dist`)
+-   - Any flags to keep (DEV overlays behind backtick)
+-
+-Constraints (apply to all Sonnet prompts you generate)
+-- Exact asset paths/casing (e.g., assets/Hanger.png, assets/boss/boss1.png…)
+-- Default render path = direct renderer; composer is optional flag
+-- No visual drift: port vanilla constants/behavior exactly
+-- Each Sonnet step outputs ONE timestamped unified diff under /diffs/ and then commits/pushes
+-- No scope creep beyond the block’s listed files
+-- TypeScript only; no new deps unless the block explicitly calls for them
+-
+-Output format
+-- Roadmap
+-- Constants Table
+-- Module/File Breakdown
+-- Numbered Execution Blocks (each with its own Sonnet prompt)
+-- Verification Plan
+-- Drop-in Readiness notes
+-
+-Do NOT write code. Produce the plan and per-step Sonnet prompts only.
+\ No newline at end of file
+diff --git a/docs/prompts/10.md b/docs/prompts/10.md
+new file mode 100644
+index 0000000..df16e44
+--- /dev/null
++++ b/docs/prompts/10.md
+@@ -0,0 +1,16 @@
++Approved with edits. Apply these corrections, then execute.
++	1.	Starfield.ts
++Do not add a custom size attribute. Use new THREE.PointsMaterial({ size: 1.2 }), set depthTest=false, depthWrite=false, transparent=true, place points at z=-10. Return { update(dt) { wrap(); } }.
++	2.	Imports sweep
++After deleting /reactShell/src/utils/units.ts, update any remaining imports in all touched files plus Asteroid.ts to the correct ../utils/units or ./utils/units path relative to file location. No stale paths.
++	3.	Ship.ts
++Scale from this.object.userData.radius exactly:
++sprite.scale.set(2 * this.object.userData.radius, 2 * this.object.userData.radius, 1);
++Do not introduce a new class field.
++	4.	GameCanvas.tsx
++Create starfield before other entities, store the instance, and call starfield.update(dt) every frame after camera updates.
++	5.	Spawning.ts
++Leave wave-1 logic unchanged only if it is already >= 1. If any check uses > 1, change to >= 1.
++
++Commit and push in one unified diff under /diffs/ with message:
++fix(world): unify units module, restore starfield, normalize scale, ensure wave-1 asteroids
+\ No newline at end of file
+diff --git a/docs/prompts/11.md b/docs/prompts/11.md
+new file mode 100644
+index 0000000..0ae5b76
+--- /dev/null
++++ b/docs/prompts/11.md
+@@ -0,0 +1,11 @@
++Approved with edits.
++	1.	Starfield.ts
++Set mat.sizeAttenuation = true so PointsMaterial.size behaves as world units under the orthographic camera. Keep size = 1.2, z = -10, depthTest = false, depthWrite = false, transparent = true.
++	2.	Import sweep
++After deleting /reactShell/src/utils/units.ts, update any lingering imports in all touched files plus Asteroid.ts. No stale paths to ../../utils/units.
++	3.	Unused imports
++Remove pxToWorld imports anywhere it is not used to avoid TS unused warnings.
++	4.	GameCanvas.tsx
++Store the starfield instance and call starfield.update(dt) every frame after camera updates. No other loop changes.
++
++Commit and push in one unified diff under /diffs/ with the planned message.
+\ No newline at end of file
+diff --git a/docs/prompts/12.md b/docs/prompts/12.md
+new file mode 100644
+index 0000000..001d619
+--- /dev/null
++++ b/docs/prompts/12.md
+@@ -0,0 +1,27 @@
++Approved with edits. Apply these corrections, then execute.
++	1.	Ship.ts
++Scale from this.object.userData.radius. If undefined, set a default once and mirror it back so downstream code has it.
++
++const r = this.object.userData.radius ?? 1.5;
++this.object.userData.radius = r;
++sprite.scale.set(2 * r, 2 * r, 1);
++
++Remove any pxToWorld-based sprite scaling.
++	2.	Bullet.ts
++Set a fixed visual radius for consistency and scale from it.
++
++const radius = 0.28;
++this.object.scale.set(2 * radius, 2 * radius, 1);
++
++Keep pxToWorld only if it is used for motion or TTL; otherwise remove the import.
++	3.	Starfield.ts
++Keep PointsMaterial({ size: 1.2, sizeAttenuation: true }), depthTest=false, depthWrite=false, transparent=true, and place points at z = -10. Return { update(dt) { wrap(); } }.
++	4.	GameCanvas.tsx
++After configureWorld() on mount and resize, set ortho bounds from WORLD_BOUNDS and call camera.updateProjectionMatrix(). Instantiate starfield before other entities, store the instance, and call starfield.update(dt) every frame after camera updates. Remove all unused imports (pxToWorld, worldToPx, VISIBLE_HEIGHT, getVisibleWidth).
++	5.	Imports sweep
++Delete /reactShell/src/utils/units.ts, then update any lingering imports in all touched files plus Asteroid.ts to the correct relative path under game/utils/units. Remove any unused pxToWorld imports.
++	6.	Spawning.ts
++Leave as is if wave-1 logic already uses >= 1. If any guard is > 1, change to >= 1.
++
++Commit and push in one unified diff under /diffs/ with message:
++fix(world): unify units module, restore starfield, normalize scale, ensure wave-1 asteroids
+\ No newline at end of file
+diff --git a/docs/prompts/13.md b/docs/prompts/13.md
+new file mode 100644
+index 0000000..1bc83fa
+--- /dev/null
++++ b/docs/prompts/13.md
+@@ -0,0 +1,10 @@
++Approved with edits. Apply these before execution.
++	1.	Global import sweep
++After deleting /reactShell/src/utils/units.ts, update any lingering imports repo-wide to the correct game/utils/units relative path. Include Asteroid.ts, any systems, and helpers not listed.
++	2.	Starfield draw order
++After creating the THREE.Points, set points.renderOrder = -1 to guarantee it stays behind sprites even if materials change later. Keep z = -10, depthTest = false, depthWrite = false, transparent = true, sizeAttenuation = true.
++	3.	Unused imports
++Remove pxToWorld imports anywhere it isn’t referenced to avoid TS warnings, including Ship.ts and Bullet.ts if applicable.
++
++Everything else is approved. Commit and push in one unified diff under /diffs/ with message:
++fix(world): unify units module, restore starfield, normalize scale, ensure wave-1 asteroids.
+\ No newline at end of file
+diff --git a/docs/prompts/14.md b/docs/prompts/14.md
+new file mode 100644
+index 0000000..23f4756
+--- /dev/null
++++ b/docs/prompts/14.md
+@@ -0,0 +1,98 @@
++Approved. Execute with this prompt:
++
++EXECUTION MODE — Unify units, restore starfield, normalize scale, ensure wave-1 asteroids. Output ONE unified diff under `/diffs/` only. Then commit and push.
++
++Scope
++- UPDATE: /AsteroidsV2/reactShell/src/game/utils/units.ts
++- DELETE: /AsteroidsV2/reactShell/src/utils/units.ts (if present)
++- NEW: /AsteroidsV2/reactShell/src/game/systems/Starfield.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/GameCanvas.tsx
++- UPDATE: /AsteroidsV2/reactShell/src/game/systems/Spawning.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/entities/Ship.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/entities/Bullet.ts
++
++Edits
++
++1) Replace units.ts with exact contents
++```ts
++// src/game/utils/units.ts
++export type WorldBounds = { minX: number; maxX: number; minY: number; maxY: number };
++
++export let WORLD_BOUNDS: WorldBounds = { minX: -375, maxX: 375, minY: -249, maxY: 249 };
++
++export function configureWorld(): void {
++  WORLD_BOUNDS = { minX: -375, maxX: 375, minY: -249, maxY: 249 };
++}
++
++export function getWorldSize() { return { width: 750, height: 498 }; }
++
++export function pxToWorld(n: number) { return n; }
++
++	2.	Starfield system
++
++	•	Create src/game/systems/Starfield.ts with 300 points inside WORLD_BOUNDS at z = -10.
++	•	Use new THREE.PointsMaterial({ size: 1.2, sizeAttenuation: true }).
++	•	Set depthTest = false, depthWrite = false, transparent = true.
++	•	After creating the THREE.Points, set points.renderOrder = -1.
++	•	Export createStarfield(scene) that returns { update(dt) { wrap(); } }.
++
++	3.	GameCanvas wiring
++
++	•	Import only WORLD_BOUNDS, configureWorld from ./utils/units.
++	•	On mount and on resize: call configureWorld(), then set:
++
++camera.left = WORLD_BOUNDS.minX;
++camera.right = WORLD_BOUNDS.maxX;
++camera.top = WORLD_BOUNDS.maxY;
++camera.bottom = WORLD_BOUNDS.minY;
++camera.updateProjectionMatrix();
++
++
++	•	Instantiate starfield before other entities, store the instance, and call starfield.update(dt) every frame after camera updates.
++	•	Remove unused imports: pxToWorld, worldToPx, VISIBLE_HEIGHT, getVisibleWidth.
++
++	4.	Ship scaling
++
++	•	Import only needed symbols from ../utils/units or remove the import if unused.
++	•	Replace scaling with:
++
++const r = this.object.userData.radius ?? 1.5;
++this.object.userData.radius = r;
++this.object.scale.set(2 * r, 2 * r, 1);
++
++
++	•	Remove any pxToWorld-based sprite scaling.
++
++	5.	Bullet sizing
++
++	•	Import only needed symbols or remove the import if unused.
++	•	Set fixed visual radius and scale from it:
++
++const radius = 0.28;
++this.object.scale.set(2 * radius, 2 * radius, 1);
++
++
++
++	6.	Spawning
++
++	•	Import WORLD_BOUNDS from ../utils/units.
++	•	Leave wave 1 logic unchanged if it already uses >= 1. If any guard is > 1, change to >= 1.
++	•	Use WORLD_BOUNDS for spawn calculations.
++
++	7.	Import sweep
++
++	•	Delete src/utils/units.ts if present.
++	•	Update any lingering imports repo-wide to the correct game/utils/units relative path.
++	•	Remove any unused pxToWorld imports to avoid TS warnings.
++
++Acceptance
++	•	Dev server runs clean.
++	•	Starfield visible behind entities.
++	•	Ship and bullets sized by radius.
++	•	Asteroids spawn on wave 1.
++
++Deliverable
++	•	Print ONE timestamped unified diff under /diffs/ with all edits and the file deletion. No truncation.
++	•	Commit and push with message:
++fix(world): unify units module, restore starfield, normalize scale, ensure wave-1 asteroids
++
+diff --git a/docs/prompts/15.md b/docs/prompts/15.md
+new file mode 100644
+index 0000000..b8bb163
+--- /dev/null
++++ b/docs/prompts/15.md
+@@ -0,0 +1,97 @@
++Approved. Execute with this prompt:
++
++EXECUTION MODE — Unify units, restore starfield, normalize scale, ensure wave-1 asteroids. Output ONE unified diff under `/diffs/` only. Then commit and push.
++
++Scope
++- UPDATE: /AsteroidsV2/reactShell/src/game/utils/units.ts
++- DELETE: /AsteroidsV2/reactShell/src/utils/units.ts (if present)
++- NEW: /AsteroidsV2/reactShell/src/game/systems/Starfield.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/GameCanvas.tsx
++- UPDATE: /AsteroidsV2/reactShell/src/game/systems/Spawning.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/entities/Ship.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/entities/Bullet.ts
++
++1) Replace units.ts with EXACT contents
++```ts
++// src/game/utils/units.ts
++export type WorldBounds = { minX: number; maxX: number; minY: number; maxY: number };
++
++export let WORLD_BOUNDS: WorldBounds = { minX: -375, maxX: 375, minY: -249, maxY: 249 };
++
++export function configureWorld(): void {
++  // lock to original extents; 1 world unit = 1 pixel
++  WORLD_BOUNDS = { minX: -375, maxX: 375, minY: -249, maxY: 249 };
++}
++
++export function getWorldSize() { return { width: 750, height: 498 }; }
++
++export function pxToWorld(n: number) { return n; }
++
++	2.	Starfield system
++
++	•	Create src/game/systems/Starfield.ts with 300 points randomly positioned inside WORLD_BOUNDS at z = -10.
++	•	Use new THREE.PointsMaterial({ size: 1.2, sizeAttenuation: true }).
++	•	Set depthTest = false, depthWrite = false, transparent = true.
++	•	After creating the THREE.Points, set points.renderOrder = -1.
++	•	Export createStarfield(scene) returning { update(dt) { wrap(); } } where wrap clamps positions inside WORLD_BOUNDS each frame.
++
++	3.	GameCanvas wiring
++
++	•	Import only { WORLD_BOUNDS, configureWorld } from ./utils/units.
++	•	On mount and on resize: call configureWorld(), then set ortho camera:
++
++camera.left = WORLD_BOUNDS.minX;
++camera.right = WORLD_BOUNDS.maxX;
++camera.top = WORLD_BOUNDS.maxY;
++camera.bottom = WORLD_BOUNDS.minY;
++camera.updateProjectionMatrix();
++
++
++	•	Instantiate starfield before other entities, store the instance, and call starfield.update(dt) every frame after camera updates.
++	•	Remove unused imports: pxToWorld, worldToPx, VISIBLE_HEIGHT, getVisibleWidth.
++
++	4.	Ship scaling
++
++	•	Remove any unused imports from ../utils/units.
++	•	Replace scaling with:
++
++const r = this.object.userData.radius ?? 1.5;
++this.object.userData.radius = r;
++this.object.scale.set(2 * r, 2 * r, 1);
++
++
++	•	Remove any pxToWorld-based sprite scaling.
++
++	5.	Bullet sizing
++
++	•	Remove any unused imports from ../utils/units.
++	•	Set fixed visual radius and scale from it:
++
++const radius = 0.28;
++this.object.scale.set(2 * radius, 2 * radius, 1);
++
++
++
++	6.	Spawning
++
++	•	Import WORLD_BOUNDS from ../utils/units.
++	•	Leave wave 1 logic unchanged if it already uses >= 1. If any guard is > 1, change to >= 1.
++	•	Use WORLD_BOUNDS for spawn calculations and outside-world buffer as currently designed.
++
++	7.	Import sweep
++
++	•	Delete src/utils/units.ts if present.
++	•	Update any lingering imports repo-wide to the correct relative path under game/utils/units.
++	•	Remove any unused pxToWorld imports to avoid TS warnings.
++
++Acceptance
++	•	Dev server runs clean.
++	•	Starfield visible behind entities.
++	•	Ship and bullets sized by radius.
++	•	Asteroids spawn on wave 1.
++
++Deliverable
++	•	Print ONE timestamped unified diff under /diffs/ with all edits and any file deletion. No truncation.
++	•	Commit and push with message:
++fix(world): unify units module, restore starfield, normalize scale, ensure wave-1 asteroids
++
+diff --git a/docs/prompts/2.md b/docs/prompts/2.md
+index 0252bc0..a41dab6 100644
+--- a/docs/prompts/2.md
++++ b/docs/prompts/2.md
+@@ -1,87 +1,78 @@
+-Here’s the Block 5 execution prompt for Sonnet. Drop this in and let him run it.
+-
+-EXECUTION MODE — Implement Enemy Hunters (AI + enemy bullets + wave≥3 spawns). Output ONE unified diff under `/diffs/` only. Then commit and push.
+-
+-Scope
+-- NEW: /AsteroidsV2/reactShell/src/game/entities/EnemyHunter.ts
+-- NEW: /AsteroidsV2/reactShell/src/game/systems/EnemyBullets.ts
+-- UPDATE: /AsteroidsV2/reactShell/src/game/systems/Spawning.ts
+-- UPDATE: /AsteroidsV2/reactShell/src/game/systems/Collision.ts
+-- UPDATE: /AsteroidsV2/reactShell/src/game/GameCanvas.tsx
+-- (Assets are already present) /public/assets/boss/boss1.png … boss10.png
+-
+-Requirements
+-
+-1) EnemyHunter entity (constants from plan)
+-- Radius: 1.2; accel: 20; maxSpeed: 26
+-- Fire rate: 0.9s; bulletSpeed: 55; bulletLife: 1.6s
+-- Preferred distance to player: 14 (strafing orbit)
+-- Speed scaling per boss level: ×1.2 each level
+-- Visual: use boss sprites from `assets/boss/boss1.png`…`boss10.png` (random, avoid immediate repeats)
+-- API:
+-  ```ts
+-  export class EnemyHunter {
+-    object: THREE.Object3D;
+-    radius: number; level: number;
+-    lastFireAt: number;
+-    constructor(level: number, pos: THREE.Vector2, spriteUrl: string);
+-    update(dt: number, shipPos: THREE.Vector2): void; // strafing AI: accelerate tangentially to maintain ~14u distance
+-    canFire(now: number): boolean;
+-  }
+-
+-	2.	Enemy bullets system (separate from player bullets)
+-
+-	•	File: systems/EnemyBullets.ts
+-	•	Manages pooled bullets fired by hunters.
+-	•	Bullet properties: speed=55, ttl=1.6s, small radius (match Collision expectations)
+-	•	Wrap at world bounds (±375, ±249).
+-	•	API:
+-
+-export function createEnemyBullets(scene: THREE.Scene) {
+-  return {
+-    fire(from: THREE.Vector2, angleRad: number): void,
+-    update(dt: number): void,
+-    getAll(): { pos: THREE.Vector2; radius: number; object: THREE.Object3D }[]
+-  };
+-}
++# Claude Code — OPUS PLAN MODE
+ 
++Problem
++- After the last commit the game renders at the wrong scale, the starfield is missing, and wave-1 asteroids do not appear.
++- Root cause is a broken world→screen contract introduced by the new `utils/units.ts` plus missing initialization/wiring for Starfield and Spawning.
+ 
++Objective
++- Restore the original world scale, re-enable starfield rendering, and ensure wave-1 asteroid spawns. One diff, then commit and push.
+ 
+-	3.	Spawning integration (wave ≥ 3)
++Execution (Sonnet)
++- Output ONE unified diff under `/diffs/` only. Then commit and push.
+ 
+-	•	In Spawning.ts, add hunter spawns for wave ≥ 3:
+-	•	count = Math.min(1 + Math.floor((wave - 2)/2), 4)
+-	•	level = 1..n (affects speed scaling)
+-	•	spawn outside world by 20 units buffer like asteroids
+-	•	Ensure sprite selection pulls a random boss image each time; avoid repeating the same sprite twice in a row if multiple spawn.
+-
+-	4.	Collision integration
+-
+-	•	Ensure Collision.ts handles enemy bullets ↔ ship (damage ship unless invulnerable).
+-	•	Keep existing bullet↔asteroid, ship↔asteroid behavior unchanged.
+-
+-	5.	Game loop wiring
+-
+-	•	In GameCanvas.tsx, instantiate and update:
+-	•	Array/list of EnemyHunter instances per wave
+-	•	The enemy bullets system
+-	•	Per frame: update hunters (passing ship position), if canFire then enemyBullets.fire from hunter nose angle.
+-	•	Update enemyBullets after hunters.
+-	•	Optional: surface hunter and enemy bullet counts to DevPanel stats if it exists.
+-
+-Constraints
+-	•	Do NOT touch PostFX, HUD, upgrades, or audio in this block.
+-	•	Asset paths/casing must match exactly: assets/boss/boss1.png … assets/boss/boss10.png.
+-	•	Keep default render path as direct renderer.
+-
+-Acceptance tests (run in browser)
+-	•	On wave 1–2: no hunters spawn.
+-	•	On wave 3: at least 1 hunter spawns with a boss sprite, strafes around the ship at ~14u and fires every ~0.9s.
+-	•	Enemy bullets travel ~55u/s, expire ~1.6s, wrap at edges.
+-	•	Enemy bullets damage the ship (unless invulnerable).
+-	•	Higher waves spawn more hunters up to 4; movement speed scales ×1.2 per level.
++Scope
++- UPDATE: /AsteroidsV2/reactShell/src/game/utils/units.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/GameCanvas.tsx
++- UPDATE: /AsteroidsV2/reactShell/src/game/systems/Starfield.ts (only if needed)
++- UPDATE: /AsteroidsV2/reactShell/src/game/systems/Spawning.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/entities/Bullet.ts (radius only if oversized)
++- UPDATE: /AsteroidsV2/reactShell/src/game/entities/Ship.ts (sprite scale derived from radius)
++
++Exact changes to implement
++
++1) Fix world units and bounds (single source of truth)
++- In `utils/units.ts`:
++  - Export a mutable `WORLD_BOUNDS` and a `configureWorld(width: number, height: number)` that sets:
++    ```ts
++    // half-extents derived from render size (keep prior design: ~750x498 world)
++    const halfW = 375, halfH = 249;
++    WORLD_BOUNDS = { minX: -halfW, maxX: halfW, minY: -halfH, maxY: halfH } as const;
++    ```
++    Do not compute from devicePixelRatio. Keep 1 world unit == 1 pixel for now.
++  - Keep `pxToWorld(n)` returning `n`.
++  - Export `getWorldSize()` returning `{ width: 750, height: 498 }` so camera/spawn systems don’t duplicate constants.
++
++2) Camera and resize wiring; re-enable starfield
++- In `GameCanvas.tsx`:
++  - On mount and on window resize, call `configureWorld(canvas.clientWidth, canvas.clientHeight)` and then set the orthographic camera:
++    ```ts
++    camera.left = WORLD_BOUNDS.minX; camera.right = WORLD_BOUNDS.maxX;
++    camera.top = WORLD_BOUNDS.maxY; camera.bottom = WORLD_BOUNDS.minY;
++    camera.updateProjectionMatrix();
++    ```
++  - Ensure Starfield system is created before other entities and added to the scene. If it was removed from the update loop, re-insert its `update(dt)` call each frame.
++
++3) Restore starfield defaults if the module exists but renders nothing
++- In `systems/Starfield.ts` (only if necessary):
++  - Use particles sized in world units (1.0–1.5) and place them uniformly within `WORLD_BOUNDS` with wrap logic identical to bullets.
++  - Ensure the material is not depth-tested so stars render behind sprites:
++    ```ts
++    material.depthWrite = false; material.depthTest = false; material.transparent = true;
++    ```
++
++4) Fix asteroid spawning on wave 1
++- In `systems/Spawning.ts`:
++  - Ensure wave 1 spawns asteroids. If there is a `wave >= 1` guard that accidentally became `> 1`, change it to `>= 1`.
++  - Use `getWorldSize()` or `WORLD_BOUNDS` to spawn just outside the world with a 20u buffer, then wrap.
++  - Keep original counts/speeds; do not change gameplay balance.
++
++5) Normalize visual scale from entity radii
++- In `entities/Ship.ts`:
++  - Derive sprite scale from `radius` so texture size doesn’t blow up visuals. Set:
++    ```ts
++    // assume sprite nominal width == 2*radius in world units
++    sprite.scale.set(2*radius, 2*radius, 1);
++    ```
++- In `entities/Bullet.ts`:
++  - If bullets render oversized, clamp `radius` to `0.28` and ensure mesh/sprite uses `2*radius` for scale.
++
++Acceptance
++- Starfield visible again behind everything.
++- Ship and bullets appear at reasonable size (radius-driven).
++- Asteroids spawn on wave 1 and wrap correctly.
++- Canvas resize preserves scale and bounds.
+ 
+ Deliverable
+-	•	Print ONE timestamped unified diff under /diffs/ with all new/updated files. No truncation/summaries.
+-	•	After printing, commit and push with message: “Add Enemy Hunters (AI, enemy bullets, wave≥3 spawns)”.
+-
++- Print ONE timestamped unified diff under `/diffs/` with all edits above. No truncation.
++- Then commit and push with message:
++  `fix(world): restore world scale, re-enable starfield, and ensure wave-1 asteroid spawns`
+\ No newline at end of file
+diff --git a/docs/prompts/3.md b/docs/prompts/3.md
+index 9c3fc7d..a1ccc8e 100644
+--- a/docs/prompts/3.md
++++ b/docs/prompts/3.md
+@@ -1,82 +1,90 @@
+-Here’s the Block 6 execution prompt for Sonnet. Drop it in.
++Approved with edits. Use this exact execution prompt.
+ 
+-EXECUTION MODE — Implement Particles & Debris (pooled, performant). Output ONE unified diff under `/diffs/` only. Then commit and push.
++EXECUTION MODE — Consolidate world units, restore starfield, fix scale, ensure wave-1 spawns. Output ONE unified diff under `/diffs/` only. Then commit and push.
+ 
+ Scope
+-- NEW: /AsteroidsV2/reactShell/src/game/entities/Particles.ts
+-- NEW: /AsteroidsV2/reactShell/src/game/entities/Debris.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/utils/units.ts
+ - UPDATE: /AsteroidsV2/reactShell/src/game/GameCanvas.tsx
+-- UPDATE: /AsteroidsV2/reactShell/src/game/systems/Collision.ts
+-- (Optional) UPDATE: /AsteroidsV2/reactShell/src/ui/DevPanel.tsx (counters only)
+-
+-Requirements
+-
+-1) Particles (hit/explosion bursts)
+-- Object pool (configurable, default 400–600 sprites/points). No runtime alloc churn.
+-- API:
+-  ```ts
+-  export type BurstOpts = { count:number; color?:number; speed?:number; lifeMs?:number; size?:number };
+-  export function createParticles(scene:THREE.Scene){
+-    return {
+-      burst(pos:THREE.Vector2, opts:BurstOpts): void,
+-      update(dt:number): void,
+-      activeCount(): number
+-    };
+-  }
+-
+-	•	Each particle stores pos, vel, ttl; fades out over life; removed back to pool.
+-	•	Visual: lightweight (THREE.Points with dynamic buffer or tiny Sprites). Keep GPU-friendly.
+-
+-	2.	Debris (tetrahedrons, pooled = 220)
+-
+-	•	Geometry: prebuilt tetrahedron (one BufferGeometry), material reused.
+-	•	API:
+-
+-export function createDebris(scene:THREE.Scene){
+-  return {
+-    spawn(pos:THREE.Vector2, count:number, baseSpeed:number): void,
+-    update(dt:number): void,
+-    activeCount(): number
+-  };
++- UPDATE or NEW: /AsteroidsV2/reactShell/src/game/systems/Starfield.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/systems/Spawning.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/entities/Ship.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/entities/Bullet.ts
++- DELETE if present: /AsteroidsV2/reactShell/src/utils/units.ts
++
++Edits
++
++1) Single source of truth for units
++- Ensure only this module exists: `src/game/utils/units.ts`.
++- Replace its contents with:
++
++```ts
++// src/game/utils/units.ts
++export type WorldBounds = { minX: number; maxX: number; minY: number; maxY: number };
++
++// mutable so resize can reconfigure
++export let WORLD_BOUNDS: WorldBounds = { minX: -375, maxX: 375, minY: -249, maxY: 249 };
++
++export function configureWorld(width: number, height: number): void {
++  // keep 1 world unit = 1 pixel; derive half-extents from initial design not DPR
++  WORLD_BOUNDS = { minX: -375, maxX: 375, minY: -249, maxY: 249 };
+ }
+ 
++export function getWorldSize(): { width: number; height: number } {
++  return { width: 750, height: 498 };
++}
++
++export function pxToWorld(n: number): number {
++  return n;
++}
+ 
+-	•	Each piece stores pos, vel, angular velocity, life; fades and returns to pool.
+-	•	Trigger from larger events (asteroid split/destroy, ship hit).
++	2.	Import path normalization
+ 
+-	3.	Integration points
++	•	Delete src/utils/units.ts if it exists.
++	•	Update imports to reference game/utils/units:
++	•	In src/game/GameCanvas.tsx import from ./utils/units.
++	•	In src/game/entities/* keep ../utils/units as is.
++	•	In any other files importing ../utils/units or ../../utils/units, point them at the game/utils/units relative path from their location.
++
++	3.	Camera and world config
+ 
+-	•	In Collision.ts:
+-	•	On bullet↔asteroid hit: small particle burst; on asteroid destroy/split: bigger burst + debris spawn proportional to size (e.g., L=20, M=12, S=6).
+-	•	On ship↔asteroid hit: distinct color burst + a few debris pieces.
+ 	•	In GameCanvas.tsx:
+-	•	Instantiate particles and debris; call update(dt) each frame after collisions.
+-	•	Optionally send activeCount() totals into DevPanel stats if present.
++	•	After scene/camera init and on resize, call configureWorld(canvas.clientWidth, canvas.clientHeight).
++	•	Set orthographic camera bounds from WORLD_BOUNDS and call camera.updateProjectionMatrix().
++
++	4.	Starfield
+ 
+-	4.	Constants (inline defaults; match vanilla feel)
++	•	If src/game/systems/Starfield.ts exists, re-wire it; otherwise create it.
++	•	Requirements:
++	•	Create N particles (e.g., 300) positioned uniformly within WORLD_BOUNDS.
++	•	Particle size 1.0–1.5 in world units.
++	•	Wrap on movement using WORLD_BOUNDS with no parallax for now.
++	•	Material flags: depthWrite=false, depthTest=false, transparent=true.
++	•	In GameCanvas.tsx, instantiate Starfield before other entities and call its update(dt) each frame.
+ 
+-	•	PARTICLES:
+-	•	default count 12 (hit), 28 (destroy), color #ffffff, speed 60–120, life 450–900ms, size 2–3px.
+-	•	DEBRIS:
+-	•	pool 220, life 900–1400ms, baseSpeed ~40–80, angular vel small.
++	5.	Visual scale from radius
+ 
+-	5.	Performance
++	•	In src/game/entities/Ship.ts ensure sprite scale derives from radius:
++	•	sprite.scale.set(2 * radius, 2 * radius, 1);
++	•	In src/game/entities/Bullet.ts:
++	•	Clamp radius = 0.28 if currently larger.
++	•	Ensure mesh/sprite scale is 2 * radius.
++	•	Keep existing physics, speed, ttl.
+ 
+-	•	No per-frame allocations; reuse arrays/typed buffers.
+-	•	Avoid creating materials per instance (share materials).
+-	•	Keep draw calls low (prefer batched Points over many Sprites where feasible).
++	6.	Spawning fixes
+ 
+-Constraints
+-	•	Do NOT alter physics constants already established.
+-	•	No PostFX changes.
+-	•	No new dependencies.
++	•	In src/game/systems/Spawning.ts:
++	•	Confirm wave-1 asteroids spawn. If a guard uses wave > 1, change to wave >= 1.
++	•	Spawn positions: outside WORLD_BOUNDS by 20 units then allow wrap.
++	•	Use WORLD_BOUNDS or getWorldSize() to compute spawn zone. Do not hardcode canvas size.
+ 
+-Acceptance tests
+-	•	Shooting an asteroid produces a visible particle burst; destroying one produces a larger burst plus flying debris; counts decay over time.
+-	•	Pooling verified: sustained fire does not degrade FPS, no growing memory.
+-	•	DevPanel (if updated) shows nonzero particle/debris counts during action and they drop back toward zero when idle.
++Acceptance
++	•	Starfield visible behind everything.
++	•	Ship and bullets sized by radius, not by texture pixels.
++	•	Wave 1 shows asteroids with correct wrap.
++	•	pnpm dev runs with no import errors.
+ 
+ Deliverable
+-	•	Print ONE timestamped unified diff under /diffs/ with all new/updated files. No truncation/summaries.
+-	•	Then commit and push with message: “Add pooled Particles and Debris systems and integrate with collisions”.
++	•	Print ONE timestamped unified diff under /diffs/ with all edits and the file deletion if applicable. No truncation.
++	•	Then commit and push with message:
++fix(world): unify units module, restore starfield, normalize scale, and ensure wave-1 asteroids
+ 
+diff --git a/docs/prompts/4.md b/docs/prompts/4.md
+index 8ee68e4..1a9690d 100644
+--- a/docs/prompts/4.md
++++ b/docs/prompts/4.md
+@@ -1,18 +1,73 @@
+-> APPROVAL: Block 6 (Particles & Debris) is complete and validated against acceptance criteria.  
+-Proceed with Block 7: Shield & Invulnerability mechanics.  
+-
+-Use the execution prompt already defined in the plan for Block 7.  
+-Implementation details to cover:  
+-- Invuln timers: 2s respawn, 3s wave start, 1s after hit  
+-- Shield visual: transparent sphere (opacity 0.6)  
+-- Shield charges integrated with upgrades system  
+-- Damage immunity during active invulnerability  
+-- Visual feedback: ship flashing during invuln  
+-
+-Acceptance criteria:  
+-- ✅ Ship is invulnerable for 3s on wave start, 2s after respawn, 1s after hit  
+-- ✅ Shield visuals appear correctly when active  
+-- ✅ Shield charges reduce properly when damage is absorbed  
+-- ✅ Flash effect clearly shows invulnerable state  
+-
+-Output: Single unified diff under /diffs/shields_[timestamp].diff and commit the changes.  
+\ No newline at end of file
++Approved with edits. Use this exact execution prompt.
++
++EXECUTION MODE — Unify units, restore starfield, normalize visual scale, ensure wave-1 spawns. Output ONE unified diff under `/diffs/` only. Then commit and push.
++
++Scope
++- UPDATE: /AsteroidsV2/reactShell/src/game/utils/units.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/GameCanvas.tsx
++- NEW or UPDATE: /AsteroidsV2/reactShell/src/game/systems/Starfield.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/systems/Spawning.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/entities/Ship.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/entities/Bullet.ts
++- DELETE if present: /AsteroidsV2/reactShell/src/utils/units.ts
++
++Edits to implement
++
++1) Single source of truth for units
++- Replace `src/game/utils/units.ts` with:
++```ts
++export type WorldBounds = { minX: number; maxX: number; minY: number; maxY: number };
++
++// mutable so other systems can read updated bounds if needed
++export let WORLD_BOUNDS: WorldBounds = { minX: -375, maxX: 375, minY: -249, maxY: 249 };
++
++export function configureWorld(): void {
++  // keep 1 world unit = 1 pixel; lock to original design half-extents
++  WORLD_BOUNDS = { minX: -375, maxX: 375, minY: -249, maxY: 249 };
++}
++export function getWorldSize(): { width: number; height: number } {
++  return { width: 750, height: 498 };
++}
++export function pxToWorld(n: number): number { return n; }
++
++	2.	Normalize imports
++
++	•	Delete src/utils/units.ts if it exists.
++	•	Update any imports that reference ../utils/units or ../../utils/units to point to the path under game/ relative to the file’s location. In GameCanvas.tsx it should be ./utils/units. Keep entity imports that already correctly resolve to ../utils/units under game/.
++
++	3.	Camera and world config
++
++	•	In GameCanvas.tsx, call configureWorld() on mount and on resize handler.
++	•	Set orthographic camera bounds from WORLD_BOUNDS and call camera.updateProjectionMatrix() after changes.
++	•	Ensure the game loop still runs after these changes.
++
++	4.	Starfield
++
++	•	Create src/game/systems/Starfield.ts if missing, otherwise update it to:
++	•	Create ~300 particles positioned uniformly inside WORLD_BOUNDS.
++	•	Particle size 1.0–1.5 world units.
++	•	Wrap positions at WORLD_BOUNDS.
++	•	Set material flags depthWrite=false, depthTest=false, transparent=true.
++	•	In GameCanvas.tsx, instantiate Starfield before other entities and call starfield.update(dt) each frame.
++
++	5.	Visual scale from radius
++
++	•	In entities/Ship.ts, set sprite scale from radius: sprite.scale.set(2*radius, 2*radius, 1);
++	•	In entities/Bullet.ts, ensure radius = 0.28 and mesh/sprite scale is 2*radius.
++
++	6.	Spawning
++
++	•	In systems/Spawning.ts, ensure wave 1 spawns asteroids. If any guard is wave > 1, change to wave >= 1.
++	•	Spawn just outside WORLD_BOUNDS with a 20-unit buffer, then allow wrap. Do not change counts or speeds.
++
++Acceptance
++	•	Starfield visible behind all entities.
++	•	Ship and bullets sized by radius, not by texture pixels.
++	•	Asteroids spawn on wave 1 and wrap correctly.
++	•	pnpm dev runs clean.
++
++Deliverable
++	•	Print ONE timestamped unified diff under /diffs/ with all edits and any file deletion. No truncation.
++	•	Then commit and push with message:
++fix(world): unify units module, restore starfield, normalize scale, ensure wave-1 asteroids
++
+diff --git a/docs/prompts/5.md b/docs/prompts/5.md
+index 5b3d179..f9d19b3 100644
+--- a/docs/prompts/5.md
++++ b/docs/prompts/5.md
+@@ -1,84 +1,123 @@
+-Here’s the Block 8 execution prompt for Sonnet. Drop it in.
++Approved with edits. Use this exact execution prompt.
+ 
+-EXECUTION MODE — Implement HUD (score, wave, combo, currency, upgrade history). Output ONE unified diff under `/diffs/` only. Then commit and push.
++EXECUTION MODE — Unify units, restore starfield, normalize visual scale, ensure wave-1 spawns. Output ONE unified diff under `/diffs/` only. Then commit and push.
+ 
+ Scope
+-- NEW:    /AsteroidsV2/reactShell/src/ui/Hud.tsx
+-- UPDATE: /AsteroidsV2/reactShell/src/game/GameState.ts (selectors only; no behavior changes)
+-- UPDATE: /AsteroidsV2/reactShell/src/App.tsx (mount HUD)
+-- UPDATE: /AsteroidsV2/reactShell/src/styles.css (append minimal HUD styles)
++- UPDATE: /AsteroidsV2/reactShell/src/game/utils/units.ts
++- DELETE if present: /AsteroidsV2/reactShell/src/utils/units.ts
++- NEW or UPDATE: /AsteroidsV2/reactShell/src/game/systems/Starfield.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/GameCanvas.tsx
++- UPDATE: /AsteroidsV2/reactShell/src/game/systems/Spawning.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/entities/Ship.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/entities/Bullet.ts
++
++1) Replace units.ts with exact contents
++```ts
++// src/game/utils/units.ts
++export type WorldBounds = { minX: number; maxX: number; minY: number; maxY: number };
+ 
+-Requirements
++// Keep 1 world unit = 1 pixel. Lock to original design half-extents.
++export let WORLD_BOUNDS: WorldBounds = { minX: -375, maxX: 375, minY: -249, maxY: 249 };
+ 
+-1) Data (read-only from GameState)
+-Expose lightweight selectors (pure functions) in `GameState.ts`:
+-```ts
+-export const selectScore = (s:GameState)=>s.score;
+-export const selectWave  = (s:GameState)=>s.wave;
+-export const selectCombo = (s:GameState)=>({ value:s.combo, timer:s.comboTimer, max:2.3 });
+-export const selectCurrency = (s:GameState)=>s.currency; // {salvage,gold,platinum,adamantium}
+-export const selectUpgrades = (s:GameState)=>s.upgradeHistory.slice(-8); // newest last
+-
+-No state shape changes, no new mutations.
+-	2.	HUD component
+-
+-	•	File: src/ui/Hud.tsx
+-	•	Props:
+-
+-type HudProps = {
+-  score:number;
+-  wave:number;
+-  combo:{ value:number; timer:number; max:number };
+-  currency:{ salvage:number; gold:number; platinum:number; adamantium:number };
+-  upgrades: Array<{ name:string; tier?:string }>;
+-  visible?: boolean; // default true
+-};
+-
+-	•	Layout:
+-	•	Top-left: Wave (e.g., “Wave 3”) and Score stacked.
+-	•	Top-right: currency row with subtle glass panel: Salvage | Gold | Platinum | Adamantium.
+-	•	Bottom-left: “Upgrades” small list (max 8; newest at bottom).
+-	•	Top-center: Combo meter bar (width = timer/max, label “x{combo.value.toFixed(2)}” if >1.0).
+-	•	No external deps; basic CSS only.
+-
+-	3.	App integration
+-
+-	•	In App.tsx, pull current GameState instance or snapshot provider already present. If not directly accessible, thread a lightweight getter or subscribe callback that’s already used for DevPanel stats.
+-	•	Compute props via the selectors and render <Hud .../> when gamePhase is 'playing' | 'wave-complete' (still visible during wave-clear).
+-	•	Ensure HUD does not reflow canvas; use position:fixed containers.
+-
+-	4.	Styles (append to styles.css)
+-Minimal classes:
+-
+-.hud { position: fixed; inset: 0; pointer-events: none; z-index: 5000; }
+-.hud-tl, .hud-tr, .hud-tc, .hud-bl { position: absolute; pointer-events: none; color:#e6e6e6; text-shadow: 0 1px 2px rgba(0,0,0,.6); font: 14px/1.3 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
+-.hud-tl{ top:12px; left:12px; }
+-.hud-tr{ top:12px; right:12px; }
+-.hud-tc{ top:12px; left:50%; transform: translateX(-50%); width: 360px; }
+-.hud-bl{ bottom:12px; left:12px; max-width: 320px; }
+-.hud-panel{ background: rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.18); border-radius:8px; padding:8px 10px; }
+-.hud-row{ display:flex; gap:10px; align-items:center; justify-content:space-between; }
+-.hud-chip{ background: rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); border-radius:6px; padding:4px 8px; font-weight:600; }
+-.combo-wrap{ height:10px; background: rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); border-radius:999px; overflow:hidden; }
+-.combo-bar{ height:100%; background: linear-gradient(90deg,#63b3ff,#7cffc1); }
+-.hud-upgrades li{ list-style:none; margin:2px 0; opacity:.9; }
+-
+-	5.	Performance
+-
+-	•	HUD must not cause React re-renders per frame. Throttle to ~10Hz if needed using an existing stats tick or requestAnimationFrame sample with setState guard. Keep computation minimal.
+-
+-Acceptance tests
+-	•	Wave/Score: shows correct numbers and updates as score/wave change.
+-	•	Currency: numbers reflect GameState.currency live; layout doesn’t overlap dev panel.
+-	•	Combo: when comboTimer > 0, bar animates; label shows xN.NN when > 1.0.
+-	•	Upgrades: after you (temporarily) push mock items into upgradeHistory, list shows the last 8, newest at bottom.
+-
+-Constraints
+-	•	Do NOT modify gameplay logic or constants.
+-	•	No new dependencies.
+-	•	Keep asset paths/casing untouched.
++export function configureWorld(): void {
++  WORLD_BOUNDS = { minX: -375, maxX: 375, minY: -249, maxY: 249 };
++}
++
++export function getWorldSize(): { width: number; height: number } {
++  return { width: 750, height: 498 };
++}
++
++export function pxToWorld(n: number): number { return n; }
++
++	2.	Remove duplicate module
++
++	•	Delete src/utils/units.ts if it exists.
++
++	3.	GameCanvas wiring
++
++	•	Change import to ./utils/units.
++	•	After camera init and on resize: call configureWorld(), set:
++
++camera.left = WORLD_BOUNDS.minX;
++camera.right = WORLD_BOUNDS.maxX;
++camera.top = WORLD_BOUNDS.maxY;
++camera.bottom = WORLD_BOUNDS.minY;
++camera.updateProjectionMatrix();
++
++
++	•	Instantiate Starfield before other entities and call starfield.update(dt) each frame.
++
++	4.	Starfield file contents
++
++// src/game/systems/Starfield.ts
++import * as THREE from "three";
++import { WORLD_BOUNDS } from "../utils/units";
++
++export function createStarfield(scene: THREE.Scene, count = 300) {
++  const positions = new Float32Array(count * 3);
++  const sizes = new Float32Array(count);
++  for (let i = 0; i < count; i++) {
++    const x = WORLD_BOUNDS.minX + Math.random() * (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX);
++    const y = WORLD_BOUNDS.minY + Math.random() * (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY);
++    positions[i * 3 + 0] = x;
++    positions[i * 3 + 1] = y;
++    positions[i * 3 + 2] = -10;
++    sizes[i] = 1 + Math.random() * 0.5; // 1.0–1.5 world units
++  }
++
++  const geom = new THREE.BufferGeometry();
++  geom.setAttribute("position", new THREE.BufferAttribute(positions, 3));
++  geom.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
++
++  const mat = new THREE.PointsMaterial({ size: 1, color: 0xffffff });
++  mat.depthWrite = false; mat.depthTest = false; mat.transparent = true;
++
++  const points = new THREE.Points(geom, mat);
++  scene.add(points);
++
++  function wrap() {
++    const pos = geom.getAttribute("position") as THREE.BufferAttribute;
++    for (let i = 0; i < count; i++) {
++      let x = pos.getX(i), y = pos.getY(i);
++      if (x < WORLD_BOUNDS.minX) x = WORLD_BOUNDS.maxX;
++      if (x > WORLD_BOUNDS.maxX) x = WORLD_BOUNDS.minX;
++      if (y < WORLD_BOUNDS.minY) y = WORLD_BOUNDS.maxY;
++      if (y > WORLD_BOUNDS.maxY) y = WORLD_BOUNDS.minY;
++      pos.setX(i, x); pos.setY(i, y);
++    }
++    pos.needsUpdate = true;
++  }
++
++  return { update(_: number) { wrap(); } };
++}
++
++	5.	Ship scale from radius
++
++	•	In src/game/entities/Ship.ts, after sprite creation, set:
++
++sprite.scale.set(2 * this.radius, 2 * this.radius, 1);
++
++
++	•	Remove any pxToWorld-based sprite scaling.
++
++	6.	Bullet radius and scale
++
++	•	In src/game/entities/Bullet.ts, set radius = 0.28 if larger, and ensure mesh/sprite scale uses 2 * radius.
++
++	7.	Spawning
++
++	•	In src/game/systems/Spawning.ts, import from ../utils/units.
++	•	Ensure wave 1 spawns asteroids. If any guard is wave > 1, change to wave >= 1.
++	•	Spawn just outside WORLD_BOUNDS with a 20 unit buffer, then normal wrap applies.
++
++Acceptance
++	•	Starfield visible behind all entities.
++	•	Ship and bullets appear at reasonable size based on radius.
++	•	Asteroids present on wave 1.
++	•	Dev server runs clean.
+ 
+ Deliverable
+-	•	Print ONE timestamped unified diff under /diffs/ with all new/updated files. No truncation/summaries.
+-	•	Commit message: “Add HUD (score, wave, combo, currency, upgrade history) and wire to GameState”.
++	•	Print ONE timestamped unified diff under /diffs/ with all edits and any deletion. No truncation.
++	•	Commit and push with message:
++fix(world): unify units module, restore starfield, normalize scale, ensure wave-1 asteroids
+ 
+diff --git a/docs/prompts/6.md b/docs/prompts/6.md
+index 7d8d1f9..47c4763 100644
+--- a/docs/prompts/6.md
++++ b/docs/prompts/6.md
+@@ -1,68 +1,84 @@
+-Here’s the Block 9 execution prompt for Sonnet. Paste it in.
++Approved with edits. Use this exact execution prompt.
+ 
+-EXECUTION MODE — Implement Minimap (tactical display). Output ONE unified diff under `/diffs/` only. Then commit and push.
++EXECUTION MODE — Unify units, restore starfield, normalize scale, ensure wave-1 asteroids. Output ONE unified diff under `/diffs/` only. Then commit and push.
+ 
+ Scope
+-- NEW:    /AsteroidsV2/reactShell/src/ui/Minimap.tsx
+-- UPDATE: /AsteroidsV2/reactShell/src/App.tsx (mount Minimap)
+-- UPDATE: /AsteroidsV2/reactShell/src/styles.css (append minimap styles)
+-- UPDATE: /AsteroidsV2/reactShell/src/game/GameCanvas.tsx (provide read-only entity snapshots)
+-
+-Requirements
+-
+-1) Data source (read-only snapshots, no behavior changes)
+-- In `GameCanvas.tsx`, expose a lightweight getter or subscription used by HUD to publish per-~100ms snapshots:
+-  ```ts
+-  type MiniSnapshot = {
+-    ship: { x:number; y:number };
+-    asteroids: Array<{ x:number; y:number; r:number }>;
+-    hunters: Array<{ x:number; y:number; r:number }>;
+-    bullets: Array<{ x:number; y:number }>;
+-    enemyBullets: Array<{ x:number; y:number }>;
+-    world: { width:number; height:number }; // 750x498
+-  };
+-
+-	•	Reuse existing lists; do NOT reallocate per-frame. Throttle to ~10Hz like HUD.
+-
+-	2.	Minimap component
+-
+-	•	File: src/ui/Minimap.tsx
+-	•	Props: { data: MiniSnapshot | null; visible?: boolean }
+-	•	Canvas-based render (no new deps). Size: 280×187 px (fixed).
+-	•	Visual mapping:
+-	•	Full world (750×498) scaled into 280×187 (maintain aspect; letterbox if needed).
+-	•	Ship: bright dot/triangle at center-relative position.
+-	•	Asteroids: gray/ore-tinted small circles scaled by radius.
+-	•	Hunters: red dots slightly larger than bullets.
+-	•	Player bullets: white tiny dots; enemy bullets: red tiny dots.
+-	•	Draw order: asteroids, hunters, bullets, ship on top.
+-	•	No interactivity; pointer-events: none.
+-
+-	3.	Styling (append)
+-
+-.minimap-wrap { position: fixed; right: 12px; bottom: 12px; z-index: 5000; pointer-events: none; }
+-.minimap-panel { background: rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.18); border-radius:8px; padding:8px; }
+-.minimap-canvas { display:block; width:280px; height:187px; image-rendering: pixelated; }
+-
+-	4.	App integration
+-
+-	•	In App.tsx, where HUD is mounted, also mount <Minimap data={miniSnapshot} />.
+-	•	Reuse the same 10Hz tick used for HUD to update miniSnapshot.
+-	•	Keep visible tied to game phase 'playing' | 'wave-complete'.
+-
+-	5.	Performance
+-
+-	•	Avoid allocations in draw loop; reuse paths/clears.
+-	•	Clear canvas each paint; no React re-render per entity.
+-
+-Acceptance tests
+-	•	Minimap appears bottom-right in a glass panel, 280×187.
+-	•	Ship dot tracks movement accurately.
+-	•	Asteroids/hunters/bullets positions update ~10Hz.
+-	•	World edges map correctly (objects wrap across edges on the minimap).
+-	•	No noticeable perf impact during heavy action.
++- UPDATE: /AsteroidsV2/reactShell/src/game/utils/units.ts
++- DELETE if present: /AsteroidsV2/reactShell/src/utils/units.ts
++- NEW or UPDATE: /AsteroidsV2/reactShell/src/game/systems/Starfield.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/GameCanvas.tsx
++- UPDATE: /AsteroidsV2/reactShell/src/game/systems/Spawning.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/entities/Ship.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/entities/Bullet.ts
++
++Edits to implement
++
++1) Replace units.ts with exact contents
++```ts
++// src/game/utils/units.ts
++export type WorldBounds = { minX: number; maxX: number; minY: number; maxY: number };
++
++export let WORLD_BOUNDS: WorldBounds = { minX: -375, maxX: 375, minY: -249, maxY: 249 };
++
++export function configureWorld(): void {
++  // lock to original extents; 1 world unit = 1 pixel
++  WORLD_BOUNDS = { minX: -375, maxX: 375, minY: -249, maxY: 249 };
++}
++
++export function getWorldSize() { return { width: 750, height: 498 }; }
++
++export function pxToWorld(n: number) { return n; }
++
++	2.	GameCanvas wiring
++
++	•	Change import to ./utils/units.
++	•	After init and on resize: call configureWorld(), then:
++
++camera.left = WORLD_BOUNDS.minX;
++camera.right = WORLD_BOUNDS.maxX;
++camera.top = WORLD_BOUNDS.maxY;
++camera.bottom = WORLD_BOUNDS.minY;
++camera.updateProjectionMatrix();
++
++
++	•	Instantiate Starfield before other entities and call starfield.update(dt) each frame.
++
++	3.	Starfield file
++
++	•	Create or update src/game/systems/Starfield.ts per prior plan: 300 points within WORLD_BOUNDS, size 1.0–1.5, wrap at bounds, depthWrite=false, depthTest=false, transparent=true.
++
++	4.	Ship scale fix
++
++	•	In src/game/entities/Ship.ts set sprite scale from radius exactly:
++
++sprite.scale.set(2 * this.radius, 2 * this.radius, 1);
++
++
++	•	Remove any pxToWorld-based sprite scaling.
++
++	5.	Bullet size
++
++	•	In src/game/entities/Bullet.ts ensure radius = 0.28 and mesh/sprite scale uses 2 * radius.
++
++	6.	Spawning must show asteroids on wave 1
++
++	•	In src/game/systems/Spawning.ts:
++	•	Import from ../utils/units.
++	•	Ensure guard is wave >= 1 (change any > 1).
++	•	Spawn outside WORLD_BOUNDS with a 20u buffer, then allow normal wrap.
++
++	7.	Remove duplicate module
++
++	•	Delete src/utils/units.ts if present.
++
++Acceptance
++	•	Starfield visible.
++	•	Ship and bullets sized by radius.
++	•	Asteroids present on wave 1 with wrap.
++	•	Dev server runs clean.
+ 
+ Deliverable
+-	•	Print ONE timestamped unified diff under /diffs/ with all new/updated files. No truncation/summaries.
+-	•	Commit message: “Add Minimap tactical display (280×187 canvas) with live entity snapshots”.
++	•	Print ONE timestamped unified diff under /diffs/ with all edits and the file deletion. No truncation.
++	•	Commit and push with message:
++fix(world): unify units module, restore starfield, normalize scale, ensure wave-1 asteroids
+ 
+diff --git a/docs/prompts/7.md b/docs/prompts/7.md
+index 7c5251f..688d031 100644
+--- a/docs/prompts/7.md
++++ b/docs/prompts/7.md
+@@ -1,81 +1,10 @@
+-insane efficiency. keep the loop rolling.
+-
+-here’s Block 10 ready so you can paste it the moment Block 9 lands:
+-
+-EXECUTION MODE — Implement Upgrades system + 3-choice picker UI. Output ONE unified diff under `/diffs/`. Then commit and push.
+-
+-Scope
+-- NEW:    /AsteroidsV2/reactShell/src/game/systems/Upgrades.ts
+-- NEW:    /AsteroidsV2/reactShell/src/ui/UpgradeMenu.tsx
+-- UPDATE: /AsteroidsV2/reactShell/src/game/GameState.ts  (mods shape, upgradeHistory, apply logic)
+-- UPDATE: /AsteroidsV2/reactShell/src/game/GameCanvas.tsx (phase transitions)
+-- UPDATE: /AsteroidsV2/reactShell/src/styles.css (upgrade menu styles)
+-
+-Requirements
+-
+-1) Mods + Upgrades (game logic)
+-- Define Mods in GameState: 
+-
+-{ fireRateMul:number, engineMul:number, spread:number, pierce:number, ricochet:number,
+-shieldCharges:number, bulletBounce:number, bulletLifeMul:number, bulletSpeedMul:number,
+-magnetRadius:number, drone:boolean }
+-
+-Defaults = identity (1 or 0).
+-- Implement Upgrade definitions (16 baseline as per plan) with rarity tiers and numeric effects that match vanilla (e.g., Rapid Fire → fireRateMul *= 1.30; Engine Boost → engineMul *= 1.20; Shield Charge → shieldCharges += 1; Ricochet → bulletBounce += 1; Piercing → pierce += 1; Spread Shot → spread += 2; etc.).
+-- `Upgrades.ts`:
+-```ts
+-export type Upgrade = { id:string; name:string; tier:'common'|'rare'|'epic'|'legendary';
+-                        apply:(mods:Mods)=>void; describe:(mods:Mods)=>string; };
+-export function getUpgradeChoices(wave:number, taken:Set<string>): Upgrade[];
+-export function applyUpgrade(u:Upgrade, state:GameState): void;
+-
+-	•	Weighted random by tier; exclude already-taken upgrades when appropriate.
+-	•	Record selection in upgradeHistory.
+-
+-	2.	Picker UI (UpgradeMenu.tsx)
+-
+-	•	3 cards centered overlay; keyboard shortcuts 1/2/3; click to select.
+-	•	Show name, tier badge, and short describe() text.
+-	•	On select: apply upgrade, close menu, transition back to playing.
+-
+-	3.	Phase transitions (GameCanvas/App integration)
+-
+-	•	On wave clear → set gamePhase='upgrade' and prepare 3 choices via getUpgradeChoices.
+-	•	After selection → apply upgrade, push to upgradeHistory, gamePhase='playing', spawn next wave per existing logic.
+-	•	Ensure invulnerability timing on wave start remains intact.
+-
+-	4.	HUD integration
+-
+-	•	HUD should automatically reflect mods via existing selectors (e.g., shieldCharges, possibly show last upgrade in the bottom-left list already wired).
+-	•	No extra HUD features required in this block.
+-
+-	5.	Styling (append minimal)
+-
+-.upgrade-overlay{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:7000; background:rgba(0,0,0,.35); }
+-.upgrade-grid{ display:grid; grid-template-columns:repeat(3, 280px); gap:16px; }
+-.upgrade-card{ pointer-events:auto; background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.18); border-radius:12px; padding:16px; cursor:pointer; transition:transform .12s; }
+-.upgrade-card:hover{ transform:translateY(-2px); }
+-.tier-common{ border-color:#9aa4b2; }
+-.tier-rare{ border-color:#4ea9ff; }
+-.tier-epic{ border-color:#b889ff; }
+-.tier-legendary{ border-color:#ffcc66; }
+-.upgrade-name{ font-weight:700; margin-bottom:6px; }
+-.upgrade-desc{ opacity:.9; font-size:14px; }
+-
+-Constraints
+-	•	Do NOT change established combat constants.
+-	•	No new dependencies.
+-	•	Asset paths/casing unchanged.
+-	•	Keep update frequency sane; no per-frame React re-render storms.
+-
+-Acceptance
+-	•	Clearing a wave opens the 3-choice overlay.
+-	•	1/2/3 keys or click selects and applies the upgrade; returns to gameplay.
+-	•	Effects are visible immediately (e.g., Rapid Fire increases fire rate; Shield Charge increments shield count; Spread adds side bullets; Pierce/Ricochet modify bullet behavior if those are already supported hooks; if hooks not present yet, wire no-op now but store mods so later blocks use them).
+-	•	upgradeHistory shows last 8 in HUD (already wired).
+-	•	No regressions to waves, collisions, hunters, or shields.
+-
+-Deliverable
+-	•	ONE timestamped unified diff under /diffs/ with all new/updated files.
+-	•	Commit message: “Add Upgrades system and 3-choice picker UI; wire wave-clear → upgrade → resume”.
+-
++Approved with edits. Apply these corrections to the plan before execution.
++	1.	Ship.ts
++Change the scale to derive from the actual radius, not a fixed 3.
++Use the instance radius field. Example: sprite.scale.set(2 * this.radius, 2 * this.radius, 1);
++	2.	Import sweep
++After deleting /reactShell/src/utils/units.ts, update any file still importing from ../../utils/units or similar to point at the game/utils/units path relative to the file. Don’t leave stale imports outside the files already listed.
++	3.	Starfield z-order
++Keep depthTest=false, depthWrite=false, and place at a negative z (for example -10) to guarantee it stays behind. Instantiate before other entities as you planned.
++
++Everything else is good. Commit and push after generating one unified diff under /diffs/.
+\ No newline at end of file
+diff --git a/docs/prompts/8.md b/docs/prompts/8.md
+index 45649c9..5ea0816 100644
+--- a/docs/prompts/8.md
++++ b/docs/prompts/8.md
+@@ -1,21 +1,11 @@
+-> APPROVAL: Block 10 (Upgrades System & Picker UI) is complete and validated against acceptance criteria.  
+-Proceed with Block 11: Currency Pickups & Magnetism.  
++Approved with edits. Apply these corrections before execution.
++	1.	Ship.ts
++Do not use userData.radius. Use the class field.
++Set: sprite.scale.set(2 * this.radius, 2 * this.radius, 1);
++	2.	GameCanvas.tsx
++Ensure the starfield instance is stored and updated every frame.
++Create before other entities. Call starfield.update(dt) each tick after camera updates.
++	3.	Starfield.ts
++Place stars at z = -10. Keep depthTest = false, depthWrite = false, transparent = true. Return an object with update(dt).
+ 
+-Use the execution prompt already defined in the plan for Block 11.  
+-Implementation details to cover:  
+-- NEW Pickup.ts entity with floating animation, TTL, and collection radius  
+-- Spawn currency drops when asteroids are destroyed, based on ore type drop rates (gold=27%, platinum=60%, adamantium=40%)  
+-- Magnetism: ship attracts pickups within radius (base + upgrade scaling)  
+-- Auto-collect after 10s if not picked up  
+-- Update GameState.currency on collection  
+-- Integrate pickup rendering into GameCanvas update loop  
+-
+-Acceptance criteria:  
+-- ✅ Destroying a gold asteroid has ~27% chance to drop gold pickup  
+-- ✅ Platinum and adamantium pickups spawn at correct probabilities  
+-- ✅ Pickups float slightly, auto-collect after 10s  
+-- ✅ Ship auto-collects pickups within magnet radius  
+-- ✅ Currency totals update live in HUD panel  
+-- ✅ No performance regressions  
+-
+-Output: Single unified diff under `/diffs/pickups_[timestamp].diff` and commit the changes.  
+\ No newline at end of file
++Everything else is approved. Commit and push in one diff under /diffs/.
+\ No newline at end of file
+diff --git a/docs/prompts/9.md b/docs/prompts/9.md
+new file mode 100644
+index 0000000..4c6ccda
+--- /dev/null
++++ b/docs/prompts/9.md
+@@ -0,0 +1,13 @@
++Approved with edits.
++	1.	Ship.ts
++Remove “private radius = 1.5”. Use the existing class field. Set sprite.scale.set(2 * this.radius, 2 * this.radius, 1);
++	2.	Spawning.ts
++Explicitly confirm wave-1 spawns. If any guard uses wave > 1, change to wave >= 1. Keep counts and speeds unchanged.
++	3.	Import sweep
++After deleting /reactShell/src/utils/units.ts, update any remaining imports that still point at ../../utils/units (or similar) to the correct game/utils/units path relative to each file. Do not leave stale paths outside the listed files.
++	4.	Starfield.ts
++Keep stars at z = -10 and set depthTest = false, depthWrite = false, transparent = true. Return { update(dt) }.
++	5.	GameCanvas.tsx
++Instantiate starfield before other entities and call starfield.update(dt) every frame after camera updates.
++
++Commit in one diff under /diffs/, then push with the planned message.
+\ No newline at end of file
+diff --git a/docs/prompts/done/1.md b/docs/prompts/done/1/1.md
+similarity index 100%
+rename from docs/prompts/done/1.md
+rename to docs/prompts/done/1/1.md
+diff --git a/docs/prompts/done/10.md b/docs/prompts/done/1/10.md
+similarity index 100%
+rename from docs/prompts/done/10.md
+rename to docs/prompts/done/1/10.md
+diff --git a/docs/prompts/done/11.md b/docs/prompts/done/1/11.md
+similarity index 100%
+rename from docs/prompts/done/11.md
+rename to docs/prompts/done/1/11.md
+diff --git a/docs/prompts/done/12.md b/docs/prompts/done/1/12.md
+similarity index 100%
+rename from docs/prompts/done/12.md
+rename to docs/prompts/done/1/12.md
+diff --git a/docs/prompts/done/13.md b/docs/prompts/done/1/13.md
+similarity index 100%
+rename from docs/prompts/done/13.md
+rename to docs/prompts/done/1/13.md
+diff --git a/docs/prompts/done/14.md b/docs/prompts/done/1/14.md
+similarity index 100%
+rename from docs/prompts/done/14.md
+rename to docs/prompts/done/1/14.md
+diff --git a/docs/prompts/done/15.md b/docs/prompts/done/1/15.md
+similarity index 100%
+rename from docs/prompts/done/15.md
+rename to docs/prompts/done/1/15.md
+diff --git a/docs/prompts/done/16.md b/docs/prompts/done/1/16.md
+similarity index 100%
+rename from docs/prompts/done/16.md
+rename to docs/prompts/done/1/16.md
+diff --git a/docs/prompts/done/17.md b/docs/prompts/done/1/17.md
+similarity index 100%
+rename from docs/prompts/done/17.md
+rename to docs/prompts/done/1/17.md
+diff --git a/docs/prompts/done/18.md b/docs/prompts/done/1/18.md
+similarity index 100%
+rename from docs/prompts/done/18.md
+rename to docs/prompts/done/1/18.md
+diff --git a/docs/prompts/done/19.md b/docs/prompts/done/1/19.md
+similarity index 100%
+rename from docs/prompts/done/19.md
+rename to docs/prompts/done/1/19.md
+diff --git a/docs/prompts/done/2.md b/docs/prompts/done/1/2.md
+similarity index 100%
+rename from docs/prompts/done/2.md
+rename to docs/prompts/done/1/2.md
+diff --git a/docs/prompts/done/20.md b/docs/prompts/done/1/20.md
+similarity index 100%
+rename from docs/prompts/done/20.md
+rename to docs/prompts/done/1/20.md
+diff --git a/docs/prompts/done/21.md b/docs/prompts/done/1/21.md
+similarity index 100%
+rename from docs/prompts/done/21.md
+rename to docs/prompts/done/1/21.md
+diff --git a/docs/prompts/done/22.md b/docs/prompts/done/1/22.md
+similarity index 100%
+rename from docs/prompts/done/22.md
+rename to docs/prompts/done/1/22.md
+diff --git a/docs/prompts/done/23.md b/docs/prompts/done/1/23.md
+similarity index 100%
+rename from docs/prompts/done/23.md
+rename to docs/prompts/done/1/23.md
+diff --git a/docs/prompts/done/3.md b/docs/prompts/done/1/3.md
+similarity index 100%
+rename from docs/prompts/done/3.md
+rename to docs/prompts/done/1/3.md
+diff --git a/docs/prompts/done/4.md b/docs/prompts/done/1/4.md
+similarity index 100%
+rename from docs/prompts/done/4.md
+rename to docs/prompts/done/1/4.md
+diff --git a/docs/prompts/done/5.md b/docs/prompts/done/1/5.md
+similarity index 100%
+rename from docs/prompts/done/5.md
+rename to docs/prompts/done/1/5.md
+diff --git a/docs/prompts/done/6.md b/docs/prompts/done/1/6.md
+similarity index 100%
+rename from docs/prompts/done/6.md
+rename to docs/prompts/done/1/6.md
+diff --git a/docs/prompts/done/7.md b/docs/prompts/done/1/7.md
+similarity index 100%
+rename from docs/prompts/done/7.md
+rename to docs/prompts/done/1/7.md
+diff --git a/docs/prompts/done/8.md b/docs/prompts/done/1/8.md
+similarity index 100%
+rename from docs/prompts/done/8.md
+rename to docs/prompts/done/1/8.md
+diff --git a/docs/prompts/done/9.md b/docs/prompts/done/1/9.md
+similarity index 100%
+rename from docs/prompts/done/9.md
+rename to docs/prompts/done/1/9.md
+diff --git a/docs/prompts/done/2/1.md b/docs/prompts/done/2/1.md
+new file mode 100644
+index 0000000..2aba980
+--- /dev/null
++++ b/docs/prompts/done/2/1.md
+@@ -0,0 +1,93 @@
++PLANNING MODE — FULL BUILD PLAN FOR ASTEROIDS (vanilla → React/Three), as a **standalone folder ready to drop into the monorepo later**. 
++Do NOT write code. Produce a complete, numbered plan that Sonnet will execute step-by-step.
++
++Current status (facts)
++- Repo/folder: /AsteroidsV2/reactShell (standalone package now; not in monorepo yet)
++- Tooling: Vite + React 18 + TypeScript, Three.js 0.158.0
++- Camera: orthographic; 1 world unit = 1 CSS pixel
++- Render: default = direct renderer; EffectComposer (bloom/outline/vignette) available but off by default
++- Start screen overlay implemented (assets/start_screen.png)
++- Ship ported; mouse-aim, WASD/arrow thrust/turn, wrapping; sprite locked to 50px height
++- Input live; assets under /public/assets/... (case-exact)
++- Goal: exact parity with /AsteroidsV2/vanillaHTML/src/main.js as a drop-in package directory; **no monorepo work yet** (that comes after parity).
++
++Deliverables (structure your output exactly like this)
++
++1) One-page Roadmap
++   - Phases that reach parity in the smallest safe increments Sonnet can ship (each step touches ~1–4 files, ends in a single diff+commit).
++
++2) Feature Checklist with Acceptance Criteria
++   - Bullets (cadence, TTL, speed, velocity inheritance, muzzle offset)
++   - Collisions (bullet↔asteroid, ship↔asteroid, hunter↔ship; circle-circle)
++   - Asteroids (L/M/S sizes, HP, spawn counts, split counts/velocities, ore types & yields)
++   - Wave system (wave 1 start, progression/clear rules)
++   - Enemy hunters (spawn wave ≥3, strafing, fire timing, boss1–boss10 sprites)
++   - Particles & debris (density, lifetime)
++   - HUD (score, wave, combo; currency if vanilla), Minimap
++   - Upgrades (exact list/effects from vanilla; gating)
++   - Pause/Restart, Status overlay/debug toggle, Audio (path parity)
++   - Start/GameOver behavior, Hangar/shop if present in vanilla
++
++3) Constants Map (compact table)
++   - Constant | Value | Vanilla line(s) | Target file/const name
++   - Include: movement, radii, bullet speed/TTL/cooldown, asteroid sizes/HP/splits, hunter timings, scoring, invuln windows, etc.
++
++4) Module/File Breakdown (under src/)
++   - game/entities/*  (Ship, Bullet, Asteroid, EnemyHunter, Particles, Debris)
++   - game/systems/*   (Bullets, Collision, Spawning/Waves, Physics, Upgrades, Minimap)
++   - game/render/*    (Scene, PostFX, Materials)
++   - game/GameState.ts (shape & selectors), game/GameLoop.ts (update order)
++   - ui/* (Hud, UpgradeMenu, PauseOverlay, GameOverScreen, Hangar)
++   - For each file: public API (classes/functions, signatures) and what state it owns.
++
++5) Numbered Execution Blocks (1..N)
++   For EACH block provide:
++   - Scope: exact file paths to create/update
++   - API contracts to implement (signatures)
++   - Done checks: concrete browser tests (e.g., “hold Space: bullets spawn at nose every X ms, TTL ≈ Y ms, wrap at edges”)
++   - Risks & mitigations (1–3 bullets)
++   - **The exact Sonnet EXECUTION MODE prompt** for that single step (include constraints, one unified diff under /diffs/, then commit/push)
++
++   Suggested sequence (tune if needed):
++   1) Bullets (spawn, TTL, velocity inheritance; no collisions)
++   2) Collision system (bullet↔asteroid, ship↔asteroid; circle-circle)
++   3) Asteroids (L/M/S with split logic + ore)
++   4) Spawning/Waves controller
++   5) HUD (score/wave/combo), basic Minimap
++   6) Hunters (AI, fire timing, sprites)
++   7) Particles & Debris
++   8) Upgrades system + upgrade picker UI
++   9) Pause/Restart + Status overlay
++   10) Audio wiring (path parity) + SFX triggers
++   11) Polish/Parity audit (numeric constants, speeds, timers, wrapping)
++
++6) Verification Plan
++   - Side-by-side comparisons with vanilla
++   - Numeric audits (constants diffed against vanilla lines)
++   - Asset path/casing validation
++   - Dev vs prod build parity
++
++7) **Drop-in Readiness for Monorepo (planning only, no code yet)**
++   - Folder stays self-contained under `reactShell/` with:
++     - package.json (name/scripts ready), vite.config base:'./', public/assets preserved
++     - No cross-repo assumptions; env-free by default
++   - What to expose when moved (e.g., `export default <App/>`, `npm run build` emits `/dist`)
++   - Any flags to keep (DEV overlays behind backtick)
++
++Constraints (apply to all Sonnet prompts you generate)
++- Exact asset paths/casing (e.g., assets/Hanger.png, assets/boss/boss1.png…)
++- Default render path = direct renderer; composer is optional flag
++- No visual drift: port vanilla constants/behavior exactly
++- Each Sonnet step outputs ONE timestamped unified diff under /diffs/ and then commits/pushes
++- No scope creep beyond the block’s listed files
++- TypeScript only; no new deps unless the block explicitly calls for them
++
++Output format
++- Roadmap
++- Constants Table
++- Module/File Breakdown
++- Numbered Execution Blocks (each with its own Sonnet prompt)
++- Verification Plan
++- Drop-in Readiness notes
++
++Do NOT write code. Produce the plan and per-step Sonnet prompts only.
+\ No newline at end of file
+diff --git a/docs/prompts/done/2/10.md b/docs/prompts/done/2/10.md
+new file mode 100644
+index 0000000..2201156
+--- /dev/null
++++ b/docs/prompts/done/2/10.md
+@@ -0,0 +1,67 @@
++POLISH SPRINT 1 – Visual parity fixes (ship halo, bullets visibility, asteroid look)
++
++Target repo: AsteroidsV2/reactShell. No gameplay changes, visuals only. One diff under /diffs/ and one commit+push.
++
++Issues to fix
++	1.	Ship has a gray/black block/halo
++Likely due to PNG alpha handling or material settings.
++	2.	Bullets are barely visible
++Need brighter, larger, crisp dots (vanilla-like).
++	3.	Asteroids look like dull gray turds
++Need simple, clean 2D look with ore-color tint + subtle outline.
++
++Required changes
++
++A) Ship sprite/material (remove halo)
++	•	In game/entities/Ship.ts (or wherever the mesh/material is created):
++	•	Ensure we’re using a plane with PNG (ship.png) with proper alpha:
++	•	material = new THREE.MeshBasicMaterial({ map, transparent: true, depthWrite: false, alphaTest: 0.5, side: THREE.DoubleSide });
++	•	After loading the texture:
++	•	map.colorSpace = THREE.SRGBColorSpace;
++	•	map.magFilter = THREE.NearestFilter;
++	•	map.minFilter = THREE.NearestFilter;
++	•	map.generateMipmaps = false;
++	•	Do not use premultipliedAlpha=false on the renderer; instead rely on alphaTest to drop fringe.
++	•	Verify the PNG truly has transparency (no black matte). If the asset is incorrect, fix by exporting with alpha or add a 1-px transparent bleed.
++
++Acceptance: No visible rectangle/halo around ship at any scale; crisp edges.
++
++B) Bullets visibility & style
++	•	In game/entities/Bullet.ts & systems/BulletManager.ts:
++	•	Visual should be small bright sprite/mesh:
++	•	Keep radius logic for collisions, but render size ≈ 2–3px at 1:1 mapping.
++	•	Use MeshBasicMaterial({ color: 0xffffff }) plus a soft additive glow option:
++	•	Either a small white SpriteMaterial with transparent:true and a soft circle texture, or a tiny plane with a radial-gradient texture.
++	•	Make sure they pop on dark background:
++	•	If using color only: material.color.setHex(0xE6E6E6) and optionally material.emissive is not applicable on Basic; alternative: duplicate tiny bloom pass path when composer is enabled.
++	•	Keep physics unchanged.
++
++Acceptance: Holding fire shows clearly visible bright dots/mini-sparks from ship nose in facing direction at 70 u/s on dark backdrop.
++
++C) Asteroid look (clean 2D style with ore tint)
++	•	In game/entities/Asteroid.ts & game/render/Materials.ts:
++	•	Replace flat gray with tinted disk + thin outline:
++	•	Geometry: keep simple circle (or low-poly round) plane facing camera.
++	•	Material: MeshBasicMaterial with color set by ore:
++	•	iron: #9AA1A8, gold: #E3B341, platinum: #B9D3EE, adamantium: #7FFFD4 (adjust if needed).
++	•	Outline: add a subtle darker rim:
++	•	Option 1: second slightly larger disk behind with darker color & lower opacity (cheap faux outline).
++	•	Option 2: custom fragment for radial darkening (simple smoothstep on uv radius).
++	•	Randomize slight rotation over time for life, but keep strictly 2D billboard.
++
++Acceptance: Large/med/small asteroids render as clean disks with a subtle outline and distinct ore tints; not muddy gray.
++
++D) Optional tiny starfield tweak (if trivial)
++	•	Ensure background stars are visible but faint (do not change density unless trivial):
++	•	Stars as Points with size 1, low alpha (0.3–0.4), color #9aa or #889.
++	•	No impact on perf.
++
++Non-goals (do NOT change)
++	•	No gameplay constants, speeds, hitboxes, spawn counts.
++	•	Keep direct rendering default (composer toggle unchanged).
++	•	Do not touch HUD/minimap layout in this sprint.
++
++Deliverables
++	•	Single diff: /diffs/polish_sprint1_[timestamp].diff
++	•	Commit message: Polish: fix ship alpha fringe, brighten bullets, tint/outline asteroids
++	•	Commit and push when done.
+\ No newline at end of file
+diff --git a/docs/prompts/done/2/11.md b/docs/prompts/done/2/11.md
+new file mode 100644
+index 0000000..c7d6cfa
+--- /dev/null
++++ b/docs/prompts/done/2/11.md
+@@ -0,0 +1,77 @@
++PLAN MODE — Visual Parity Fix Block
++
++Objective
++Restore vanilla visual parity by correcting camera/world scale, entity sizes, and conditional shield rendering. Result should match the vanilla HTML look/feel (ship ~50px tall, clearly visible bullets, correctly sized asteroids with the intended style), with the shield ring shown only during invulnerability/shields.
++
++Symptoms reported
++	•	Always-visible cyan ring around ship (should appear only during invuln/shield, ~3s on wave start).
++	•	Bullets are extremely small / hard to see.
++	•	Asteroids appear as tiny gray balls; overall scale feels mini.
++	•	This likely began after switching to a pixel-perfect ortho mapping (1 world unit = 1 CSS px), which conflicts with vanilla’s world-unit system.
++
++What to audit (read-only first)
++Files:
++	•	reactShell/src/game/render/Scene.ts (camera/frustum)
++	•	reactShell/src/game/GameCanvas.tsx (resize, screen→world mapping)
++	•	reactShell/src/game/entities/Ship.ts (shield visual, size, rotation)
++	•	reactShell/src/game/entities/Bullet.ts (geometry/size)
++	•	reactShell/src/game/entities/Asteroid.ts (visuals, radii)
++	•	reactShell/src/game/systems/Spawning.ts (world bounds usage)
++	•	reactShell/src/game/GameState.ts (invuln timers/shield charges)
++
++Source of truth for scale
++Use vanilla world numbers we already standardized in the plan:
++	•	WORLD: 750 × 498
++	•	Visible window ≈ 1/5 of world → target visible height = 99.6 world units, width ~ 150 world units at 16:9-ish aspect.
++	•	Wrapping at ±375, ±249 world units.
++	•	Ship desired on-screen height ≈ 50 px.
++	•	Bullet visual radius ≈ 3–4 px (readable).
++	•	Asteroids radii (world units): large=6, medium=3.5, small=2 (these must look right once camera scale is corrected).
++
++Plan of record (do in this order)
++	1.	Camera & world-unit restoration
++	•	Revert the pixel-perfect “1 unit = 1 px” mapping.
++	•	Implement an orthographic camera whose frustum height is VISIBLE_HEIGHT = 99.6 world units at any window size.
++	•	Compute frustum width from aspect ratio.
++	•	Update resize handler to preserve that world-unit height.
++	•	Update screen↔world converters accordingly.
++	•	Confirm world wrapping still uses ±375/±249.
++	2.	Shield ring visibility & style
++	•	In Ship.ts, the cyan ring (shield mesh) should render only when:
++	•	invulnerability timers are active (wave start, respawn, recent hit), or
++	•	GameState.shields > 0.
++	•	When not active: set visible=false (not just opacity).
++	•	Ensure wave-start invuln is 3s (as implemented in Block 7).
++	•	Keep opacity ~0.6 when visible; ensure it disappears cleanly after timers.
++	3.	Entity visual sizing pass
++	•	Ship: keep the texture-based scaling set by Ship.setPixelHeight(50) but ensure pixel->world conversion uses the corrected camera (i.e., 50 px on screen regardless of DPI/window).
++	•	Bullets: choose a fixed pixel radius (e.g., 3 px). Convert to world units via camera DPI helper and build a sphere/point size that reads clearly.
++	•	Asteroids: enforce world radii (6/3.5/2). Their screen size will become correct once camera scaling is fixed. Keep them simple discs for now, but use a softer material (slight emissive / alpha) so they don’t look like tiny dull dots.
++	4.	Styling parity tweaks
++	•	Slight bloom on bullets and pickups to increase readability (threshold/strength already in PostFX).
++	•	Ensure minimap dots scale independently and remain readable.
++	5.	Dev tuning (temporary)
++	•	Add a hidden dev slider (`` key) for bullet pixel radius (2–6 px) and ship pixel height (40–60 px). This should update live via conversion helpers, but the shipped defaults must be Ship=50 px, Bullet=3–4 px.
++
++Acceptance Criteria
++	•	With no upgrades:
++	•	On wave start, ship shows ring for ~3s then it vanishes.
++	•	Ship appears ~50 px tall.
++	•	Bullets visibly sized (~3–4 px), easy to track.
++	•	Asteroids visibly sized per vanilla (large clearly bigger than small).
++	•	Wrapping works at ±375/±249 world units.
++	•	Minimap still aligns to world bounds.
++	•	No permanent always-on ring around ship.
++	•	No changes to gameplay timings or physics values.
++
++Where to implement
++	•	Scene.ts: frustum height lock = 99.6 world units, resize math, converters.
++	•	GameCanvas.tsx: use converters, remove any “1 unit = 1 px” remnants.
++	•	Ship.ts: shield visible gating, keep setPixelHeight() but base it on new converters.
++	•	Bullet.ts: pixel→world sizing helper for radius; default 3–4 px.
++	•	Asteroid.ts: confirm radii in world units and materials readable.
++	•	Optional helpers: render/CameraUtils.ts for pixel↔world conversions.
++
++Output
++	•	Single unified diff to diffs/visual_parity_fix_[timestamp].diff.
++	•	One commit: "Fix camera/world scale, conditional shield ring, and readable entity sizes".
+\ No newline at end of file
+diff --git a/docs/prompts/done/2/12.md b/docs/prompts/done/2/12.md
+new file mode 100644
+index 0000000..aa6a768
+--- /dev/null
++++ b/docs/prompts/done/2/12.md
+@@ -0,0 +1,39 @@
++APPROVE PLAN — Execute Visual Parity Corrections
++
++Proceed with the plan exactly as written, with these specifics:
++	1.	Camera/world units (GameCanvas.tsx)
++
++	•	Orthographic camera with VISIBLE_HEIGHT = 99.6 world units (vertical).
++	•	Width = VISIBLE_HEIGHT * aspect.
++	•	Update resize to preserve VISIBLE_HEIGHT.
++	•	Add util:
++	•	pxToWorld(px): number = px * VISIBLE_HEIGHT / rendererHeightPx
++	•	worldToPx(units): number = units * rendererHeightPx / VISIBLE_HEIGHT
++	•	Update screen↔world conversions to use the new scale.
++
++	2.	Shield visibility (GameState.ts & Ship.ts)
++
++	•	Initialize shieldCharges = 0.
++	•	Render shield ring only when invulnTimer > 0 || shieldCharges > 0.
++	•	Invuln windows unchanged: start=3s, respawn=2s, hit=1s.
++
++	3.	Entity visual sizing
++
++	•	Ship: lock to ~50 px tall via pxToWorld(50); keep collision radius consistent with gameplay.
++	•	Bullets: visual radius ~3–4 px (pxToWorld(3) default), add subtle emissive so they read on dark background.
++	•	Asteroids: keep world radii 6 / 3.5 / 2; only adjust material for a touch more brightness (no physics changes).
++
++	4.	Minimap
++
++	•	Ensure minimap scaling is independent of the world camera change (no regressions).
++
++	5.	Dev overlay (optional)
++
++	•	Sliders: ship px height (40–60, default 50), bullet px radius (2–6, default 3), wired through the new pxToWorld.
++
++Acceptance
++	•	Ship ≈ 50 px; bullets clearly visible ≈ 3–4 px; asteroid sizes read correctly; shield ring not always on (only during invuln or with shield charges); wrapping ±375/±249 unchanged. No gameplay constants changed.
++
++Output
++	•	Single diff: diffs/visual_parity_fix_[timestamp].diff
++	•	Build passes (npm run build), then commit and push.
+\ No newline at end of file
+diff --git a/docs/prompts/done/2/2.md b/docs/prompts/done/2/2.md
+new file mode 100644
+index 0000000..0252bc0
+--- /dev/null
++++ b/docs/prompts/done/2/2.md
+@@ -0,0 +1,87 @@
++Here’s the Block 5 execution prompt for Sonnet. Drop this in and let him run it.
++
++EXECUTION MODE — Implement Enemy Hunters (AI + enemy bullets + wave≥3 spawns). Output ONE unified diff under `/diffs/` only. Then commit and push.
++
++Scope
++- NEW: /AsteroidsV2/reactShell/src/game/entities/EnemyHunter.ts
++- NEW: /AsteroidsV2/reactShell/src/game/systems/EnemyBullets.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/systems/Spawning.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/systems/Collision.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/GameCanvas.tsx
++- (Assets are already present) /public/assets/boss/boss1.png … boss10.png
++
++Requirements
++
++1) EnemyHunter entity (constants from plan)
++- Radius: 1.2; accel: 20; maxSpeed: 26
++- Fire rate: 0.9s; bulletSpeed: 55; bulletLife: 1.6s
++- Preferred distance to player: 14 (strafing orbit)
++- Speed scaling per boss level: ×1.2 each level
++- Visual: use boss sprites from `assets/boss/boss1.png`…`boss10.png` (random, avoid immediate repeats)
++- API:
++  ```ts
++  export class EnemyHunter {
++    object: THREE.Object3D;
++    radius: number; level: number;
++    lastFireAt: number;
++    constructor(level: number, pos: THREE.Vector2, spriteUrl: string);
++    update(dt: number, shipPos: THREE.Vector2): void; // strafing AI: accelerate tangentially to maintain ~14u distance
++    canFire(now: number): boolean;
++  }
++
++	2.	Enemy bullets system (separate from player bullets)
++
++	•	File: systems/EnemyBullets.ts
++	•	Manages pooled bullets fired by hunters.
++	•	Bullet properties: speed=55, ttl=1.6s, small radius (match Collision expectations)
++	•	Wrap at world bounds (±375, ±249).
++	•	API:
++
++export function createEnemyBullets(scene: THREE.Scene) {
++  return {
++    fire(from: THREE.Vector2, angleRad: number): void,
++    update(dt: number): void,
++    getAll(): { pos: THREE.Vector2; radius: number; object: THREE.Object3D }[]
++  };
++}
++
++
++
++	3.	Spawning integration (wave ≥ 3)
++
++	•	In Spawning.ts, add hunter spawns for wave ≥ 3:
++	•	count = Math.min(1 + Math.floor((wave - 2)/2), 4)
++	•	level = 1..n (affects speed scaling)
++	•	spawn outside world by 20 units buffer like asteroids
++	•	Ensure sprite selection pulls a random boss image each time; avoid repeating the same sprite twice in a row if multiple spawn.
++
++	4.	Collision integration
++
++	•	Ensure Collision.ts handles enemy bullets ↔ ship (damage ship unless invulnerable).
++	•	Keep existing bullet↔asteroid, ship↔asteroid behavior unchanged.
++
++	5.	Game loop wiring
++
++	•	In GameCanvas.tsx, instantiate and update:
++	•	Array/list of EnemyHunter instances per wave
++	•	The enemy bullets system
++	•	Per frame: update hunters (passing ship position), if canFire then enemyBullets.fire from hunter nose angle.
++	•	Update enemyBullets after hunters.
++	•	Optional: surface hunter and enemy bullet counts to DevPanel stats if it exists.
++
++Constraints
++	•	Do NOT touch PostFX, HUD, upgrades, or audio in this block.
++	•	Asset paths/casing must match exactly: assets/boss/boss1.png … assets/boss/boss10.png.
++	•	Keep default render path as direct renderer.
++
++Acceptance tests (run in browser)
++	•	On wave 1–2: no hunters spawn.
++	•	On wave 3: at least 1 hunter spawns with a boss sprite, strafes around the ship at ~14u and fires every ~0.9s.
++	•	Enemy bullets travel ~55u/s, expire ~1.6s, wrap at edges.
++	•	Enemy bullets damage the ship (unless invulnerable).
++	•	Higher waves spawn more hunters up to 4; movement speed scales ×1.2 per level.
++
++Deliverable
++	•	Print ONE timestamped unified diff under /diffs/ with all new/updated files. No truncation/summaries.
++	•	After printing, commit and push with message: “Add Enemy Hunters (AI, enemy bullets, wave≥3 spawns)”.
++
+diff --git a/docs/prompts/done/2/3.md b/docs/prompts/done/2/3.md
+new file mode 100644
+index 0000000..9c3fc7d
+--- /dev/null
++++ b/docs/prompts/done/2/3.md
+@@ -0,0 +1,82 @@
++Here’s the Block 6 execution prompt for Sonnet. Drop it in.
++
++EXECUTION MODE — Implement Particles & Debris (pooled, performant). Output ONE unified diff under `/diffs/` only. Then commit and push.
++
++Scope
++- NEW: /AsteroidsV2/reactShell/src/game/entities/Particles.ts
++- NEW: /AsteroidsV2/reactShell/src/game/entities/Debris.ts
++- UPDATE: /AsteroidsV2/reactShell/src/game/GameCanvas.tsx
++- UPDATE: /AsteroidsV2/reactShell/src/game/systems/Collision.ts
++- (Optional) UPDATE: /AsteroidsV2/reactShell/src/ui/DevPanel.tsx (counters only)
++
++Requirements
++
++1) Particles (hit/explosion bursts)
++- Object pool (configurable, default 400–600 sprites/points). No runtime alloc churn.
++- API:
++  ```ts
++  export type BurstOpts = { count:number; color?:number; speed?:number; lifeMs?:number; size?:number };
++  export function createParticles(scene:THREE.Scene){
++    return {
++      burst(pos:THREE.Vector2, opts:BurstOpts): void,
++      update(dt:number): void,
++      activeCount(): number
++    };
++  }
++
++	•	Each particle stores pos, vel, ttl; fades out over life; removed back to pool.
++	•	Visual: lightweight (THREE.Points with dynamic buffer or tiny Sprites). Keep GPU-friendly.
++
++	2.	Debris (tetrahedrons, pooled = 220)
++
++	•	Geometry: prebuilt tetrahedron (one BufferGeometry), material reused.
++	•	API:
++
++export function createDebris(scene:THREE.Scene){
++  return {
++    spawn(pos:THREE.Vector2, count:number, baseSpeed:number): void,
++    update(dt:number): void,
++    activeCount(): number
++  };
++}
++
++
++	•	Each piece stores pos, vel, angular velocity, life; fades and returns to pool.
++	•	Trigger from larger events (asteroid split/destroy, ship hit).
++
++	3.	Integration points
++
++	•	In Collision.ts:
++	•	On bullet↔asteroid hit: small particle burst; on asteroid destroy/split: bigger burst + debris spawn proportional to size (e.g., L=20, M=12, S=6).
++	•	On ship↔asteroid hit: distinct color burst + a few debris pieces.
++	•	In GameCanvas.tsx:
++	•	Instantiate particles and debris; call update(dt) each frame after collisions.
++	•	Optionally send activeCount() totals into DevPanel stats if present.
++
++	4.	Constants (inline defaults; match vanilla feel)
++
++	•	PARTICLES:
++	•	default count 12 (hit), 28 (destroy), color #ffffff, speed 60–120, life 450–900ms, size 2–3px.
++	•	DEBRIS:
++	•	pool 220, life 900–1400ms, baseSpeed ~40–80, angular vel small.
++
++	5.	Performance
++
++	•	No per-frame allocations; reuse arrays/typed buffers.
++	•	Avoid creating materials per instance (share materials).
++	•	Keep draw calls low (prefer batched Points over many Sprites where feasible).
++
++Constraints
++	•	Do NOT alter physics constants already established.
++	•	No PostFX changes.
++	•	No new dependencies.
++
++Acceptance tests
++	•	Shooting an asteroid produces a visible particle burst; destroying one produces a larger burst plus flying debris; counts decay over time.
++	•	Pooling verified: sustained fire does not degrade FPS, no growing memory.
++	•	DevPanel (if updated) shows nonzero particle/debris counts during action and they drop back toward zero when idle.
++
++Deliverable
++	•	Print ONE timestamped unified diff under /diffs/ with all new/updated files. No truncation/summaries.
++	•	Then commit and push with message: “Add pooled Particles and Debris systems and integrate with collisions”.
++
+diff --git a/docs/prompts/done/2/4.md b/docs/prompts/done/2/4.md
+new file mode 100644
+index 0000000..8ee68e4
+--- /dev/null
++++ b/docs/prompts/done/2/4.md
+@@ -0,0 +1,18 @@
++> APPROVAL: Block 6 (Particles & Debris) is complete and validated against acceptance criteria.  
++Proceed with Block 7: Shield & Invulnerability mechanics.  
++
++Use the execution prompt already defined in the plan for Block 7.  
++Implementation details to cover:  
++- Invuln timers: 2s respawn, 3s wave start, 1s after hit  
++- Shield visual: transparent sphere (opacity 0.6)  
++- Shield charges integrated with upgrades system  
++- Damage immunity during active invulnerability  
++- Visual feedback: ship flashing during invuln  
++
++Acceptance criteria:  
++- ✅ Ship is invulnerable for 3s on wave start, 2s after respawn, 1s after hit  
++- ✅ Shield visuals appear correctly when active  
++- ✅ Shield charges reduce properly when damage is absorbed  
++- ✅ Flash effect clearly shows invulnerable state  
++
++Output: Single unified diff under /diffs/shields_[timestamp].diff and commit the changes.  
+\ No newline at end of file
+diff --git a/docs/prompts/done/2/5.md b/docs/prompts/done/2/5.md
+new file mode 100644
+index 0000000..5b3d179
+--- /dev/null
++++ b/docs/prompts/done/2/5.md
+@@ -0,0 +1,84 @@
++Here’s the Block 8 execution prompt for Sonnet. Drop it in.
++
++EXECUTION MODE — Implement HUD (score, wave, combo, currency, upgrade history). Output ONE unified diff under `/diffs/` only. Then commit and push.
++
++Scope
++- NEW:    /AsteroidsV2/reactShell/src/ui/Hud.tsx
++- UPDATE: /AsteroidsV2/reactShell/src/game/GameState.ts (selectors only; no behavior changes)
++- UPDATE: /AsteroidsV2/reactShell/src/App.tsx (mount HUD)
++- UPDATE: /AsteroidsV2/reactShell/src/styles.css (append minimal HUD styles)
++
++Requirements
++
++1) Data (read-only from GameState)
++Expose lightweight selectors (pure functions) in `GameState.ts`:
++```ts
++export const selectScore = (s:GameState)=>s.score;
++export const selectWave  = (s:GameState)=>s.wave;
++export const selectCombo = (s:GameState)=>({ value:s.combo, timer:s.comboTimer, max:2.3 });
++export const selectCurrency = (s:GameState)=>s.currency; // {salvage,gold,platinum,adamantium}
++export const selectUpgrades = (s:GameState)=>s.upgradeHistory.slice(-8); // newest last
++
++No state shape changes, no new mutations.
++	2.	HUD component
++
++	•	File: src/ui/Hud.tsx
++	•	Props:
++
++type HudProps = {
++  score:number;
++  wave:number;
++  combo:{ value:number; timer:number; max:number };
++  currency:{ salvage:number; gold:number; platinum:number; adamantium:number };
++  upgrades: Array<{ name:string; tier?:string }>;
++  visible?: boolean; // default true
++};
++
++	•	Layout:
++	•	Top-left: Wave (e.g., “Wave 3”) and Score stacked.
++	•	Top-right: currency row with subtle glass panel: Salvage | Gold | Platinum | Adamantium.
++	•	Bottom-left: “Upgrades” small list (max 8; newest at bottom).
++	•	Top-center: Combo meter bar (width = timer/max, label “x{combo.value.toFixed(2)}” if >1.0).
++	•	No external deps; basic CSS only.
++
++	3.	App integration
++
++	•	In App.tsx, pull current GameState instance or snapshot provider already present. If not directly accessible, thread a lightweight getter or subscribe callback that’s already used for DevPanel stats.
++	•	Compute props via the selectors and render <Hud .../> when gamePhase is 'playing' | 'wave-complete' (still visible during wave-clear).
++	•	Ensure HUD does not reflow canvas; use position:fixed containers.
++
++	4.	Styles (append to styles.css)
++Minimal classes:
++
++.hud { position: fixed; inset: 0; pointer-events: none; z-index: 5000; }
++.hud-tl, .hud-tr, .hud-tc, .hud-bl { position: absolute; pointer-events: none; color:#e6e6e6; text-shadow: 0 1px 2px rgba(0,0,0,.6); font: 14px/1.3 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
++.hud-tl{ top:12px; left:12px; }
++.hud-tr{ top:12px; right:12px; }
++.hud-tc{ top:12px; left:50%; transform: translateX(-50%); width: 360px; }
++.hud-bl{ bottom:12px; left:12px; max-width: 320px; }
++.hud-panel{ background: rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.18); border-radius:8px; padding:8px 10px; }
++.hud-row{ display:flex; gap:10px; align-items:center; justify-content:space-between; }
++.hud-chip{ background: rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); border-radius:6px; padding:4px 8px; font-weight:600; }
++.combo-wrap{ height:10px; background: rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); border-radius:999px; overflow:hidden; }
++.combo-bar{ height:100%; background: linear-gradient(90deg,#63b3ff,#7cffc1); }
++.hud-upgrades li{ list-style:none; margin:2px 0; opacity:.9; }
++
++	5.	Performance
++
++	•	HUD must not cause React re-renders per frame. Throttle to ~10Hz if needed using an existing stats tick or requestAnimationFrame sample with setState guard. Keep computation minimal.
++
++Acceptance tests
++	•	Wave/Score: shows correct numbers and updates as score/wave change.
++	•	Currency: numbers reflect GameState.currency live; layout doesn’t overlap dev panel.
++	•	Combo: when comboTimer > 0, bar animates; label shows xN.NN when > 1.0.
++	•	Upgrades: after you (temporarily) push mock items into upgradeHistory, list shows the last 8, newest at bottom.
++
++Constraints
++	•	Do NOT modify gameplay logic or constants.
++	•	No new dependencies.
++	•	Keep asset paths/casing untouched.
++
++Deliverable
++	•	Print ONE timestamped unified diff under /diffs/ with all new/updated files. No truncation/summaries.
++	•	Commit message: “Add HUD (score, wave, combo, currency, upgrade history) and wire to GameState”.
++
+diff --git a/docs/prompts/done/2/6.md b/docs/prompts/done/2/6.md
+new file mode 100644
+index 0000000..7d8d1f9
+--- /dev/null
++++ b/docs/prompts/done/2/6.md
+@@ -0,0 +1,68 @@
++Here’s the Block 9 execution prompt for Sonnet. Paste it in.
++
++EXECUTION MODE — Implement Minimap (tactical display). Output ONE unified diff under `/diffs/` only. Then commit and push.
++
++Scope
++- NEW:    /AsteroidsV2/reactShell/src/ui/Minimap.tsx
++- UPDATE: /AsteroidsV2/reactShell/src/App.tsx (mount Minimap)
++- UPDATE: /AsteroidsV2/reactShell/src/styles.css (append minimap styles)
++- UPDATE: /AsteroidsV2/reactShell/src/game/GameCanvas.tsx (provide read-only entity snapshots)
++
++Requirements
++
++1) Data source (read-only snapshots, no behavior changes)
++- In `GameCanvas.tsx`, expose a lightweight getter or subscription used by HUD to publish per-~100ms snapshots:
++  ```ts
++  type MiniSnapshot = {
++    ship: { x:number; y:number };
++    asteroids: Array<{ x:number; y:number; r:number }>;
++    hunters: Array<{ x:number; y:number; r:number }>;
++    bullets: Array<{ x:number; y:number }>;
++    enemyBullets: Array<{ x:number; y:number }>;
++    world: { width:number; height:number }; // 750x498
++  };
++
++	•	Reuse existing lists; do NOT reallocate per-frame. Throttle to ~10Hz like HUD.
++
++	2.	Minimap component
++
++	•	File: src/ui/Minimap.tsx
++	•	Props: { data: MiniSnapshot | null; visible?: boolean }
++	•	Canvas-based render (no new deps). Size: 280×187 px (fixed).
++	•	Visual mapping:
++	•	Full world (750×498) scaled into 280×187 (maintain aspect; letterbox if needed).
++	•	Ship: bright dot/triangle at center-relative position.
++	•	Asteroids: gray/ore-tinted small circles scaled by radius.
++	•	Hunters: red dots slightly larger than bullets.
++	•	Player bullets: white tiny dots; enemy bullets: red tiny dots.
++	•	Draw order: asteroids, hunters, bullets, ship on top.
++	•	No interactivity; pointer-events: none.
++
++	3.	Styling (append)
++
++.minimap-wrap { position: fixed; right: 12px; bottom: 12px; z-index: 5000; pointer-events: none; }
++.minimap-panel { background: rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.18); border-radius:8px; padding:8px; }
++.minimap-canvas { display:block; width:280px; height:187px; image-rendering: pixelated; }
++
++	4.	App integration
++
++	•	In App.tsx, where HUD is mounted, also mount <Minimap data={miniSnapshot} />.
++	•	Reuse the same 10Hz tick used for HUD to update miniSnapshot.
++	•	Keep visible tied to game phase 'playing' | 'wave-complete'.
++
++	5.	Performance
++
++	•	Avoid allocations in draw loop; reuse paths/clears.
++	•	Clear canvas each paint; no React re-render per entity.
++
++Acceptance tests
++	•	Minimap appears bottom-right in a glass panel, 280×187.
++	•	Ship dot tracks movement accurately.
++	•	Asteroids/hunters/bullets positions update ~10Hz.
++	•	World edges map correctly (objects wrap across edges on the minimap).
++	•	No noticeable perf impact during heavy action.
++
++Deliverable
++	•	Print ONE timestamped unified diff under /diffs/ with all new/updated files. No truncation/summaries.
++	•	Commit message: “Add Minimap tactical display (280×187 canvas) with live entity snapshots”.
++
+diff --git a/docs/prompts/done/2/7.md b/docs/prompts/done/2/7.md
+new file mode 100644
+index 0000000..7c5251f
+--- /dev/null
++++ b/docs/prompts/done/2/7.md
+@@ -0,0 +1,81 @@
++insane efficiency. keep the loop rolling.
++
++here’s Block 10 ready so you can paste it the moment Block 9 lands:
++
++EXECUTION MODE — Implement Upgrades system + 3-choice picker UI. Output ONE unified diff under `/diffs/`. Then commit and push.
++
++Scope
++- NEW:    /AsteroidsV2/reactShell/src/game/systems/Upgrades.ts
++- NEW:    /AsteroidsV2/reactShell/src/ui/UpgradeMenu.tsx
++- UPDATE: /AsteroidsV2/reactShell/src/game/GameState.ts  (mods shape, upgradeHistory, apply logic)
++- UPDATE: /AsteroidsV2/reactShell/src/game/GameCanvas.tsx (phase transitions)
++- UPDATE: /AsteroidsV2/reactShell/src/styles.css (upgrade menu styles)
++
++Requirements
++
++1) Mods + Upgrades (game logic)
++- Define Mods in GameState: 
++
++{ fireRateMul:number, engineMul:number, spread:number, pierce:number, ricochet:number,
++shieldCharges:number, bulletBounce:number, bulletLifeMul:number, bulletSpeedMul:number,
++magnetRadius:number, drone:boolean }
++
++Defaults = identity (1 or 0).
++- Implement Upgrade definitions (16 baseline as per plan) with rarity tiers and numeric effects that match vanilla (e.g., Rapid Fire → fireRateMul *= 1.30; Engine Boost → engineMul *= 1.20; Shield Charge → shieldCharges += 1; Ricochet → bulletBounce += 1; Piercing → pierce += 1; Spread Shot → spread += 2; etc.).
++- `Upgrades.ts`:
++```ts
++export type Upgrade = { id:string; name:string; tier:'common'|'rare'|'epic'|'legendary';
++                        apply:(mods:Mods)=>void; describe:(mods:Mods)=>string; };
++export function getUpgradeChoices(wave:number, taken:Set<string>): Upgrade[];
++export function applyUpgrade(u:Upgrade, state:GameState): void;
++
++	•	Weighted random by tier; exclude already-taken upgrades when appropriate.
++	•	Record selection in upgradeHistory.
++
++	2.	Picker UI (UpgradeMenu.tsx)
++
++	•	3 cards centered overlay; keyboard shortcuts 1/2/3; click to select.
++	•	Show name, tier badge, and short describe() text.
++	•	On select: apply upgrade, close menu, transition back to playing.
++
++	3.	Phase transitions (GameCanvas/App integration)
++
++	•	On wave clear → set gamePhase='upgrade' and prepare 3 choices via getUpgradeChoices.
++	•	After selection → apply upgrade, push to upgradeHistory, gamePhase='playing', spawn next wave per existing logic.
++	•	Ensure invulnerability timing on wave start remains intact.
++
++	4.	HUD integration
++
++	•	HUD should automatically reflect mods via existing selectors (e.g., shieldCharges, possibly show last upgrade in the bottom-left list already wired).
++	•	No extra HUD features required in this block.
++
++	5.	Styling (append minimal)
++
++.upgrade-overlay{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:7000; background:rgba(0,0,0,.35); }
++.upgrade-grid{ display:grid; grid-template-columns:repeat(3, 280px); gap:16px; }
++.upgrade-card{ pointer-events:auto; background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.18); border-radius:12px; padding:16px; cursor:pointer; transition:transform .12s; }
++.upgrade-card:hover{ transform:translateY(-2px); }
++.tier-common{ border-color:#9aa4b2; }
++.tier-rare{ border-color:#4ea9ff; }
++.tier-epic{ border-color:#b889ff; }
++.tier-legendary{ border-color:#ffcc66; }
++.upgrade-name{ font-weight:700; margin-bottom:6px; }
++.upgrade-desc{ opacity:.9; font-size:14px; }
++
++Constraints
++	•	Do NOT change established combat constants.
++	•	No new dependencies.
++	•	Asset paths/casing unchanged.
++	•	Keep update frequency sane; no per-frame React re-render storms.
++
++Acceptance
++	•	Clearing a wave opens the 3-choice overlay.
++	•	1/2/3 keys or click selects and applies the upgrade; returns to gameplay.
++	•	Effects are visible immediately (e.g., Rapid Fire increases fire rate; Shield Charge increments shield count; Spread adds side bullets; Pierce/Ricochet modify bullet behavior if those are already supported hooks; if hooks not present yet, wire no-op now but store mods so later blocks use them).
++	•	upgradeHistory shows last 8 in HUD (already wired).
++	•	No regressions to waves, collisions, hunters, or shields.
++
++Deliverable
++	•	ONE timestamped unified diff under /diffs/ with all new/updated files.
++	•	Commit message: “Add Upgrades system and 3-choice picker UI; wire wave-clear → upgrade → resume”.
++
+diff --git a/docs/prompts/done/2/8.md b/docs/prompts/done/2/8.md
+new file mode 100644
+index 0000000..45649c9
+--- /dev/null
++++ b/docs/prompts/done/2/8.md
+@@ -0,0 +1,21 @@
++> APPROVAL: Block 10 (Upgrades System & Picker UI) is complete and validated against acceptance criteria.  
++Proceed with Block 11: Currency Pickups & Magnetism.  
++
++Use the execution prompt already defined in the plan for Block 11.  
++Implementation details to cover:  
++- NEW Pickup.ts entity with floating animation, TTL, and collection radius  
++- Spawn currency drops when asteroids are destroyed, based on ore type drop rates (gold=27%, platinum=60%, adamantium=40%)  
++- Magnetism: ship attracts pickups within radius (base + upgrade scaling)  
++- Auto-collect after 10s if not picked up  
++- Update GameState.currency on collection  
++- Integrate pickup rendering into GameCanvas update loop  
++
++Acceptance criteria:  
++- ✅ Destroying a gold asteroid has ~27% chance to drop gold pickup  
++- ✅ Platinum and adamantium pickups spawn at correct probabilities  
++- ✅ Pickups float slightly, auto-collect after 10s  
++- ✅ Ship auto-collects pickups within magnet radius  
++- ✅ Currency totals update live in HUD panel  
++- ✅ No performance regressions  
++
++Output: Single unified diff under `/diffs/pickups_[timestamp].diff` and commit the changes.  
+\ No newline at end of file
+diff --git a/docs/prompts/done/2/9.md b/docs/prompts/done/2/9.md
+new file mode 100644
+index 0000000..68c464a
+--- /dev/null
++++ b/docs/prompts/done/2/9.md
+@@ -0,0 +1,40 @@
++EXECUTION MODE — Fix runtime/build blockers and restore running game.
++
++Context:
++- Recent error: [plugin:vite:react-babel] Identifier 'shipPos' has already been declared in reactShell/src/game/GameCanvas.tsx around lines 240–250.
++- After Block 11, the game isn’t running. We need a clean dev server with no red overlay and working gameplay.
++
++Tasks:
++1) GameCanvas.tsx audit & fix
++   - Remove/rework duplicate const/let declarations in the same scope (e.g., `shipPos`).
++   - Hoist a single `let shipPos: {x:number;y:number}` per frame OR reuse the existing variable; do not redeclare.
++   - Scan the file for any other duplicate identifiers, shadowing, or duplicated imports introduced across Blocks 7–11 and fix.
++   - Keep behavior identical (camera follow, orthographic mapping, RAF loop, update order).
++
++2) Repo-wide quick sanity pass
++   - Grep for “has already been declared” patterns in src/ and fix any similar duplicates created during merges (variable names and imports).
++   - Ensure no duplicate default imports of THREE or PostFX helpers in a single module.
++   - Ensure exported interfaces/types aren’t declared twice across files.
++
++3) TypeScript/build check
++   - Run `npm run build` to ensure zero TS errors.
++   - Then run `npm run dev` and verify no Vite red overlay. If an error appears, capture the exact message and patch immediately.
++
++4) Runtime verify
++   - Confirm the game boots to Start screen, dismisses, and shows: ship, bullets, asteroids, collisions, waves, HUD, minimap, pickups working.
++   - No console errors; HMR stable on file save.
++
++Constraints:
++- Do not change gameplay constants, visuals, or features beyond fixing dupes/imports and necessary build/runtime issues.
++- No refactors outside what’s required to eliminate duplicates and errors.
++
++Acceptance Criteria:
++- `npm run build` passes without errors.
++- `npm run dev` shows a running game (no red overlay), controls responsive, HUD/minimap visible.
++- No duplicate identifier or duplicate import errors remain.
++- Single unified diff documenting fixes.
++
++Output:
++- Write diff to `/diffs/fix_runtime_blockers_[timestamp].diff`
++- Commit with message: "Fix duplicate declarations/imports; restore clean build & running dev server"
++- Push.
+\ No newline at end of file
+diff --git a/file_tree.txt b/file_tree.txt
+new file mode 100644
+index 0000000..e69de29
+diff --git a/reactShell/src/game/GameCanvas.tsx b/reactShell/src/game/GameCanvas.tsx
+index 302854b..cf98a04 100644
+--- a/reactShell/src/game/GameCanvas.tsx
++++ b/reactShell/src/game/GameCanvas.tsx
+@@ -14,7 +14,8 @@ import { GameState, selectScore, selectWave, selectCombo, selectCurrency, select
+ import { createEnemyBullets } from './systems/EnemyBullets'
+ import { DevStats } from '../ui/DevPanel'
+ import { DebugBus } from '../dev/DebugBus'
+-import { VISIBLE_HEIGHT, getVisibleWidth, pxToWorld, worldToPx } from '../utils/units'
++import { WORLD_BOUNDS, configureWorld } from './utils/units'
++import { createStarfield } from './systems/Starfield'
+ 
+ // HUD data type for passing game state to UI
+ export interface HudData {
+@@ -43,11 +44,8 @@ const WORLD = {
+ }
+ 
+ // World-unit based orthographic camera (vanilla parity)
+-function makeOrthoCamera(aspect: number): THREE.OrthographicCamera {
+-  const visibleWidth = getVisibleWidth(aspect)
+-  const halfW = visibleWidth / 2
+-  const halfH = VISIBLE_HEIGHT / 2
+-  const cam = new THREE.OrthographicCamera(-halfW, halfW, halfH, -halfH, 0.1, 1000)
++function makeOrthoCamera(): THREE.OrthographicCamera {
++  const cam = new THREE.OrthographicCamera(WORLD_BOUNDS.minX, WORLD_BOUNDS.maxX, WORLD_BOUNDS.maxY, WORLD_BOUNDS.minY, 0.1, 1000)
+   cam.position.set(0, 0, 10)
+   cam.lookAt(0, 0, 0)
+   return cam
+@@ -75,6 +73,7 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
+   const pickupManagerRef = useRef<PickupManager | null>(null)
+   const gameStateRef = useRef<GameState | null>(null)
+   const enemyBulletsRef = useRef<any>(null)
++  const starfieldRef = useRef<any>(null)
+ 
+   useEffect(() => {
+     if (!canvasRef.current) return
+@@ -82,11 +81,18 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
+     // Basic Three.js setup - placeholder for full game integration
+     const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current })
+     const scene = new THREE.Scene()
+-    const camera = makeOrthoCamera(window.innerWidth / window.innerHeight)
++    
++    // Configure world bounds and camera
++    configureWorld()
++    const camera = makeOrthoCamera()
+     
+     renderer.setPixelRatio(window.devicePixelRatio)
+     renderer.setSize(window.innerWidth, window.innerHeight)
+     
++    // Initialize starfield first
++    const starfield = createStarfield(scene)
++    starfieldRef.current = starfield
++    
+     // Initialize game systems
+     const input = new Input()
+     const gameState = new GameState()
+@@ -135,17 +141,14 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
+     const handleResize = () => {
+       const width = window.innerWidth
+       const height = window.innerHeight
+-      const aspect = width / height
+       renderer.setPixelRatio(window.devicePixelRatio)
+       
+-      // Update camera to maintain world-unit scale
+-      const visibleWidth = getVisibleWidth(aspect)
+-      const halfW = visibleWidth / 2
+-      const halfH = VISIBLE_HEIGHT / 2
+-      camera.left = -halfW
+-      camera.right = halfW
+-      camera.top = halfH
+-      camera.bottom = -halfH
++      // Configure world and update camera
++      configureWorld()
++      camera.left = WORLD_BOUNDS.minX
++      camera.right = WORLD_BOUNDS.maxX
++      camera.top = WORLD_BOUNDS.maxY
++      camera.bottom = WORLD_BOUNDS.minY
+       camera.updateProjectionMatrix()
+       
+       resize(width, height)
+@@ -157,15 +160,13 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
+     // Screen to world coordinate conversion (world-unit based)
+     const screenToWorld = (screenX: number, screenY: number): THREE.Vector2 => {
+       const rect = canvasRef.current!.getBoundingClientRect()
+-      const aspect = rect.width / rect.height
+-      const visibleWidth = getVisibleWidth(aspect)
+       
+       // Convert screen pixels to world coordinates
+       const normalizedX = (screenX - rect.left - rect.width / 2) / (rect.width / 2)
+       const normalizedY = -((screenY - rect.top - rect.height / 2) / (rect.height / 2))
+       
+-      const worldX = normalizedX * (visibleWidth / 2)
+-      const worldY = normalizedY * (VISIBLE_HEIGHT / 2)
++      const worldX = normalizedX * (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX) / 2
++      const worldY = normalizedY * (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY) / 2
+       
+       return new THREE.Vector2(worldX, worldY)
+     }
+@@ -186,6 +187,11 @@ export default function GameCanvas({ onStats, onHudData, onMiniSnapshot, onGameS
+       }
+       const avgFps = fpsHistoryRef.current.reduce((a, b) => a + b, 0) / fpsHistoryRef.current.length
+       
++      // Update starfield
++      if (starfieldRef.current) {
++        starfieldRef.current.update(dt)
++      }
++      
+       // Update input
+       input.update()
+       const inputState = input.getState()
+diff --git a/reactShell/src/game/entities/Bullet.ts b/reactShell/src/game/entities/Bullet.ts
+index 434cda8..884a589 100644
+--- a/reactShell/src/game/entities/Bullet.ts
++++ b/reactShell/src/game/entities/Bullet.ts
+@@ -1,6 +1,6 @@
+ // Bullet.ts - Projectile system
+ import * as THREE from 'three'
+-import { pxToWorld, WORLD_BOUNDS } from '../utils/units'
++import { WORLD_BOUNDS } from '../utils/units'
+ 
+ // Constants from vanilla
+ const BULLET = { 
+@@ -21,17 +21,17 @@ export class Bullet {
+   public isEnemy = false
+ 
+   constructor() {
+-    // Create brighter, more visible bullet visual with world-unit scaling
+-    // Convert target pixel size to world units (using window height as reference)
+-    const visualRadius = pxToWorld(DEFAULT_BULLET_PX, window.innerHeight)
+-    const geometry = new THREE.SphereGeometry(visualRadius, 8, 6)
++    // Create bullet visual with fixed radius scaling
++    const radius = 0.28
++    const geometry = new THREE.SphereGeometry(1, 8, 6)
+     const material = new THREE.MeshBasicMaterial({ 
+       color: 0xE6E6E6, // Brighter than pure white for better visibility
+     })
+     this.mesh = new THREE.Mesh(geometry, material)
++    this.mesh.scale.set(2 * radius, 2 * radius, 2 * radius)
+     this.mesh.userData = {
+       kind: 'bullet',
+-      radius: BULLET.r // Keep original collision radius
++      radius: radius
+     }
+   }
+ 
+diff --git a/reactShell/src/game/entities/Ship.ts b/reactShell/src/game/entities/Ship.ts
+index ca7b017..5a7c3c8 100644
+--- a/reactShell/src/game/entities/Ship.ts
++++ b/reactShell/src/game/entities/Ship.ts
+@@ -3,7 +3,7 @@ import * as THREE from 'three'
+ import type { InputState } from '../Input'
+ import type { BulletManager } from '../systems/BulletManager'
+ import type { GameState } from '../GameState'
+-import { pxToWorld, WORLD_BOUNDS } from '../utils/units'
++import { WORLD_BOUNDS } from '../utils/units'
+ 
+ // Constants from vanilla
+ const PLAYER = {
+@@ -71,16 +71,10 @@ export class Ship {
+       texture.minFilter = THREE.NearestFilter
+       texture.generateMipmaps = false
+       
+-      // Scale ship to world units based on target pixel height
+-      const imgH = texture.image?.height ?? SHIP_DESIRED_PX
+-      const imgW = texture.image?.width ?? SHIP_DESIRED_PX
+-      const aspectRatio = imgW / imgH
+-      
+-      // Convert target pixel height to world units (using window height as reference)
+-      const targetWorldHeight = pxToWorld(SHIP_DESIRED_PX, window.innerHeight)
+-      
+-      // Scale the mesh to achieve desired world size
+-      this.object.scale.set(targetWorldHeight * aspectRatio, targetWorldHeight, 1)
++      // Scale ship from radius
++      const r = this.object.userData.radius ?? 1.5
++      this.object.userData.radius = r
++      this.object.scale.set(2 * r, 2 * r, 1)
+     })
+     
+     // Create ship geometry with texture (placeholder size will be scaled)
+@@ -233,18 +227,10 @@ export class Ship {
+ 
+   // Set ship pixel height for runtime tuning (converts to world units)
+   setPixelHeight(px: number, viewportHeight: number): void {
+-    const targetWorldHeight = pxToWorld(px, viewportHeight)
+-    
+-    const material = (this.object as THREE.Mesh).material as THREE.MeshBasicMaterial
+-    if (material.map && material.map.image) {
+-      const texture = material.map
+-      const imgH = texture.image.height
+-      const imgW = texture.image.width
+-      const aspectRatio = imgW / imgH
+-      
+-      // Scale to target world height, maintaining aspect ratio
+-      this.object.scale.set(targetWorldHeight * aspectRatio, targetWorldHeight, 1)
+-    }
++    // Scale ship from radius
++    const r = this.object.userData.radius ?? 1.5
++    this.object.userData.radius = r
++    this.object.scale.set(2 * r, 2 * r, 1)
+   }
+ 
+   // Reset ship for new wave
+diff --git a/reactShell/src/game/systems/Spawning.ts b/reactShell/src/game/systems/Spawning.ts
+index 4561fa6..8e6b94d 100644
+--- a/reactShell/src/game/systems/Spawning.ts
++++ b/reactShell/src/game/systems/Spawning.ts
+@@ -2,11 +2,7 @@
+ import * as THREE from 'three'
+ import { Asteroid, chooseOreType, type AsteroidSize, type OreType } from '../entities/Asteroid'
+ import { EnemyHunter } from '../entities/EnemyHunter'
+-
+-const WORLD = {
+-  width: 750,
+-  height: 498,
+-}
++import { WORLD_BOUNDS } from '../utils/units'
+ 
+ // Wave spawning constants (from vanilla)
+ const SPAWN_BUFFER = 20 // Units outside world bounds to spawn asteroids
+@@ -29,27 +25,27 @@ export class Spawning {
+     const edge = Math.floor(Math.random() * 4) // 0=top, 1=right, 2=bottom, 3=left
+     let x: number, y: number
+     
+-    const halfWidth = WORLD.width / 2   // ±375
+-    const halfHeight = WORLD.height / 2 // ±249
++    const halfWidth = (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX) / 2   // ±375
++    const halfHeight = (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY) / 2 // ±249
+     const margin = SPAWN_BUFFER // Spawn 20 units outside world bounds
+     
+     switch (edge) {
+       case 0: // Top
+-        x = (Math.random() - 0.5) * WORLD.width
++        x = (Math.random() - 0.5) * (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX)
+         y = halfHeight + margin
+         break
+       case 1: // Right
+         x = halfWidth + margin
+-        y = (Math.random() - 0.5) * WORLD.height
++        y = (Math.random() - 0.5) * (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY)
+         break
+       case 2: // Bottom
+-        x = (Math.random() - 0.5) * WORLD.width
++        x = (Math.random() - 0.5) * (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX)
+         y = -halfHeight - margin
+         break
+       case 3: // Left
+       default:
+         x = -halfWidth - margin
+-        y = (Math.random() - 0.5) * WORLD.height
++        y = (Math.random() - 0.5) * (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY)
+         break
+     }
+     
+@@ -194,27 +190,27 @@ export class Spawning {
+       const edge = Math.floor(Math.random() * 4) // 0=top, 1=right, 2=bottom, 3=left
+       let x: number, y: number
+       
+-      const halfWidth = WORLD.width / 2   // ±375
+-      const halfHeight = WORLD.height / 2 // ±249
++      const halfWidth = (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX) / 2   // ±375
++      const halfHeight = (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY) / 2 // ±249
+       const margin = SPAWN_BUFFER // 20 units outside world bounds
+       
+       switch (edge) {
+         case 0: // Top
+-          x = (Math.random() - 0.5) * WORLD.width
++          x = (Math.random() - 0.5) * (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX)
+           y = halfHeight + margin
+           break
+         case 1: // Right
+           x = halfWidth + margin
+-          y = (Math.random() - 0.5) * WORLD.height
++          y = (Math.random() - 0.5) * (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY)
+           break
+         case 2: // Bottom
+-          x = (Math.random() - 0.5) * WORLD.width
++          x = (Math.random() - 0.5) * (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX)
+           y = -halfHeight - margin
+           break
+         case 3: // Left
+         default:
+           x = -halfWidth - margin
+-          y = (Math.random() - 0.5) * WORLD.height
++          y = (Math.random() - 0.5) * (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY)
+           break
+       }
+       
+diff --git a/reactShell/src/game/systems/Starfield.ts b/reactShell/src/game/systems/Starfield.ts
+new file mode 100644
+index 0000000..48b6b61
+--- /dev/null
++++ b/reactShell/src/game/systems/Starfield.ts
+@@ -0,0 +1,42 @@
++// src/game/systems/Starfield.ts
++import * as THREE from "three";
++import { WORLD_BOUNDS } from "../utils/units";
++
++export function createStarfield(scene: THREE.Scene, count = 300) {
++  const positions = new Float32Array(count * 3);
++  
++  for (let i = 0; i < count; i++) {
++    const x = WORLD_BOUNDS.minX + Math.random() * (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX);
++    const y = WORLD_BOUNDS.minY + Math.random() * (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY);
++    positions[i * 3 + 0] = x;
++    positions[i * 3 + 1] = y;
++    positions[i * 3 + 2] = -10;
++  }
++
++  const geom = new THREE.BufferGeometry();
++  geom.setAttribute("position", new THREE.BufferAttribute(positions, 3));
++
++  const mat = new THREE.PointsMaterial({ size: 1.2, sizeAttenuation: true });
++  mat.depthWrite = false; 
++  mat.depthTest = false; 
++  mat.transparent = true;
++
++  const points = new THREE.Points(geom, mat);
++  points.renderOrder = -1;
++  scene.add(points);
++
++  function wrap() {
++    const pos = geom.getAttribute("position") as THREE.BufferAttribute;
++    for (let i = 0; i < count; i++) {
++      let x = pos.getX(i), y = pos.getY(i);
++      if (x < WORLD_BOUNDS.minX) x = WORLD_BOUNDS.maxX;
++      if (x > WORLD_BOUNDS.maxX) x = WORLD_BOUNDS.minX;
++      if (y < WORLD_BOUNDS.minY) y = WORLD_BOUNDS.maxY;
++      if (y > WORLD_BOUNDS.maxY) y = WORLD_BOUNDS.minY;
++      pos.setX(i, x); pos.setY(i, y);
++    }
++    pos.needsUpdate = true;
++  }
++
++  return { update(_: number) { wrap(); } };
++}
+\ No newline at end of file
+diff --git a/reactShell/src/game/utils/units.ts b/reactShell/src/game/utils/units.ts
+index 607c501..e2469fc 100644
+--- a/reactShell/src/game/utils/units.ts
++++ b/reactShell/src/game/utils/units.ts
+@@ -1,15 +1,13 @@
+-// reactShell/src/game/utils/units.ts
+-// World units and bounds used by entities. Values match current wrap behavior.
+-export const WORLD_BOUNDS = {
+-  minX: -375,
+-  maxX: 375,
+-  minY: -249,
+-  maxY: 249,
+-} as const;
+-
+-export type WorldBounds = typeof WORLD_BOUNDS;
+-
+-/** Convert screen pixels to world units. Identity for now; adjust if a scale is introduced. */
+-export function pxToWorld(px: number): number {
+-  return px;
+-}
+\ No newline at end of file
++// src/game/utils/units.ts
++export type WorldBounds = { minX: number; maxX: number; minY: number; maxY: number };
++
++export let WORLD_BOUNDS: WorldBounds = { minX: -375, maxX: 375, minY: -249, maxY: 249 };
++
++export function configureWorld(): void {
++  // lock to original extents; 1 world unit = 1 pixel
++  WORLD_BOUNDS = { minX: -375, maxX: 375, minY: -249, maxY: 249 };
++}
++
++export function getWorldSize() { return { width: 750, height: 498 }; }
++
++export function pxToWorld(n: number) { return n; }
+\ No newline at end of file
+diff --git a/reactShell/src/utils/units.ts b/reactShell/src/utils/units.ts
+deleted file mode 100644
+index 50176b8..0000000
+--- a/reactShell/src/utils/units.ts
++++ /dev/null
+@@ -1,28 +0,0 @@
+-// units.ts - World unit to pixel conversion utilities
+-
+-// Vanilla world constants
+-export const WORLD_WIDTH = 750
+-export const WORLD_HEIGHT = 498
+-export const VISIBLE_HEIGHT = 99.6 // Visible world units vertically (1/5 of world height)
+-
+-// Conversion utilities for maintaining visual parity
+-export function pxToWorld(px: number, viewportHeight: number): number {
+-  // Convert desired pixel size to world units based on current viewport
+-  return (px * VISIBLE_HEIGHT) / viewportHeight
+-}
+-
+-export function worldToPx(units: number, viewportHeight: number): number {
+-  // Convert world units to pixel size based on current viewport
+-  return (units * viewportHeight) / VISIBLE_HEIGHT
+-}
+-
+-// Helper to get visible width based on aspect ratio
+-export function getVisibleWidth(aspectRatio: number): number {
+-  return VISIBLE_HEIGHT * aspectRatio
+-}
+-
+-// World wrapping boundaries
+-export const WORLD_BOUNDS = {
+-  x: WORLD_WIDTH / 2,  // ±375
+-  y: WORLD_HEIGHT / 2, // ±249
+-}
+\ No newline at end of file
